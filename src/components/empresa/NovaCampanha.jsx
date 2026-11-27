@@ -647,8 +647,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       origemLeads: !!campanha.mercado,
       canais: !!campanha.origemLeads,
       materiais: !!(campanha.canais && campanha.canais.length > 0),
-      fonteLeads: !!(campanha.canais && campanha.canais.length > 0),
-      estrutura: !!campanha.fonteLeads,
+      estrutura: !!(campanha.canais && campanha.canais.length > 0),
     };
   }, [campanha]);
 
@@ -1214,12 +1213,64 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Origem dos leads */}
           {secaoVisivel.origemLeads && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>De onde vêm os contatos?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Como os profissionais vão conseguir os contatos para trabalhar?</div></div>
-            <div style={{ display: "grid", gap: 8 }}>
-              {Object.values(ORIGENS_LEAD).map((o) => (
-                <CardOption key={o.id} selected={campanha.origemLeads === o.id} onClick={() => set("origemLeads", o.id)} title={o.label} />
-              ))}
+            <div style={{ marginBottom: 12 }}>
+              <b style={{ color: "var(--brand)" }}>De onde vêm os contatos?</b><Tag obrigatorio={false} />
+              <div className="vx-mut" style={{ fontSize: 11.5 }}>Você fornece a lista de contatos ou o profissional busca sozinho?</div>
             </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              <CardOption selected={campanha.origemLeads === "empresa"} onClick={() => { set("origemLeads", "empresa"); set("fonteLeads", "empresa"); }} icon={Database} title="Minha empresa fornecerá os leads" subtitle="Você envia a lista e o profissional trabalha só esses contatos." />
+              <CardOption selected={campanha.origemLeads === "profissional"} onClick={() => { set("origemLeads", "profissional"); set("fonteLeads", "profissional"); }} icon={UserPlus} title="O profissional encontrará os leads" subtitle="Ele mesmo prospecta e cadastra novos contatos." />
+              <CardOption selected={campanha.origemLeads === "ambos"} onClick={() => { set("origemLeads", "ambos"); set("fonteLeads", "ambos"); }} icon={Shuffle} title="Ambas as opções" subtitle="Você fornece contatos e o profissional também pode buscar mais." />
+            </div>
+            {(campanha.origemLeads === "empresa" || campanha.origemLeads === "ambos") && (
+              <div style={{ marginTop: 14, padding: "14px 16px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
+                <b style={{ fontSize: 13, color: "var(--brand)" }}>Como dividir os contatos entre os profissionais?</b><Tag obrigatorio={false} />
+                <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+                  <CardOption selected={!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica"} onClick={() => { set("distribuicaoLeads", "automatica"); set("limiteLeadsSimultaneos", 0); set("limiteLeadsDia", 0); set("prazoContatoHoras", 0); set("prazoInatividadeHoras", 0); }} icon={Zap} title="Automático (recomendado)" subtitle="A plataforma distribui os contatos de forma equilibrada entre os profissionais." />
+                  <CardOption selected={campanha.distribuicaoLeads === "manual"} onClick={() => set("distribuicaoLeads", "manual")} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Você define quantos contatos cada profissional recebe e os prazos." />
+                </div>
+                {(!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica") && (
+                  <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
+                    <Check size={14} color="var(--green, #16A34A)" style={{ flexShrink: 0 }} />
+                    <span className="vx-mut" style={{ fontSize: 12, lineHeight: 1.4 }}>A RYCS distribui os contatos automaticamente de forma equilibrada: até 5 simultâneos, 10 por dia, com prazo de 4h para primeiro contato e 48h de inatividade.</span>
+                  </div>
+                )}
+                {campanha.distribuicaoLeads === "manual" && (
+                  <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
+                    <label><div className="vx-label">Contatos ao mesmo tempo por profissional</div>
+                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsSimultaneos || 0}
+                        onChange={(e) => set("limiteLeadsSimultaneos", Number(e.target.value))} placeholder="0 = sem limite" /></label>
+                    <label><div className="vx-label">Novos contatos por dia</div>
+                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsDia || 0}
+                        onChange={(e) => set("limiteLeadsDia", Number(e.target.value))} placeholder="0 = sem limite" /></label>
+                    <label><div className="vx-label">Prazo primeiro contato (horas)</div>
+                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoContatoHoras || 0}
+                        onChange={(e) => set("prazoContatoHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
+                    <label><div className="vx-label">Prazo inatividade (horas)</div>
+                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoInatividadeHoras || 0}
+                        onChange={(e) => set("prazoInatividadeHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
+                  </div>
+                )}
+                <FontesContatosSelector campanha={campanha} set={set} />
+                <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={!!campanha.incluirNovosAutomaticamente} onChange={(e) => set("incluirNovosAutomaticamente", e.target.checked)} style={{ accentColor: "var(--brand)" }} />
+                    <span style={{ fontSize: 13, fontWeight: 500 }}>Incluir novos contatos automaticamente</span>
+                  </label>
+                  <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, paddingLeft: 26 }}>
+                    {campanha.incluirNovosAutomaticamente
+                      ? "Novos leads recebidos pelas fontes selecionadas entrarão automaticamente na campanha enquanto ela estiver ativa."
+                      : "Somente os contatos selecionados manualmente farão parte da campanha."}
+                  </div>
+                </div>
+                {!campanha.incluirNovosAutomaticamente && (campanha.leadsSelecionados || []).length === 0 && (campanha.listasSelecionadas || []).length === 0 && !campanha.planilhaUrl && (
+                  <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--amber-50, #FFFBEB)", borderRadius: 8, border: "1px solid var(--amber-200, #FDE68A)", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                    <AlertCircle size={14} color="var(--amber, #F59E0B)" style={{ flexShrink: 0, marginTop: 1 }} />
+                    <span style={{ fontSize: 12, color: "var(--amber-700, #92400E)" }}>Selecione ao menos uma fonte de contatos ou ative a inclusão automática para poder publicar esta campanha.</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>}
 
           {/* Canais */}
@@ -1540,68 +1591,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           )}
 
-          {/* Base de leads da campanha */}
-          {secaoVisivel.fonteLeads && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}>
-              <b style={{ color: "var(--brand)" }}>Quem o profissional vai contatar?</b><Tag obrigatorio={false} />
-              <div className="vx-mut" style={{ fontSize: 11.5 }}>Você fornece a lista de contatos ou o profissional busca sozinho?</div>
-            </div>
-            <div style={{ display: "grid", gap: 8 }}>
-              <CardOption selected={campanha.fonteLeads === "empresa"} onClick={() => set("fonteLeads", "empresa")} icon={Database} title="Eu forneço os contatos" subtitle="Você envia a lista e o profissional trabalha só esses contatos." />
-              <CardOption selected={campanha.fonteLeads === "profissional"} onClick={() => set("fonteLeads", "profissional")} icon={UserPlus} title="O profissional busca sozinho" subtitle="Ele mesmo prospecta e cadastra novos contatos." />
-              <CardOption selected={campanha.fonteLeads === "ambos"} onClick={() => set("fonteLeads", "ambos")} icon={Shuffle} title="As duas coisas" subtitle="Você fornece contatos e o profissional também pode buscar mais." />
-            </div>
-            {(campanha.fonteLeads === "empresa" || campanha.fonteLeads === "ambos") && (
-              <div style={{ marginTop: 14, padding: "14px 16px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
-                <b style={{ fontSize: 13, color: "var(--brand)" }}>Como dividir os contatos entre os profissionais?</b><Tag obrigatorio={false} />
-                <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-                  <CardOption selected={!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica"} onClick={() => { set("distribuicaoLeads", "automatica"); set("limiteLeadsSimultaneos", 0); set("limiteLeadsDia", 0); set("prazoContatoHoras", 0); set("prazoInatividadeHoras", 0); }} icon={Zap} title="Automático (recomendado)" subtitle="A plataforma distribui os contatos de forma equilibrada entre os profissionais." />
-                  <CardOption selected={campanha.distribuicaoLeads === "manual"} onClick={() => set("distribuicaoLeads", "manual")} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Você define quantos contatos cada profissional recebe e os prazos." />
-                </div>
-                {(!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica") && (
-                  <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
-                    <Check size={14} color="var(--green, #16A34A)" style={{ flexShrink: 0 }} />
-                    <span className="vx-mut" style={{ fontSize: 12, lineHeight: 1.4 }}>A RYCS distribui os contatos automaticamente de forma equilibrada: até 5 simultâneos, 10 por dia, com prazo de 4h para primeiro contato e 48h de inatividade.</span>
-                  </div>
-                )}
-                {campanha.distribuicaoLeads === "manual" && (
-                  <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
-                    <label><div className="vx-label">Contatos ao mesmo tempo por profissional</div>
-                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsSimultaneos || 0}
-                        onChange={(e) => set("limiteLeadsSimultaneos", Number(e.target.value))} placeholder="0 = sem limite" /></label>
-                    <label><div className="vx-label">Novos contatos por dia</div>
-                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.limiteLeadsDia || 0}
-                        onChange={(e) => set("limiteLeadsDia", Number(e.target.value))} placeholder="0 = sem limite" /></label>
-                    <label><div className="vx-label">Prazo primeiro contato (horas)</div>
-                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoContatoHoras || 0}
-                        onChange={(e) => set("prazoContatoHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
-                    <label><div className="vx-label">Prazo inatividade (horas)</div>
-                      <input className="vx-input vx-mono" type="number" min="0" value={campanha.prazoInatividadeHoras || 0}
-                        onChange={(e) => set("prazoInatividadeHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
-                  </div>
-                )}
-                <FontesContatosSelector campanha={campanha} set={set} />
-                <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                    <input type="checkbox" checked={!!campanha.incluirNovosAutomaticamente} onChange={(e) => set("incluirNovosAutomaticamente", e.target.checked)} style={{ accentColor: "var(--brand)" }} />
-                    <span style={{ fontSize: 13, fontWeight: 500 }}>Incluir novos contatos automaticamente</span>
-                  </label>
-                  <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, paddingLeft: 26 }}>
-                    {campanha.incluirNovosAutomaticamente
-                      ? "Novos leads recebidos pelas fontes selecionadas entrarão automaticamente na campanha enquanto ela estiver ativa."
-                      : "Somente os contatos selecionados manualmente farão parte da campanha."}
-                  </div>
-                </div>
-                {/* Aviso: sem contatos nem fonte automática */}
-                {!campanha.incluirNovosAutomaticamente && (campanha.leadsSelecionados || []).length === 0 && (campanha.listasSelecionadas || []).length === 0 && !campanha.planilhaUrl && (
-                  <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--amber-50, #FFFBEB)", borderRadius: 8, border: "1px solid var(--amber-200, #FDE68A)", display: "flex", gap: 8, alignItems: "flex-start" }}>
-                    <AlertCircle size={14} color="var(--amber, #F59E0B)" style={{ flexShrink: 0, marginTop: 1 }} />
-                    <span style={{ fontSize: 12, color: "var(--amber-700, #92400E)" }}>Selecione ao menos uma fonte de contatos ou ative a inclusão automática para poder publicar esta campanha.</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>}
 
 
           {/* Perguntas de qualificação */}
