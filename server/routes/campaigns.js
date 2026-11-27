@@ -2105,15 +2105,22 @@ router.post("/campaigns/gerar-descricao", async (req, res) => {
   if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
 
   const produto = empresa.produto || "";
-  const icp = empresa.icp || publico || "";
   const tit = titulo || "campanha comercial";
+  const funcaoLabel = (funcao || "SDR").toUpperCase();
+
+  const atividadesPorFuncao = {
+    sdr: "qualificar leads, fazer ligações de prospecção, enviar mensagens e agendar reuniões para o time de vendas",
+    bdr: "prospectar ativamente novos clientes, mapear contas e gerar demanda outbound",
+    closer: "conduzir reuniões de vendas, apresentar propostas, negociar e fechar contratos",
+    pap: "visitar clientes presencialmente, fazer demonstrações in loco e fechar vendas no campo",
+  };
+  const atividadePadrao = atividadesPorFuncao[funcao] || "realizar atividades comerciais de prospecção e vendas";
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    const partes = [`Profissional responsável por ${objetivo || "prospecção ativa"}`];
-    if (produto) partes.push(`do produto/serviço ${produto}`);
-    if (icp) partes.push(`para ${icp}`);
-    partes.push(`na função de ${(funcao || "SDR").toUpperCase()}.`);
-    return res.json({ descricao: partes.join(" ") });
+    const partes = [`Profissional na função de ${funcaoLabel} responsável por ${atividadePadrao}`];
+    if (produto) partes.push(`do produto/serviço "${produto}"`);
+    if (objetivo) partes.push(`com foco em ${objetivo}`);
+    return res.json({ descricao: partes.join(" ") + "." });
   }
 
   try {
@@ -2122,16 +2129,13 @@ router.post("/campaigns/gerar-descricao", async (req, res) => {
     const resp = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 200,
-      system: "Escreva uma descrição curta (2-3 frases) para uma vaga de campanha comercial. Descreva o que o profissional vai fazer. Responda APENAS o texto da descrição, sem aspas nem JSON. Use português do Brasil.",
-      messages: [{ role: "user", content: `Campanha: ${tit}\nEmpresa: ${empresa.nome || "—"}\nProduto: ${produto || "—"}\nTicket: ${empresa.ticket || "—"}\nCliente ideal: ${icp || "—"}\nObjetivo: ${objetivo || "vendas"}\nFunção: ${(funcao || "SDR").toUpperCase()}` }],
+      system: "Escreva 2-3 frases descrevendo as ATIVIDADES E TAREFAS do profissional comercial: o que ele vai fazer no dia a dia (ligar, prospectar, apresentar, fechar, visitar, etc.). NÃO mencione quem ele vai abordar, NÃO descreva o público-alvo. Foque exclusivamente nas ações e responsabilidades do profissional. Responda APENAS o texto, sem aspas nem JSON. Use português do Brasil.",
+      messages: [{ role: "user", content: `Campanha: ${tit}\nEmpresa: ${empresa.nome || "—"}\nProduto: ${produto || "—"}\nTicket médio: ${empresa.ticket || "—"}\nObjetivo: ${objetivo || "vendas"}\nFunção: ${funcaoLabel}\nAtividades típicas da função: ${atividadePadrao}` }],
     });
     const descricao = resp.content.map(b => b.text || "").join("").trim();
     res.json({ descricao });
   } catch (e) {
-    const partes = [`Profissional responsável por ${objetivo || "prospecção ativa"}`];
-    if (produto) partes.push(`do produto/serviço ${produto}`);
-    if (icp) partes.push(`para ${icp}`);
-    res.json({ descricao: partes.join(" ") + "." });
+    res.json({ descricao: `Profissional na função de ${funcaoLabel} responsável por ${atividadePadrao}${produto ? ` do produto/serviço "${produto}"` : ""}.` });
   }
 });
 

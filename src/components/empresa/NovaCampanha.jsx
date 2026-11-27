@@ -742,8 +742,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     setGerandoDescricao(true);
     try {
       const r = await api("/campaigns/gerar-descricao", {
-        titulo: campanha.titulo, objetivo: campanha.objetivo,
-        funcao: campanha.funcao, publico: campanha.publico,
+        titulo: campanha.titulo, objetivo: campanha.objetivo, funcao: campanha.funcao,
       });
       if (r.descricao) set("descricao", r.descricao);
     } catch (e) { aviso("Não foi possível gerar a descrição."); }
