@@ -572,6 +572,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const _rawPasso = rascunho?.passoWizard ?? rascunhoSalvo.current?.passo ?? 0;
   const [passo, _setPasso] = useState(rascunhoCampanhaInicial ? _rawPasso + 1 : _rawPasso);
   const setPasso = (p) => { _setPasso(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const [subPasso, setSubPasso] = useState(0);
   const [campanha, setCampanha] = useState(rascunho || rascunhoSalvo.current?.campanha || null);
   // id do registro persistente no banco (DRAFT). Existe desde a primeira
   // interação significativa; é o mesmo id até a publicação (sem duplicar).
@@ -622,6 +623,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   useEffect(() => { rascunhoIdRef.current = rascunhoId; }, [rascunhoId]);
   useEffect(() => { campanhaRef.current = campanha; }, [campanha]);
   useEffect(() => { passoRef.current = passo; }, [passo]);
+  useEffect(() => { setSubPasso(0); }, [passo]);
   useEffect(() => {
     if (passo !== 5) return;
     api("/erp/pedidos/catalogo").then((r) => {
@@ -1065,6 +1067,32 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     script: { nome: "Script operacional", descricao: "Roteiro passo a passo" },
   };
 
+  const getBlocosPasso = () => {
+    if (passo === 2) {
+      const bs = ["basico"];
+      if (secaoVisivel.mercado) bs.push("mercado");
+      if (secaoVisivel.origemLeads) bs.push("origemLeads");
+      if (secaoVisivel.origemLeads && (campanha?.origemLeads === "empresa" || campanha?.origemLeads === "ambos")) bs.push("fontes");
+      if (secaoVisivel.canais) bs.push("canais");
+      if (secaoVisivel.materiais) bs.push("materiais");
+      bs.push("qualificacao");
+      bs.push("confirmacao");
+      return bs;
+    }
+    if (passo === 3) return ["profissionais", "validacao"];
+    return ["bloco"];
+  };
+  const blocos = passo >= 2 ? getBlocosPasso() : [];
+  const blocoAtual = blocos[subPasso] || blocos[0];
+  const avancarBloco = () => {
+    if (subPasso < blocos.length - 1) { setSubPasso(subPasso + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    else { setPasso(passo + 1); }
+  };
+  const voltarBloco = () => {
+    if (subPasso > 0) { setSubPasso(subPasso - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    else { setPasso(passo - 1); }
+  };
+
   return (
     <div className="vx-fade vx-campaign-wizard">
       {rascunhoSalvo.current && campanha && (
@@ -1086,22 +1114,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       <div className="vx-wizard-stepper">
         <div className="vx-ws-label">Etapa {passo + 1} de {PASSOS.length}</div>
         <div className="vx-ws-bar"><div className="vx-ws-bar-fill" style={{ width: `${((passo) / (PASSOS.length - 1)) * 100}%` }} /></div>
-        <div className="vx-ws-steps">
-          {PASSOS_CURTOS.map((p, i) => (
-            <button key={p} type="button" className="vx-ws-step" data-state={i < passo ? "done" : i === passo ? "active" : "pending"} onClick={() => i < passo && setPasso(i)}>
-              <span className="vx-ws-circle">{i < passo ? <Check size={11} strokeWidth={2.5} /> : i + 1}</span>
-              <span className="vx-ws-title">{p}</span>
-            </button>
-          ))}
-        </div>
-        <div className="vx-ws-mobile">
-          <span className="vx-ws-circle" data-state="active">{passo + 1}</span>
-          <div className="vx-ws-mobile-info">
-            <span className="vx-ws-mobile-title">{PASSOS_CURTOS[passo]}</span>
-            <span className="vx-ws-mobile-sub">Etapa {passo + 1} de {PASSOS.length}</span>
-          </div>
-          <div className="vx-ws-mobile-bar"><div className="vx-ws-bar-fill" style={{ width: `${((passo) / (PASSOS.length - 1)) * 100}%` }} /></div>
-        </div>
       </div>
 
       {/* ═══════════════════════ PASSO 0: TIPO DE CAMPANHA ═══════════════════════ */}
@@ -1178,12 +1190,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 2: ESTRUTURA ═══════════════════════ */}
       {passo === 2 && campanha && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Como vai funcionar?</h2>
-          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            Defina o nome da campanha, de onde vêm os contatos e como eles serão distribuídos.
-          </p>
-
           {/* Dados básicos */}
+          {blocoAtual === "basico" && (
+          <>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Nome e descrição</h2>
+          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Defina o nome e as atividades desta campanha.</p>
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <label><div className="vx-label">Como você quer chamar esta campanha? <Tag obrigatorio={true} /></div>
               <input className="vx-input" value={campanha.titulo} onChange={(e) => set("titulo", e.target.value)} /></label>
@@ -1210,9 +1221,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 placeholder="Ex.: Donos de restaurante com mais de 10 mesas no interior de SP." />
             </div>
           </div>
+          </>)}
 
           {/* Mercado de atuação do cliente */}
-          {secaoVisivel.mercado && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          {blocoAtual === "mercado" && secaoVisivel.mercado && (<>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Localização dos clientes</h2>
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização dos seus clientes</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde estão os clientes que o profissional vai contatar?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {[
@@ -1230,10 +1244,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <MultiSelect opcoes={OPC_PAISES} valor={campanha.mercadoPaises || []} onChange={(v) => set("mercadoPaises", v)} placeholder="Selecione os países" />
               </div>
             )}
-          </div>}
+          </div>
+          </>)}
 
           {/* Origem dos leads */}
-          {secaoVisivel.origemLeads && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          {blocoAtual === "origemLeads" && secaoVisivel.origemLeads && (<>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>De onde vêm os contatos?</h2>
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
               <b style={{ color: "var(--brand)" }}>De onde vêm os contatos?</b><Tag obrigatorio={false} />
               <div className="vx-mut" style={{ fontSize: 11.5 }}>Você fornece a lista de contatos ou o profissional busca sozinho?</div>
@@ -1243,9 +1260,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <CardOption selected={campanha.origemLeads === "profissional"} onClick={() => { set("origemLeads", "profissional"); set("fonteLeads", "profissional"); }} icon={UserPlus} title="O profissional encontrará os leads" subtitle="Ele mesmo prospecta e cadastra novos contatos." />
               <CardOption selected={campanha.origemLeads === "ambos"} onClick={() => { set("origemLeads", "ambos"); set("fonteLeads", "ambos"); }} icon={Shuffle} title="Ambas as opções" subtitle="Você fornece contatos e o profissional também pode buscar mais." />
             </div>
-          </div>}
+          </div>
+          </>)}
 
-          {secaoVisivel.origemLeads && (campanha.origemLeads === "empresa" || campanha.origemLeads === "ambos") && (
+          {/* Fontes de contatos + Distribuição */}
+          {blocoAtual === "fontes" && secaoVisivel.origemLeads && (campanha.origemLeads === "empresa" || campanha.origemLeads === "ambos") && (<>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Contatos e distribuição</h2>
+          {true && (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
               <FontesContatosSelector campanha={campanha} set={set} />
               <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
@@ -1316,9 +1337,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               )}
             </div>
           )}
+          </>)}
 
           {/* Canais */}
-          {secaoVisivel.canais && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          {blocoAtual === "canais" && secaoVisivel.canais && (<>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Canais de comunicação</h2>
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Por onde ele vai falar com os contatos?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione os meios de comunicação que o profissional pode usar.</div></div>
             <ChipToggle
               items={CANAIS.map((c) => ({ id: c.id, nome: c.nome, icon: ICONES_CANAL[c.id] || Globe }))}
@@ -1326,10 +1350,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               onChange={(v) => set("canais", v)}
               multi
             />
-          </div>}
+          </div>
+          </>)}
 
           {/* Materiais e treinamento (unificado) */}
-          {secaoVisivel.materiais && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          {blocoAtual === "materiais" && secaoVisivel.materiais && (<>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Materiais e treinamento</h2>
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
               <b style={{ color: "var(--brand)" }}>Materiais e treinamento</b><Tag obrigatorio={false} />
               <div className="vx-mut" style={{ fontSize: 11.5 }}>Adicione arquivos, treinamentos e conteúdos que vão ajudar o profissional.</div>
@@ -1509,9 +1536,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.5 }}>O treinamento é liberado após a aprovação da candidatura, mas contatos e atividades remuneradas ficam bloqueados até a conclusão dos treinamentos obrigatórios.</div>
               </div>
             </label>
-          </div>}
+          </div>
+          </>)}
 
-          {/* Modal Criar com IA */}
+          {/* Modal Criar com IA — sempre montado para não perder estado */}
           {modalTreinamentoIA && (
             <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
               onClick={(e) => { if (e.target === e.currentTarget) setModalTreinamentoIA(false); }}>
@@ -1638,6 +1666,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
 
           {/* Perguntas de qualificação */}
+          {blocoAtual === "qualificacao" && (<>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Qualificação de leads</h2>
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div>
@@ -1697,8 +1727,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               </div>
             )}
           </div>
+          </>)}
 
           {/* Confirmação de contato */}
+          {blocoAtual === "confirmacao" && (<>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Confirmação de contato</h2>
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
               <b style={{ color: "var(--brand)" }}><ShieldCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Confirmação de contato</b><Tag obrigatorio={false} />
@@ -1736,10 +1769,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               })()}
             </div>
           </div>
+          </>)}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Quem vai trabalhar? <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={voltarBloco}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={avancarBloco}>
+              {subPasso < blocos.length - 1 ? <>Continuar <ArrowRight size={14} /></> : <>Profissionais <ArrowRight size={14} /></>}
+            </button>
           </div>
         </>
       )}
@@ -1747,10 +1783,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 3: PERFIL PROFISSIONAL ═══════════════════════ */}
       {passo === 3 && campanha && (
         <>
+          {blocoAtual === "profissionais" && (<>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Quem vai trabalhar?</h2>
-          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            Defina o tipo de profissional, onde ele trabalha, o nível de experiência e como ele entra na campanha.
-          </p>
+          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Defina o perfil do profissional para esta campanha.</p>
 
           {campanha.estruturaComercial === "operacao" ? (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
@@ -2086,7 +2121,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
+          </>)}
+
           {/* Validação de resultados */}
+          {blocoAtual === "validacao" && (<>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Validação de resultados</h2>
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 10 }}>
               <b style={{ color: "var(--brand)" }}>Como os resultados serão validados?</b><Tag obrigatorio={false} />
@@ -2108,9 +2147,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
+          </>)}
+
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Ações e pagamentos <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={voltarBloco}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={avancarBloco}>
+              {subPasso < blocos.length - 1 ? <>Continuar <ArrowRight size={14} /></> : <>Ações e pagamentos <ArrowRight size={14} /></>}
+            </button>
           </div>
         </>
       )}
