@@ -90,14 +90,12 @@ export const NAV = {
       { key: "campanhas-tarefas", label: "Tarefas" },
     ] },
     { key: "leads", label: "Leads", Icon: Target, children: [
-      { key: "leads", label: "Pipeline" },
-      { key: "discadora", label: "Discadora" },
-      { key: "pedidos", label: "Pedidos" },
       { key: "integracoes", label: "Integrações" },
       { key: "calendario", label: "Calendário" },
       { key: "loja-leads", label: "Loja de Leads" },
     ] },
-    { key: "conversas", label: "Conversas", Icon: MessageSquare, children: [
+    { key: "conversas", label: "Atendimentos", Icon: Headphones, children: [
+      { key: "discadora", label: "Discadora" },
       { key: "conversas", label: "Chat Rycs" },
       { key: "leads-whatsapp", label: "WhatsApp" },
       { key: "leads-instagram", label: "Redes Sociais" },
@@ -171,7 +169,7 @@ export const MOBILE_NAV = {
   empresa: [
     { key: "inicio", label: "Início", Icon: Home },
     { key: "campanhas", label: "Campanhas", Icon: Megaphone },
-    { key: "conversas", label: "Conversas", Icon: MessageSquare },
+    { key: "conversas", label: "Atendimentos", Icon: Headphones },
     { key: "outros", label: "Menu", Icon: Menu },
   ],
   admin: [
