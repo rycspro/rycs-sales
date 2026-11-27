@@ -114,12 +114,12 @@ router.post("/company-identity/gerar-conteudo", async (req, res) => {
   const companyId = soEmpresa(req, res); if (!companyId) return;
 
   const identity = serializar(db.prepare("SELECT * FROM company_identity WHERE companyId = ?").get(companyId));
-  const company = db.prepare("SELECT nome, descricao, ticket, site FROM companies WHERE id = ?").get(companyId);
+  const company = db.prepare("SELECT nome, ticket FROM companies WHERE id = ?").get(companyId);
   if (!company) return res.status(404).json({ error: "Empresa não encontrada" });
 
   // Produtos vinculados — busca detalhes no catálogo
   const produtos = (identity?.produtosVinculados || []).map((id) => {
-    const p = db.prepare("SELECT nome, descricao, preco, moeda FROM erp_produtos WHERE id = ? AND companyId = ?").get(id, companyId);
+    const p = db.prepare("SELECT nome, preco FROM erp_produtos WHERE externoId = ? AND companyId = ?").get(id, companyId);
     return p || { nome: id };
   }).filter(Boolean);
 
