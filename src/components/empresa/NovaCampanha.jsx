@@ -119,7 +119,7 @@ function CardOptionLarge({ selected, onClick, icon: Icon, title, subtitle, badge
       style={{
         position: "relative", padding: "20px 18px 18px", cursor: "pointer", textAlign: "left", width: "100%",
         border: `1.5px solid ${selected ? "var(--brand)" : "var(--border)"}`,
-        background: selected ? "var(--brand-50, #EFF6FF)" : "var(--surface-2, #F9FAFB)",
+        background: selected ? "var(--brand-50, #EFF6FF)" : "var(--surface)",
         borderRadius: 12, transition: "border-color .15s, background .15s",
       }}
     >
@@ -1371,7 +1371,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     <button key={id} type="button" onClick={() => toggleCanal(id)} style={{
                       position: "relative", textAlign: "left", padding: "16px", cursor: "pointer",
                       border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`,
-                      background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface-2, #F9FAFB)",
+                      background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface)",
                       borderRadius: 12, transition: "border-color .15s, background .15s",
                       display: "flex", flexDirection: "column", gap: 0,
                     }}>
@@ -1399,7 +1399,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                       <button type="button" onClick={() => toggleCanal("outro")} style={{
                         width: "100%", textAlign: "left", padding: "14px 16px", cursor: "pointer",
                         border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`,
-                        background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface-2, #F9FAFB)",
+                        background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface)",
                         borderRadius: 12, transition: "border-color .15s, background .15s",
                         display: "flex", alignItems: "center", gap: 12, position: "relative",
                       }}>
@@ -1878,7 +1878,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     <button key={id} type="button" disabled={disabled} onClick={() => !disabled && toggleCanal(id)} style={{
                       position: "relative", textAlign: "left", padding: "16px", cursor: disabled ? "not-allowed" : "pointer",
                       border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`,
-                      background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface-2, #F9FAFB)",
+                      background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface)",
                       borderRadius: 12, opacity: disabled ? 0.6 : 1,
                       transition: "border-color .15s, background .15s",
                       display: "flex", flexDirection: "column", gap: 0,
