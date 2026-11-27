@@ -131,7 +131,19 @@ function PerformanceChart({ serie = [] }) {
 // ── Fase 03: Monitoramento completo da campanha ──────────────────────────
 function MonitoramentoCampanha({ campanha, tarefas, leads, profissionais, dados }) {
   const [secao, setSecao] = useState(null);
+  const [serverMetricas, setServerMetricas] = useState(null);
+  const [serverMetas, setServerMetas] = useState(null);
+  const [serverAlertas, setServerAlertas] = useState(null);
+  const [ricoAnalise, setRicoAnalise] = useState(null);
   const toggle = (s) => setSecao((v) => v === s ? null : s);
+
+  useEffect(() => {
+    if (!campanha?.id || campanha.status === "rascunho") return;
+    api(`/campaigns/${campanha.id}/metricas-avancadas`).then(setServerMetricas).catch(() => {});
+    api(`/campaigns/${campanha.id}/metas-projecoes`).then(setServerMetas).catch(() => {});
+    api(`/campaigns/${campanha.id}/alertas`).then((r) => setServerAlertas(r.alertas || [])).catch(() => {});
+    api(`/campaigns/${campanha.id}/analise-rico`).then(setRicoAnalise).catch(() => {});
+  }, [campanha?.id, campanha?.status]);
 
   const totalLeads = leads.length;
   const totalTarefas = tarefas.length;
@@ -183,6 +195,18 @@ function MonitoramentoCampanha({ campanha, tarefas, leads, profissionais, dados 
     insights.push({ tipo: pctMeta >= 80 ? "positivo" : pctMeta >= 40 ? "info" : "alerta", texto: `Meta: ${aprovadas.length}/${metaQ} (${pctMeta.toFixed(0)}%). ${pctMeta >= 100 ? "Meta atingida!" : pctMeta >= 80 ? "Quase lá." : pctMeta >= 40 ? "Ritmo médio." : "Abaixo do esperado."}` });
   }
 
+  if (ricoAnalise?.analises) {
+    for (const a of ricoAnalise.analises) {
+      if (!insights.some((i) => i.texto === a.texto)) insights.push(a);
+    }
+  }
+
+  if (serverAlertas && serverAlertas.length > 0) {
+    for (const a of serverAlertas) {
+      if (!insights.some((i) => i.texto === a.mensagem)) insights.push({ tipo: a.severidade === "critica" ? "alerta" : a.severidade === "alta" ? "alerta" : "sugestao", texto: a.mensagem });
+    }
+  }
+
   const Sec = ({ id, titulo, children }) => (
     <div className="vx-card" style={{ marginBottom: 10 }}>
       <button onClick={() => toggle(id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "12px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
@@ -232,7 +256,23 @@ function MonitoramentoCampanha({ campanha, tarefas, leads, profissionais, dados 
     )}
 
     <Sec id="metas" titulo="Metas vs. Realizado">
-      {metaQ > 0 ? (
+      {serverMetas?.comparacao ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {serverMetas.comparacao.map((e) => (
+            <div key={e.id}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                <span>{e.nome}</span><b>{e.realizado} / {e.planejado} ({e.percentual}%)</b>
+              </div>
+              <Bar valor={e.realizado} max={e.planejado} cor={e.percentual >= 80 ? "#16a34a" : e.percentual >= 40 ? "var(--brand)" : "#dc2626"} />
+            </div>
+          ))}
+          {serverMetas.projecao && (
+            <div className="vx-mut" style={{ fontSize: 11, marginTop: 6 }}>
+              Projeção: {serverMetas.projecao.vendasProjetadas || 0} vendas · {serverMetas.projecao.reunioesProjetadas || 0} reuniões · {serverMetas.diasRestantes || 0} dias restantes
+            </div>
+          )}
+        </div>
+      ) : metaQ > 0 ? (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
             <span>Tarefas aprovadas</span><b>{aprovadas.length} / {metaQ}</b>
@@ -365,6 +405,38 @@ function MonitoramentoCampanha({ campanha, tarefas, leads, profissionais, dados 
         </div>
       )}
     </Sec>
+
+    {ricoAnalise?.acoes?.length > 0 && (
+      <div className="vx-card" style={{ padding: 14, marginTop: 10, borderLeft: "3px solid var(--brand)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+          <Target size={14} color="var(--brand)" />
+          <span style={{ fontWeight: 700, fontSize: 13 }}>Ações recomendadas</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12.5 }}>
+          {ricoAnalise.acoes.map((acao, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <span style={{ fontWeight: 700, color: "var(--brand)", minWidth: 16 }}>{i + 1}.</span>
+              <span>{acao}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {serverMetricas?.funil?.length > 0 && (
+      <Sec id="funil" titulo="Funil de conversão">
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {serverMetricas.funil.map((e) => (
+            <div key={e.etapa} style={{ fontSize: 12.5 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                <span>{e.etapa || "Sem etapa"}</span><b>{e.total} ({e.percentual}%)</b>
+              </div>
+              <Bar valor={e.percentual} max={100} cor="var(--brand)" />
+            </div>
+          ))}
+        </div>
+      </Sec>
+    )}
   </div>;
 }
 

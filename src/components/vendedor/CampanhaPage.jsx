@@ -305,7 +305,11 @@ function QualificacaoLeadCard({ lead, campanha, onQualificado }) {
         )}
       </div>
       <div style={{ display: "grid", gap: 10 }}>
-        {perguntas.map((p) => {
+        {perguntas.filter((p) => {
+          if (!p.condicionalDe) return true;
+          const respDep = respostas.find((r) => r.perguntaId === p.condicionalDe);
+          return respDep && String(respDep.valor) === String(p.condicionalValor);
+        }).map((p) => {
           const resp = respostas.find((r) => r.perguntaId === p.id);
           return (
             <div key={p.id}>

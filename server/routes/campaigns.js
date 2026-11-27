@@ -1835,42 +1835,6 @@ router.get("/campaigns/:id/financeiro", (req, res) => {
   });
 });
 
-// ── Duplicação de campanha ───────────────────────────────────────────────
-router.post("/campaigns/:id/duplicar", (req, res) => {
-  const { role, entityId } = req.user;
-  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
-  const camp = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
-  if (!camp) return res.status(404).json({ error: "Campanha não encontrada" });
-  const novoId = uid();
-  const agr = Date.now();
-  const cols = Object.keys(camp).filter((c) => !["id", "status", "criadoEm", "atualizadoEm", "reservado"].includes(c));
-  const ins = db.prepare(`INSERT INTO campaigns (id, ${cols.join(", ")}, status, criadoEm, atualizadoEm, reservado, titulo)
-    VALUES (@id, ${cols.map((c) => "@" + c).join(", ")}, 'rascunho', @criadoEm, @atualizadoEm, 0, @novoTitulo)`);
-  const params = { id: novoId, criadoEm: agr, atualizadoEm: agr, novoTitulo: `${camp.titulo} (cópia)` };
-  for (const c of cols) params[c] = camp[c];
-  try { ins.run(params); } catch (e) {
-    console.error("[duplicar] erro:", e.message);
-    return res.status(500).json({ error: "Falha ao duplicar" });
-  }
-  const formas = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ?").all(camp.id);
-  for (const f of formas) {
-    const fId = uid();
-    const fCols = Object.keys(f).filter((c) => c !== "id" && c !== "campaignId");
-    try {
-      db.prepare(`INSERT INTO formas_ganho (id, campaignId, ${fCols.join(", ")}) VALUES (?, ?, ${fCols.map(() => "?").join(", ")})`)
-        .run(fId, novoId, ...fCols.map((c) => f[c]));
-    } catch (e) { /* coluna opcional */ }
-  }
-  const materiais = db.prepare("SELECT * FROM materiais_campanhas WHERE campaignId = ?").all(camp.id);
-  for (const m of materiais) {
-    try {
-      db.prepare("INSERT INTO materiais_campanhas (id, campaignId, materialId, categoria, obrigatoriedade, acaoVinculada, ordem, regraAcesso) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-        .run(uid(), novoId, m.materialId, m.categoria || "outros", m.obrigatoriedade || "complementar", m.acaoVinculada || "", m.ordem || 0, m.regraAcesso || "todos");
-    } catch (e) { /* ok */ }
-  }
-  res.json({ id: novoId, titulo: `${camp.titulo} (cópia)`, status: "rascunho" });
-});
-
 // ── Seleção de contatos para campanha ────────────────────────────────────
 router.post("/campaigns/:id/contatos/selecionar", (req, res) => {
   const { role, entityId } = req.user;
@@ -2099,36 +2063,6 @@ router.post("/campaigns/recomendar-comprovacoes", async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: "Erro ao recomendar comprovações" });
   }
-});
-
-// ── F1-023: Duplicar campanha ───────────────────────────────────────────
-router.post("/campaigns/:id/duplicar", (req, res) => {
-  const { role, entityId } = req.user;
-  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
-  const original = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
-  if (!original) return res.status(404).json({ error: "Campanha não encontrada" });
-
-  const novoId = uid();
-  const agr = agora();
-  const cols = Object.keys(original).filter((k) => !["id", "criadoEm", "atualizadoEm", "status", "publicadaEm"].includes(k));
-  const valores = cols.map((k) => original[k]);
-
-  db.prepare(`INSERT INTO campaigns (id, ${cols.join(", ")}, status, criadoEm, atualizadoEm)
-    VALUES (?, ${cols.map(() => "?").join(", ")}, 'rascunho', ?, ?)`)
-    .run(novoId, ...valores, agr, agr);
-
-  db.prepare("UPDATE campaigns SET titulo = ? WHERE id = ?").run(`${original.titulo || "Campanha"} (cópia)`, novoId);
-
-  const novaFormas = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ?").all(original.id);
-  for (const fg of novaFormas) {
-    const fgId = uid();
-    db.prepare(`INSERT INTO formas_ganho (id, campaignId, companyId, nome, tipo, tipoRemuneracao, valor, eventoComercial, descricao, metodoAprovacao, evidencias, condicoesRecebimento, limiteDiario, limiteSemanal, limiteMensal, limitePorProfissional, limitePorLead, limiteTotalCampanha, dependeDeAcao, prazoValidacaoHoras, frequenciaPagamento, condicoesAdicionais, regraCumulatividade, baseCalculo, ativa, criadoEm, atualizadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .run(fgId, novoId, entityId, fg.nome, fg.tipo, fg.tipoRemuneracao, fg.valor, fg.eventoComercial, fg.descricao, fg.metodoAprovacao, fg.evidencias, fg.condicoesRecebimento, fg.limiteDiario, fg.limiteSemanal, fg.limiteMensal, fg.limitePorProfissional, fg.limitePorLead, fg.limiteTotalCampanha, fg.dependeDeAcao, fg.prazoValidacaoHoras, fg.frequenciaPagamento, fg.condicoesAdicionais, fg.regraCumulatividade, fg.baseCalculo, fg.ativa, agr, agr);
-  }
-
-  const nova = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(novoId);
-  res.json(nova);
 });
 
 // ── F3: Métricas avançadas (qualificação, funil, confirmações, reuniões) ──
