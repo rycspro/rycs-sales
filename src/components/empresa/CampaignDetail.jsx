@@ -5,6 +5,7 @@ import {
   TrendingUp, Unlink, Upload, UsersRound, X,
   Laptop, MapPin, Building2, Globe, MessageCircle, Phone, Mail, Eye, EyeOff, Lock,
   FileText, Download, Trash2, Database, UserPlus, Shuffle, Filter, List, Users,
+  Sparkles, ChevronDown,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
@@ -19,13 +20,16 @@ import { lerArquivoLeads, sugerirMapeamento } from "../../lib/importers.js";
 import PipelineKanban from "./PipelineKanban.jsx";
 import ComissoesPanel from "./ComissoesPanel.jsx";
 import CriadorCampos from "./CriadorCampos.jsx";
+import { CLASSIFICACOES } from "../../../shared/qualificacaoLeads.js";
+import { STATUS_CONFIRMACAO } from "../../../shared/confirmacaoContato.js";
 
 const ABAS = [
   ["geral", "Visão Geral"], ["profissionais", "Profissionais"], ["tarefas", "Tarefas"],
   ["pipeline", "Pipeline"], ["contatos", "Contatos"], ["materiais", "Materiais"], ["leads", "Leads"],
   ["formasganho", "Formas de ganho"], ["vinculos", "Vínculos"],
   ["reunioes", "Reuniões"], ["performance", "Performance"],
-  ["financeiro", "Financeiro"], ["comissoes", "Comissões"], ["campos", "Campos"],
+  ["financeiro", "Financeiro"], ["monitoramento", "Monitoramento"],
+  ["comissoes", "Comissões"], ["campos", "Campos"],
   ["verificacao", "Verificação"], ["configuracoes", "Configurações"],
 ];
 const PERIODOS = [["hoje", "Hoje"], ["7d", "7 dias"], ["30d", "30 dias"], ["personalizado", "Personalizado"]];
@@ -121,6 +125,246 @@ function PerformanceChart({ serie = [] }) {
       <div className="vx-chart-axis"><span>{serie[0]?.data?.slice(5).split("-").reverse().join("/")}</span><span>{serie.at(-1)?.data?.slice(5).split("-").reverse().join("/")}</span></div>
     </>}
     <div className="vx-chart-source">Cada série usa sua própria escala para comparar tendências. Passe pelos pontos para ver os valores reais.</div>
+  </div>;
+}
+
+// ── Fase 03: Monitoramento completo da campanha ──────────────────────────
+function MonitoramentoCampanha({ campanha, tarefas, leads, profissionais, dados }) {
+  const [secao, setSecao] = useState(null);
+  const toggle = (s) => setSecao((v) => v === s ? null : s);
+
+  const totalLeads = leads.length;
+  const totalTarefas = tarefas.length;
+  const aprovadas = tarefas.filter((t) => t.status === "aprovada");
+  const pendentes = tarefas.filter((t) => t.status === "pendente");
+  const recusadas = tarefas.filter((t) => t.status === "recusada");
+  const revisao = tarefas.filter((t) => t.status === "revisao");
+  const orcamento = Number(campanha.orcamento || 0);
+  const gastoTotal = aprovadas.reduce((s, t) => s + Number(t.valor || 0), 0);
+  const conversao = totalLeads > 0 ? ((aprovadas.length / totalLeads) * 100).toFixed(1) : "0";
+
+  // Qualificação
+  const leadsComScore = leads.filter((l) => Number(l.qualificacaoScore) > 0);
+  const scoreDistribuicao = {};
+  for (const cls of Object.keys(CLASSIFICACOES)) scoreDistribuicao[cls] = 0;
+  leadsComScore.forEach((l) => { if (l.qualificacaoClassificacao && scoreDistribuicao[l.qualificacaoClassificacao] !== undefined) scoreDistribuicao[l.qualificacaoClassificacao]++; });
+
+  // Confirmação
+  const confirmados = leads.filter((l) => l.confirmacaoStatus === "confirmado").length;
+  const aguardando = leads.filter((l) => l.confirmacaoStatus === "aguardando").length;
+  const expirados = leads.filter((l) => l.confirmacaoStatus === "expirado").length;
+  const naoEnviados = leads.filter((l) => !l.confirmacaoStatus || l.confirmacaoStatus === "nao_enviada").length;
+
+  // Profissionais
+  const profStats = profissionais.map((p) => {
+    const pt = tarefas.filter((t) => t.sellerId === p.sellerId);
+    return { ...p, total: pt.length, aprovadas: pt.filter((t) => t.status === "aprovada").length, valor: pt.filter((t) => t.status === "aprovada").reduce((s, t) => s + Number(t.valor || 0), 0) };
+  }).sort((a, b) => b.aprovadas - a.aprovadas);
+
+  // Atividades por tipo
+  const porTipo = {};
+  tarefas.forEach((t) => { porTipo[t.tipo] = (porTipo[t.tipo] || 0) + 1; });
+
+  // Rico AI insights (determinístico)
+  const diag = diagnosticoCampanha(campanha, {});
+  const insights = [];
+  if (gastoTotal > 0 && orcamento > 0) {
+    const pctGasto = (gastoTotal / orcamento) * 100;
+    if (pctGasto > 80) insights.push({ tipo: "alerta", texto: `Orçamento ${pctGasto.toFixed(0)}% consumido. Considere pausar ou aumentar o orçamento.` });
+    else if (pctGasto > 50) insights.push({ tipo: "info", texto: `Orçamento ${pctGasto.toFixed(0)}% consumido. Ritmo adequado.` });
+  }
+  if (totalLeads > 0 && leadsComScore.length === 0) insights.push({ tipo: "sugestao", texto: "Nenhum lead qualificado ainda. Configure perguntas de qualificação." });
+  if (revisao.length > 3) insights.push({ tipo: "alerta", texto: `${revisao.length} tarefas aguardando revisão humana. Avalie o backlog.` });
+  if (profStats.length > 0 && profStats.some((p) => p.total === 0)) insights.push({ tipo: "sugestao", texto: `${profStats.filter((p) => p.total === 0).length} profissional(is) sem atividade. Verifique engajamento.` });
+  if (recusadas.length > aprovadas.length && totalTarefas > 5) insights.push({ tipo: "alerta", texto: "Taxa de recusa maior que aprovação. Revise critérios de evidência." });
+  const metaQ = campanha.metaQuantitativa ? Number(campanha.metaQuantitativa) : 0;
+  if (metaQ > 0) {
+    const pctMeta = (aprovadas.length / metaQ) * 100;
+    insights.push({ tipo: pctMeta >= 80 ? "positivo" : pctMeta >= 40 ? "info" : "alerta", texto: `Meta: ${aprovadas.length}/${metaQ} (${pctMeta.toFixed(0)}%). ${pctMeta >= 100 ? "Meta atingida!" : pctMeta >= 80 ? "Quase lá." : pctMeta >= 40 ? "Ritmo médio." : "Abaixo do esperado."}` });
+  }
+
+  const Sec = ({ id, titulo, children }) => (
+    <div className="vx-card" style={{ marginBottom: 10 }}>
+      <button onClick={() => toggle(id)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "12px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+        <span style={{ fontWeight: 700, fontSize: 14 }}>{titulo}</span>
+        <ChevronDown size={16} style={{ transform: secao === id ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+      </button>
+      {secao === id && <div style={{ padding: "0 16px 16px" }}>{children}</div>}
+    </div>
+  );
+
+  const Bar = ({ valor, max, cor }) => (
+    <div style={{ height: 8, borderRadius: 4, background: "var(--surface-2)", flex: 1 }}>
+      <div style={{ height: 8, borderRadius: 4, width: `${max > 0 ? Math.min(100, (valor / max) * 100) : 0}%`, background: cor || "var(--brand)", transition: "width 0.3s" }} />
+    </div>
+  );
+
+  return <div className="vx-fade">
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
+      {[
+        ["Leads", totalLeads, "var(--brand)"],
+        ["Tarefas", totalTarefas, "#5B8CFF"],
+        ["Conversão", `${conversao}%`, "#22A06B"],
+        ["Orçamento usado", orcamento > 0 ? `${((gastoTotal / orcamento) * 100).toFixed(0)}%` : "—", gastoTotal / orcamento > 0.8 ? "#dc2626" : "#F0B45E"],
+      ].map(([label, valor, cor]) => (
+        <div key={label} className="vx-card" style={{ padding: 14, textAlign: "center" }}>
+          <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "var(--font-mono)", color: cor }}>{valor}</div>
+          <div className="vx-mut" style={{ fontSize: 11.5 }}>{label}</div>
+        </div>
+      ))}
+    </div>
+
+    {insights.length > 0 && (
+      <div className="vx-card" style={{ padding: 14, marginBottom: 14, background: "var(--surface-2)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+          <Sparkles size={14} color="var(--brand)" />
+          <span style={{ fontWeight: 700, fontSize: 13 }}>Rico — Inteligência da campanha</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {insights.map((ins, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12.5 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 4, marginTop: 4, flexShrink: 0, background: ins.tipo === "alerta" ? "#dc2626" : ins.tipo === "positivo" ? "#16a34a" : ins.tipo === "sugestao" ? "#F0B45E" : "var(--brand)" }} />
+              <span>{ins.texto}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <Sec id="metas" titulo="Metas vs. Realizado">
+      {metaQ > 0 ? (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
+            <span>Tarefas aprovadas</span><b>{aprovadas.length} / {metaQ}</b>
+          </div>
+          <Bar valor={aprovadas.length} max={metaQ} cor="var(--brand)" />
+          <div className="vx-mut" style={{ fontSize: 11, marginTop: 6 }}>
+            {aprovadas.length >= metaQ ? "Meta atingida!" : `Faltam ${metaQ - aprovadas.length} para atingir a meta.`}
+          </div>
+        </div>
+      ) : (
+        <div className="vx-mut" style={{ fontSize: 12.5 }}>Nenhuma meta quantitativa definida para esta campanha.</div>
+      )}
+    </Sec>
+
+    <Sec id="atividades" titulo="Atividades por tipo">
+      {Object.keys(porTipo).length === 0 ? (
+        <div className="vx-mut" style={{ fontSize: 12.5 }}>Nenhuma atividade registrada.</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {Object.entries(porTipo).sort((a, b) => b[1] - a[1]).map(([tipo, qtd]) => (
+            <div key={tipo}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 3 }}>
+                <span>{ACOES[tipo]?.nome || tipo}</span><b>{qtd}</b>
+              </div>
+              <Bar valor={qtd} max={Math.max(...Object.values(porTipo))} cor="#5B8CFF" />
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 12 }}>
+        <span>Aprovadas: <b style={{ color: "#16a34a" }}>{aprovadas.length}</b></span>
+        <span>Pendentes: <b style={{ color: "#F0B45E" }}>{pendentes.length}</b></span>
+        <span>Recusadas: <b style={{ color: "#dc2626" }}>{recusadas.length}</b></span>
+        <span>Em revisão: <b style={{ color: "var(--brand)" }}>{revisao.length}</b></span>
+      </div>
+    </Sec>
+
+    <Sec id="profissionais" titulo="Desempenho dos profissionais">
+      {profStats.length === 0 ? (
+        <div className="vx-mut" style={{ fontSize: 12.5 }}>Nenhum profissional vinculado.</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {profStats.slice(0, 15).map((p) => (
+            <div key={p.sellerId || p.id} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12.5 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 14, background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11, color: "var(--brand)" }}>
+                {(p.nome || "?")[0].toUpperCase()}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600 }}>{p.nome || "Profissional"}</div>
+                <div className="vx-mut" style={{ fontSize: 11 }}>{p.aprovadas} aprovadas · {money(p.valor)}</div>
+              </div>
+              <Bar valor={p.aprovadas} max={Math.max(1, ...profStats.map((x) => x.aprovadas))} cor="var(--brand)" />
+              {p.total === 0 && <span style={{ fontSize: 10, color: "#dc2626", fontWeight: 600 }}>Sem atividade</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </Sec>
+
+    <Sec id="qualificacao" titulo="Qualificação de leads">
+      <div style={{ display: "flex", gap: 16, marginBottom: 10, fontSize: 12.5 }}>
+        <span>Total: <b>{totalLeads}</b></span>
+        <span>Qualificados: <b>{leadsComScore.length}</b></span>
+        <span>Sem score: <b>{totalLeads - leadsComScore.length}</b></span>
+      </div>
+      {Object.entries(scoreDistribuicao).some(([, v]) => v > 0) ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {Object.entries(CLASSIFICACOES).map(([cls, cfg]) => (
+            <div key={cls} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12.5 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 5, background: cfg.cor, flexShrink: 0 }} />
+              <span style={{ width: 60 }}>{cfg.nome}</span>
+              <Bar valor={scoreDistribuicao[cls]} max={Math.max(1, ...Object.values(scoreDistribuicao))} cor={cfg.cor} />
+              <b>{scoreDistribuicao[cls]}</b>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="vx-mut" style={{ fontSize: 12.5 }}>Nenhum lead qualificado ainda.</div>
+      )}
+    </Sec>
+
+    <Sec id="confirmacao" titulo="Confirmação de contato">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 8 }}>
+        {[
+          ["Confirmados", confirmados, "#16a34a"],
+          ["Aguardando", aguardando, "#F0B45E"],
+          ["Expirados", expirados, "#dc2626"],
+          ["Não enviados", naoEnviados, "var(--muted)"],
+        ].map(([label, val, cor]) => (
+          <div key={label} style={{ padding: 10, borderRadius: 8, background: "var(--surface-2)", textAlign: "center" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "var(--font-mono)", color: cor }}>{val}</div>
+            <div className="vx-mut" style={{ fontSize: 11 }}>{label}</div>
+          </div>
+        ))}
+      </div>
+      {totalLeads > 0 && (confirmados + aguardando + expirados) > 0 && (
+        <div style={{ marginTop: 10, fontSize: 12.5 }}>
+          Taxa de confirmação: <b style={{ color: "#16a34a" }}>{((confirmados / Math.max(1, confirmados + aguardando + expirados)) * 100).toFixed(0)}%</b>
+        </div>
+      )}
+    </Sec>
+
+    <Sec id="auditoria" titulo="Auditorias e aprovações">
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12.5 }}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}><span>Aguardando revisão humana</span><b style={{ color: revisao.length > 0 ? "#F0B45E" : "var(--ink)" }}>{revisao.length}</b></div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}><span>Pendentes de aprovação</span><b>{pendentes.length}</b></div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}><span>Aprovadas</span><b style={{ color: "#16a34a" }}>{aprovadas.length}</b></div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}><span>Recusadas</span><b style={{ color: "#dc2626" }}>{recusadas.length}</b></div>
+      </div>
+      {revisao.length > 0 && (
+        <div style={{ marginTop: 10, padding: 10, borderRadius: 8, background: "var(--amber-50, rgba(240,180,94,0.1))", fontSize: 12 }}>
+          <b>{revisao.length} tarefa(s)</b> aguardando análise humana. Revise na aba "Tarefas".
+        </div>
+      )}
+    </Sec>
+
+    <Sec id="financeiro_m" titulo="Gestão financeira">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 12.5 }}>
+        <div><span className="vx-mut">Orçamento</span><div style={{ fontWeight: 700 }}>{money(orcamento)}</div></div>
+        <div><span className="vx-mut">Gasto total</span><div style={{ fontWeight: 700 }}>{money(gastoTotal)}</div></div>
+        <div><span className="vx-mut">Saldo</span><div style={{ fontWeight: 700, color: orcamento - gastoTotal < 0 ? "#dc2626" : "#16a34a" }}>{money(orcamento - gastoTotal)}</div></div>
+        <div><span className="vx-mut">Ticket médio</span><div style={{ fontWeight: 700 }}>{money(aprovadas.length > 0 ? gastoTotal / aprovadas.length : 0)}</div></div>
+      </div>
+      {orcamento > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+            <span>Consumo</span><b>{((gastoTotal / orcamento) * 100).toFixed(0)}%</b>
+          </div>
+          <Bar valor={gastoTotal} max={orcamento} cor={gastoTotal / orcamento > 0.8 ? "#dc2626" : "var(--brand)"} />
+        </div>
+      )}
+    </Sec>
   </div>;
 }
 
@@ -464,6 +708,7 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
       <section className="vx-card vx-detail-section"><h2 className="vx-disp">Gasto diário × Resultados</h2><p>Séries do período selecionado, com valores reais em cada ponto.</p><PerformanceChart serie={dados.financeiro.serie} /></section>
       <section className="vx-card vx-detail-section"><h2 className="vx-disp">Detalhamento dos custos</h2><p>Valores configurados e tarefas efetivamente liquidadas.</p>{dados.financeiro.detalhamento.length === 0 ? <Empty texto="Nenhum tipo de tarefa remunerada ou liquidada nesta campanha." /> : <div className="vx-cost-table"><div><span>Tipo de tarefa</span><span>Valor unitário</span><span>Quantidade</span><span>Total gasto</span></div>{dados.financeiro.detalhamento.map((item) => <div key={item.tipo}><b>{ACOES[item.tipo]?.nome || item.tipo}</b><span className="vx-mono" data-label="Valor unitário">{money(item.valorUnitario)}</span><span className="vx-mono" data-label="Quantidade">{item.quantidade}</span><span className="vx-mono" data-label="Total gasto">{money(item.total)}</span></div>)}</div>}</section>
     </div>}
+    {aba === "monitoramento" && <MonitoramentoCampanha campanha={campanha} tarefas={tarefas} leads={leads} profissionais={profissionais} dados={dados} />}
     {dados && aba === "configuracoes" && <section className="vx-card vx-detail-section"><Settings size={22} color="var(--brand)" /><h2 className="vx-disp">Configurações da campanha</h2><p>Objetivo, público, região, valores, evidências, treinamento e regras de publicação continuam no editor completo.</p><button className="vx-btn vx-btn-primary" onClick={onEditar}><Pencil size={14} /> Editar configuração</button></section>}
     {aba === "contatos" && <ContatosCampanha campanha={campanha} profissionais={profissionais} aviso={(msg) => console.log("[contatos]", msg)} />}
     {aba === "verificacao" && <VerificacaoCampanha campanha={campanha} />}
@@ -1100,7 +1345,11 @@ function LeadsCampanha({ campanha, profissionais, onRecarregar }) {
     const emAtendimento = leads.filter((l) => l.status === "em_atendimento").length;
     const convertidos = leads.filter((l) => l.status === "convertido").length;
     const devolvidos = leads.filter((l) => l.status === "devolvido").length;
-    return { total, disponiveis, emAtendimento, convertidos, devolvidos };
+    const qualificados = leads.filter((l) => l.qualificacaoScore > 0).length;
+    const scoreMedia = qualificados ? Math.round(leads.reduce((s, l) => s + (Number(l.qualificacaoScore) || 0), 0) / qualificados) : 0;
+    const confirmados = leads.filter((l) => l.confirmacaoStatus === "confirmada").length;
+    const confirmacoesPendentes = leads.filter((l) => l.confirmacaoStatus === "enviada").length;
+    return { total, disponiveis, emAtendimento, convertidos, devolvidos, qualificados, scoreMedia, confirmados, confirmacoesPendentes };
   }, [leads]);
 
   const selecaoTipo = campanha.selecaoLeadsTipo || "toda_base";
@@ -1124,6 +1373,24 @@ function LeadsCampanha({ campanha, profissionais, onRecarregar }) {
           </div>
         ))}
       </div>
+      {(stats.qualificados > 0 || stats.confirmados > 0) && (
+        <div className="vx-grid vx-g4" style={{ marginBottom: 16 }}>
+          {stats.qualificados > 0 && (
+            <div className="vx-card" style={{ padding: 14 }}>
+              <div className="vx-mut" style={{ fontSize: 12, marginBottom: 4 }}>Qualificados</div>
+              <b style={{ fontSize: 17 }}>{stats.qualificados}</b>
+              <span className="vx-mut" style={{ fontSize: 11, marginLeft: 6 }}>score médio: {stats.scoreMedia}</span>
+            </div>
+          )}
+          {stats.confirmados > 0 && (
+            <div className="vx-card" style={{ padding: 14 }}>
+              <div className="vx-mut" style={{ fontSize: 12, marginBottom: 4 }}>Confirmados</div>
+              <b style={{ fontSize: 17, color: "#16a34a" }}>{stats.confirmados}</b>
+              {stats.confirmacoesPendentes > 0 && <span className="vx-mut" style={{ fontSize: 11, marginLeft: 6 }}>{stats.confirmacoesPendentes} pendentes</span>}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="vx-grid vx-g2" style={{ marginBottom: 16 }}>
         <div className="vx-card" style={{ padding: 16 }}>

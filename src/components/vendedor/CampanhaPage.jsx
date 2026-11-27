@@ -1,22 +1,26 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ArrowLeft, Target, BookOpen, Zap, Users, BarChart2, Award,
   CheckCircle, XCircle, TrendingUp,
-  DollarSign, Shield, ChevronDown, ChevronUp
+  DollarSign, Shield, ChevronDown, ChevronUp, ClipboardCheck,
+  ShieldCheck, AlertCircle, ArrowRight, MessageCircle
 } from "lucide-react";
 import { money } from "../../lib/utils.js";
 import { ACOES, TAXA } from "../../lib/constants.js";
-import { apiPatch } from "../../lib/api.js";
+import { api, apiPatch } from "../../lib/api.js";
 import CertificacaoCampanha from "./CertificacaoCampanha.jsx";
 import Tarefas from "./Tarefas.jsx";
 import MeusEnvios from "./MeusEnvios.jsx";
 import Curso from "./Curso.jsx";
 import Chat from "../Chat.jsx";
+import { TIPOS_RESPOSTA, CLASSIFICACOES, calcularScore } from "../../../shared/qualificacaoLeads.js";
+import { STATUS_CONFIRMACAO } from "../../../shared/confirmacaoContato.js";
 
 const ABAS = [
   { id: "visao", label: "Visão Geral", Icon: Target },
   { id: "treinamento", label: "Treinamento", Icon: BookOpen },
   { id: "operacao", label: "Operação", Icon: Zap },
+  { id: "leads", label: "Leads", Icon: ClipboardCheck },
   { id: "equipe", label: "Equipe", Icon: Users },
   { id: "resultados", label: "Meus Resultados", Icon: BarChart2 },
   { id: "envios", label: "Meus Envios", Icon: CheckCircle },
@@ -251,6 +255,145 @@ function MeusResultadosCard({ campanha, eu, db }) {
   );
 }
 
+// ── Fase 02: Qualificação do lead pelo profissional ────────────────────
+function QualificacaoLeadCard({ lead, campanha, onQualificado }) {
+  const perguntas = JSON.parse(campanha?.perguntasQualificacao || "[]");
+  const criterios = JSON.parse(campanha?.criteriosQualificacaoLeads || "[]");
+  const [respostas, setRespostas] = useState(() => {
+    try { return JSON.parse(lead?.qualificacaoRespostas || "[]"); } catch { return []; }
+  });
+  const [salvando, setSalvando] = useState(false);
+
+  if (!perguntas.length) return null;
+
+  const setResposta = (perguntaId, valor) => {
+    setRespostas((prev) => {
+      const idx = prev.findIndex((r) => r.perguntaId === perguntaId);
+      if (idx >= 0) { const n = [...prev]; n[idx] = { ...n[idx], valor }; return n; }
+      return [...prev, { perguntaId, valor }];
+    });
+  };
+
+  const resultado = calcularScore(respostas, criterios);
+
+  const salvar = async () => {
+    setSalvando(true);
+    const r = await api(`/leads/${lead.id}/qualificar`, { respostas });
+    setSalvando(false);
+    if (r && !r.error && onQualificado) onQualificado(r);
+  };
+
+  return (
+    <div className="vx-card" style={{ padding: 16, marginBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <ClipboardCheck size={16} color="var(--brand)" />
+        <span style={{ fontWeight: 700, fontSize: 14 }}>Qualificação: {lead.nome || "Lead"}</span>
+        {resultado.score > 0 && (
+          <span style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: CLASSIFICACOES[resultado.classificacao]?.cor || "var(--ink)" }}>
+            Score: {resultado.score}
+          </span>
+        )}
+      </div>
+      <div style={{ display: "grid", gap: 10 }}>
+        {perguntas.map((p) => {
+          const resp = respostas.find((r) => r.perguntaId === p.id);
+          return (
+            <div key={p.id}>
+              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
+                {p.texto}{p.obrigatoria && <span style={{ color: "#dc2626" }}> *</span>}
+              </div>
+              {p.tipo === "sim_nao" ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  {["Sim", "Não"].map((opt) => (
+                    <button key={opt} className="vx-btn vx-btn-sm" style={{
+                      background: resp?.valor === opt ? "var(--brand-50)" : "var(--surface)",
+                      border: `1px solid ${resp?.valor === opt ? "var(--brand)" : "var(--border)"}`,
+                      color: resp?.valor === opt ? "var(--brand)" : "var(--ink)",
+                    }} onClick={() => setResposta(p.id, opt)}>{opt}</button>
+                  ))}
+                </div>
+              ) : p.tipo === "escolha_unica" ? (
+                <select className="vx-input" style={{ fontSize: 13 }} value={resp?.valor || ""}
+                  onChange={(e) => setResposta(p.id, e.target.value)}>
+                  <option value="">Selecione...</option>
+                  {(p.opcoes || []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              ) : p.tipo === "escala" ? (
+                <div style={{ display: "flex", gap: 4 }}>
+                  {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                    <button key={n} style={{
+                      width: 28, height: 28, borderRadius: 6, fontSize: 11, fontWeight: 600,
+                      border: `1px solid ${Number(resp?.valor) === n ? "var(--brand)" : "var(--border)"}`,
+                      background: Number(resp?.valor) === n ? "var(--brand)" : "var(--surface)",
+                      color: Number(resp?.valor) === n ? "#fff" : "var(--ink)", cursor: "pointer",
+                    }} onClick={() => setResposta(p.id, n)}>{n}</button>
+                  ))}
+                </div>
+              ) : p.tipo === "numero" || p.tipo === "valor_monetario" ? (
+                <input className="vx-input" type="number" style={{ fontSize: 13 }} value={resp?.valor || ""}
+                  onChange={(e) => setResposta(p.id, e.target.value)} placeholder={p.tipo === "valor_monetario" ? "R$ 0,00" : "0"} />
+              ) : (
+                <input className="vx-input" style={{ fontSize: 13 }} value={resp?.valor || ""}
+                  onChange={(e) => setResposta(p.id, e.target.value)} placeholder="Responda aqui..." />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
+        <div className="vx-mut" style={{ fontSize: 11.5 }}>{resultado.respondidas}/{resultado.total} respondidas</div>
+        <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={salvando} onClick={salvar}>
+          {salvando ? "Salvando..." : "Salvar qualificação"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Fase 02: Recomendação de próxima atividade ─────────────────────────
+function ProximaAtividadeCard({ lead, campanha, onAcao }) {
+  const [rec, setRec] = useState(null);
+  useEffect(() => {
+    if (!lead?.id) return;
+    api(`/leads/${lead.id}/proxima-atividade`, null, "GET").then((r) => {
+      if (r && !r.error) setRec(r);
+    });
+  }, [lead?.id, lead?.etapa]);
+
+  if (!rec || !rec.recomendacao?.acao) return null;
+  const { acao, motivo, prioridade } = rec.recomendacao;
+  const def = ACOES[acao];
+
+  return (
+    <div className="vx-card" style={{ padding: 14, marginBottom: 10, border: `1px solid ${prioridade === "alta" ? "var(--brand-100)" : "var(--border)"}`, background: prioridade === "alta" ? "var(--brand-50)" : "var(--surface)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Zap size={14} color="var(--brand)" />
+        <span style={{ fontSize: 12, fontWeight: 600 }}>Próxima ação sugerida:</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--brand)" }}>{def?.nome || acao}</span>
+      </div>
+      <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4 }}>{motivo}</div>
+      {acao !== "confirmacao" && onAcao && (
+        <button className="vx-btn vx-btn-sm" style={{ marginTop: 8 }} onClick={() => onAcao(acao)}>
+          Registrar <ArrowRight size={12} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Fase 02: Status de confirmação ─────────────────────────────────────
+function ConfirmacaoStatusCard({ lead }) {
+  if (!lead || lead.confirmacaoStatus === "nao_enviada") return null;
+  const st = STATUS_CONFIRMACAO[lead.confirmacaoStatus] || {};
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, background: "var(--surface-2)", marginBottom: 8, fontSize: 12 }}>
+      <ShieldCheck size={14} color={st.cor || "var(--ink-2)"} />
+      <span>Confirmação: <b style={{ color: st.cor }}>{st.nome || lead.confirmacaoStatus}</b></span>
+      {lead.confirmacaoRespondidaEm && <span className="vx-mut" style={{ marginLeft: "auto" }}>{new Date(lead.confirmacaoRespondidaEm).toLocaleDateString("pt-BR")}</span>}
+    </div>
+  );
+}
+
 function pedirRevisaoHumana(setDb, aviso, sub) {
   const liquido = +(sub.valor * (1 - TAXA)).toFixed(2);
   const motivo = "Vendedor contestou e pediu revisão humana. Motivo original da IA: " + (sub.motivo || "—");
@@ -265,6 +408,13 @@ function pedirRevisaoHumana(setDb, aviso, sub) {
 export default function CampanhaPage({ campanha, empresa, eu, db, setDb, up, aviso, voltar, recarregar }) {
   const [aba, setAba] = useState("visao");
   const [tipoAcao, setTipoAcao] = useState(null);
+  const [leadSelecionado, setLeadSelecionado] = useState(null);
+  const [leadsLocal, setLeadsLocal] = useState([]);
+
+  useEffect(() => {
+    const cl = (db.leads || []).filter((l) => l.campaignId === campanha.id);
+    setLeadsLocal(cl);
+  }, [db.leads, campanha.id]);
 
   const quizAprovado = campanha.quizAprovado || !campanha.exigeCertificacao || !(campanha.quiz?.length);
   const tarefas = campanha.tarefas || {};
@@ -428,6 +578,98 @@ export default function CampanhaPage({ campanha, empresa, eu, db, setDb, up, avi
                   {tiposAtivos.map(([tipo, valor]) => (
                     <AcaoCard key={tipo} tipo={tipo} valor={valor} acoes={ACOES} onRegistrar={abrirOperacao} />
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* LEADS */}
+      {aba === "leads" && (
+        <div className="vx-fade">
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Leads da campanha</div>
+          <p className="vx-mut" style={{ fontSize: 12.5, marginBottom: 16 }}>Gerencie, qualifique e acompanhe os leads vinculados a esta campanha.</p>
+
+          {leadSelecionado ? (
+            <div>
+              <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ marginBottom: 12, marginLeft: -8 }} onClick={() => setLeadSelecionado(null)}>
+                <ArrowLeft size={14} /> Voltar aos leads
+              </button>
+
+              <div className="vx-card" style={{ padding: 16, marginBottom: 14 }}>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{leadSelecionado.nome || "Lead sem nome"}</div>
+                {leadSelecionado.empresa && <div className="vx-mut" style={{ fontSize: 12 }}>{leadSelecionado.empresa}</div>}
+                {leadSelecionado.telefone && <div style={{ fontSize: 12.5, marginTop: 4 }}>{leadSelecionado.telefone}</div>}
+                {leadSelecionado.email && <div style={{ fontSize: 12.5 }}>{leadSelecionado.email}</div>}
+                <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                  {leadSelecionado.etapa && <span className="vx-chip">{leadSelecionado.etapa}</span>}
+                  {leadSelecionado.origemLead && <span className="vx-chip">{leadSelecionado.origemLead}</span>}
+                  {leadSelecionado.qualificacaoScore > 0 && (
+                    <span className="vx-chip" style={{ background: "var(--brand-50)", color: "var(--brand)" }}>
+                      Score: {leadSelecionado.qualificacaoScore}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <ConfirmacaoStatusCard lead={leadSelecionado} />
+              {(!leadSelecionado.confirmacaoStatus || leadSelecionado.confirmacaoStatus === "nao_enviada") && campanha.confirmacaoContato && JSON.parse(campanha.confirmacaoContato || "{}").habilitada && (
+                <button className="vx-btn vx-btn-sm" style={{ marginBottom: 10, gap: 6 }} onClick={async () => {
+                  const r = await api(`/campaigns/${campanha.id}/confirmacao-token`, { leadId: leadSelecionado.id });
+                  if (r?.token) {
+                    setLeadSelecionado((prev) => ({ ...prev, confirmacaoStatus: "enviada" }));
+                    aviso("Link de confirmação gerado!");
+                  }
+                }}>
+                  <MessageCircle size={14} /> Enviar confirmação de contato
+                </button>
+              )}
+              <ProximaAtividadeCard lead={leadSelecionado} campanha={campanha} onAcao={(tipo) => { setTipoAcao(tipo); setAba("operacao"); }} />
+              <QualificacaoLeadCard
+                lead={leadSelecionado}
+                campanha={campanha}
+                onQualificado={(r) => {
+                  setLeadsLocal((prev) => prev.map((l) => l.id === leadSelecionado.id ? { ...l, qualificacaoScore: r.score, qualificacaoClassificacao: r.classificacao, qualificacaoRespostas: JSON.stringify(r.respostas) } : l));
+                  setLeadSelecionado((prev) => ({ ...prev, qualificacaoScore: r.score, qualificacaoClassificacao: r.classificacao, qualificacaoRespostas: JSON.stringify(r.respostas) }));
+                  aviso("Qualificação salva!");
+                }}
+              />
+            </div>
+          ) : (
+            <div>
+              {leadsLocal.length === 0 ? (
+                <div className="vx-card" style={{ padding: 24, textAlign: "center" }}>
+                  <ClipboardCheck size={22} color="var(--muted)" />
+                  <p className="vx-mut" style={{ marginTop: 8 }}>Nenhum lead vinculado a esta campanha ainda.</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {leadsLocal.map((lead) => {
+                    const cls = CLASSIFICACOES[lead.qualificacaoClassificacao];
+                    return (
+                      <button key={lead.id} className="vx-card" style={{ padding: 14, textAlign: "left", cursor: "pointer", border: "1px solid var(--border)", width: "100%" }} onClick={() => setLeadSelecionado(lead)}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 13.5 }}>{lead.nome || "Lead"}</div>
+                            {lead.empresa && <div className="vx-mut" style={{ fontSize: 11.5 }}>{lead.empresa}</div>}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            {lead.qualificacaoScore > 0 && (
+                              <span style={{ fontSize: 11, fontWeight: 700, color: cls?.cor || "var(--ink)", background: "var(--surface-2)", padding: "2px 8px", borderRadius: 10 }}>
+                                {lead.qualificacaoScore}
+                              </span>
+                            )}
+                            {lead.etapa && <span className="vx-chip" style={{ fontSize: 10.5 }}>{lead.etapa}</span>}
+                            {lead.confirmacaoStatus && lead.confirmacaoStatus !== "nao_enviada" && (
+                              <ShieldCheck size={14} color={(STATUS_CONFIRMACAO[lead.confirmacaoStatus] || {}).cor || "var(--ink-2)"} />
+                            )}
+                            <ArrowRight size={14} color="var(--muted)" />
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

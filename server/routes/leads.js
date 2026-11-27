@@ -5,6 +5,7 @@ import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js"
 import { notificar } from "./notifications.js";
 import { registrarEventoCampanha } from "../services/campaignEvents.js";
 import { vincularLeadAutomaticamente } from "../services/campaignAutoEntry.js";
+import { calcularScore, classificarPrioridade } from "../../shared/qualificacaoLeads.js";
 
 const router = Router();
 
@@ -329,6 +330,189 @@ router.get("/leads/comissoes", (req, res) => {
   }
 
   res.json({ vendedores: Object.values(porVendedor), total: rows.length });
+});
+
+// ── Fase 02: Qualificação do lead ──────────────────────────────────────
+router.post("/leads/:id/qualificar", (req, res) => {
+  const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(req.params.id);
+  if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
+  if (!podeVer(lead, req.user)) return res.status(403).json({ error: "Sem permissão" });
+
+  const { respostas } = req.body;
+  if (!Array.isArray(respostas)) return res.status(400).json({ error: "respostas obrigatório (array)" });
+
+  // Buscar critérios da campanha
+  let criterios = [];
+  if (lead.campaignId) {
+    const campanha = db.prepare("SELECT criteriosQualificacaoLeads FROM campaigns WHERE id = ?").get(lead.campaignId);
+    try { criterios = JSON.parse(campanha?.criteriosQualificacaoLeads || "[]"); } catch { criterios = []; }
+  }
+
+  const resultado = calcularScore(respostas, criterios);
+
+  db.prepare(`UPDATE leads SET qualificacaoRespostas = ?, qualificacaoScore = ?, qualificacaoClassificacao = ? WHERE id = ?`)
+    .run(JSON.stringify(respostas), resultado.score, resultado.classificacao, lead.id);
+
+  // Registrar evento
+  db.prepare(`INSERT INTO lead_events (id, leadId, tipo, dados, criadoEm) VALUES (?, ?, 'qualificacao', ?, ?)`)
+    .run(uid(), lead.id, JSON.stringify({ score: resultado.score, classificacao: resultado.classificacao }), agora());
+
+  res.json(resultado);
+});
+
+// ── Fase 02: Próxima atividade recomendada ─────────────────────────────
+router.get("/leads/:id/proxima-atividade", (req, res) => {
+  const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(req.params.id);
+  if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
+  if (!podeVer(lead, req.user)) return res.status(403).json({ error: "Sem permissão" });
+
+  let campanha = null;
+  if (lead.campaignId) {
+    campanha = db.prepare("SELECT objetivo, tarefas, acoesAtivas, confirmacaoContato FROM campaigns WHERE id = ?").get(lead.campaignId);
+  }
+
+  const eventos = db.prepare("SELECT tipo, dados, criadoEm FROM lead_events WHERE leadId = ? ORDER BY criadoEm DESC LIMIT 20").all(lead.id);
+  const ultimoEvento = eventos[0];
+  const acoesAtivas = JSON.parse(campanha?.acoesAtivas || "[]");
+  const confirmacao = JSON.parse(campanha?.confirmacaoContato || "{}");
+
+  // Lógica determinística de próxima atividade
+  const recomendacao = { acao: null, motivo: "", prioridade: "normal" };
+
+  if (lead.etapa === "novo" || lead.etapa === "contato") {
+    if (acoesAtivas.includes("contato") || acoesAtivas.includes("ligacao")) {
+      recomendacao.acao = acoesAtivas.includes("ligacao") ? "ligacao" : "contato";
+      recomendacao.motivo = "Primeiro contato com o lead.";
+      recomendacao.prioridade = "alta";
+    }
+  } else if (lead.etapa === "qualificacao") {
+    const qualScore = Number(lead.qualificacaoScore) || 0;
+    if (qualScore >= 70 && acoesAtivas.includes("agendamento")) {
+      recomendacao.acao = "agendamento";
+      recomendacao.motivo = "Lead qualificado com score alto. Agende a reunião.";
+      recomendacao.prioridade = "alta";
+    } else {
+      recomendacao.acao = "follow";
+      recomendacao.motivo = "Continue o follow-up para qualificar melhor.";
+    }
+  } else if (lead.etapa === "agendamento" || lead.etapa === "reuniao") {
+    if (confirmacao.habilitada && lead.confirmacaoStatus === "nao_enviada") {
+      recomendacao.acao = "confirmacao";
+      recomendacao.motivo = "Envie a confirmação de contato ao cliente.";
+      recomendacao.prioridade = "alta";
+    } else if (acoesAtivas.includes("realizada")) {
+      recomendacao.acao = "realizada";
+      recomendacao.motivo = "Registre a reunião realizada.";
+    }
+  } else if (lead.etapa === "proposta" || lead.etapa === "negociacao") {
+    if (acoesAtivas.includes("venda")) {
+      recomendacao.acao = "venda";
+      recomendacao.motivo = "Registre a venda quando confirmada.";
+    } else {
+      recomendacao.acao = "follow";
+      recomendacao.motivo = "Acompanhe a decisão do cliente.";
+    }
+  }
+
+  res.json({ recomendacao, etapaAtual: lead.etapa, qualificacaoScore: lead.qualificacaoScore || 0 });
+});
+
+// ── Fase 02: Atualizar origem do lead ──────────────────────────────────
+router.patch("/leads/:id/origem", (req, res) => {
+  const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(req.params.id);
+  if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
+  if (!podeVer(lead, req.user)) return res.status(403).json({ error: "Sem permissão" });
+
+  const { origem } = req.body;
+  if (!["empresa", "profissional", "indicacao", "loja"].includes(origem))
+    return res.status(400).json({ error: "Origem inválida" });
+
+  db.prepare("UPDATE leads SET origemLead = ? WHERE id = ?").run(origem, lead.id);
+  res.json({ ok: true, origem });
+});
+
+// ── Fase 02: Classificar e rotear lead ────────────────────────────────
+router.post("/leads/:id/classificar", (req, res) => {
+  const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(req.params.id);
+  if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
+  if (!podeVer(lead, req.user)) return res.status(403).json({ error: "Sem permissão" });
+
+  const score = Number(lead.qualificacaoScore) || 0;
+  const classificacao = classificarPrioridade(score);
+
+  // Buscar critérios da campanha para roteamento
+  let funcaoDestino = null;
+  if (lead.campaignId) {
+    const camp = db.prepare("SELECT criteriosQualificacaoLeads, funcao FROM campaigns WHERE id = ?").get(lead.campaignId);
+    const criterios = JSON.parse(camp?.criteriosQualificacaoLeads || "[]");
+    const temEliminatoria = criterios.some((c) => c.eliminatoria);
+
+    if (classificacao === "alta") {
+      funcaoDestino = "closer";
+    } else if (classificacao === "media") {
+      funcaoDestino = camp?.funcao || "sdr";
+    } else {
+      funcaoDestino = "sdr";
+    }
+  }
+
+  db.prepare("UPDATE leads SET qualificacaoClassificacao = ? WHERE id = ?").run(classificacao, lead.id);
+
+  // Rotear: encontrar profissional disponível com a função adequada
+  let roteadoPara = null;
+  if (funcaoDestino && lead.campaignId) {
+    const seller = db.prepare(`
+      SELECT cs.sellerId FROM campaign_sellers cs
+      JOIN sellers s ON s.id = cs.sellerId
+      WHERE cs.campaignId = ? AND cs.status = 'aprovado' AND s.funcao = ?
+      ORDER BY RANDOM() LIMIT 1
+    `).get(lead.campaignId, funcaoDestino);
+
+    if (seller) {
+      db.prepare("UPDATE leads SET responsavelEtapaId = ? WHERE id = ?").run(seller.sellerId, lead.id);
+      roteadoPara = seller.sellerId;
+    }
+  }
+
+  db.prepare("INSERT INTO lead_events (id, leadId, tipo, dados, criadoEm) VALUES (?, ?, 'classificacao', ?, ?)")
+    .run(uid(), lead.id, JSON.stringify({ classificacao, funcaoDestino, roteadoPara }), agora());
+
+  res.json({ classificacao, funcaoDestino, roteadoPara });
+});
+
+// ── Fase 02: Handoff para closer ──────────────────────────────────────
+router.post("/leads/:id/handoff", (req, res) => {
+  const lead = db.prepare("SELECT * FROM leads WHERE id = ?").get(req.params.id);
+  if (!lead) return res.status(404).json({ error: "Lead não encontrado" });
+  if (!podeVer(lead, req.user)) return res.status(403).json({ error: "Sem permissão" });
+
+  const { closerId, motivo } = req.body;
+
+  // Encontrar closer: informado ou buscar na campanha
+  let targetCloser = closerId;
+  if (!targetCloser && lead.campaignId) {
+    const seller = db.prepare(`
+      SELECT cs.sellerId FROM campaign_sellers cs
+      JOIN sellers s ON s.id = cs.sellerId
+      WHERE cs.campaignId = ? AND cs.status = 'aprovado' AND s.funcao = 'closer'
+      ORDER BY RANDOM() LIMIT 1
+    `).get(lead.campaignId);
+    targetCloser = seller?.sellerId;
+  }
+
+  if (!targetCloser) return res.status(400).json({ error: "Nenhum closer disponível na campanha" });
+
+  // Avançar etapa e transferir responsabilidade
+  db.prepare("UPDATE leads SET etapa = 'negociacao', responsavelEtapaId = ? WHERE id = ?")
+    .run(targetCloser, lead.id);
+
+  db.prepare("INSERT INTO lead_events (id, leadId, tipo, dados, criadoEm) VALUES (?, ?, 'handoff', ?, ?)")
+    .run(uid(), lead.id, JSON.stringify({ de: req.user.entityId, para: targetCloser, motivo: motivo || "Lead qualificado para fechamento" }), agora());
+
+  // Notificar o closer
+  notificar(targetCloser, "lead", "Novo lead para fechamento", `O lead "${lead.nome || "sem nome"}" foi transferido para você.`);
+
+  res.json({ ok: true, closerId: targetCloser, etapa: "negociacao" });
 });
 
 export default router;

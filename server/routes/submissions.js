@@ -60,9 +60,31 @@ router.post("/submissions", async (req, res) => {
   // valor enviado pelo cliente deixaria o vendedor definir quanto vale a
   // própria ação.
   const comissoes = campanha ? JSON.parse(campanha.tarefas || "{}") : JSON.parse(empresa.comissoes || "{}");
-  const valor = Number(comissoes[tipo]);
+  let valor = Number(comissoes[tipo]);
   if (!Number.isFinite(valor) || valor <= 0)
     return res.status(400).json({ error: "Esta empresa não remunera este tipo de ação." });
+
+  // Remuneração diferenciada por origem do lead
+  if (campanha && leadId) {
+    try {
+      const remOrigem = JSON.parse(campanha.remuneracaoPorOrigem || "{}");
+      if (remOrigem.diferenciarPorOrigem) {
+        const lead = db.prepare("SELECT origemLead FROM leads WHERE id = ?").get(leadId);
+        const origem = lead?.origemLead || "profissional";
+        const fator = origem === "empresa" ? Number(remOrigem.fatorEmpresa || 1) : Number(remOrigem.fatorProfissional || 1.5);
+        valor = +(valor * fator).toFixed(2);
+      }
+    } catch { /* mantém valor padrão */ }
+  }
+
+  // Marcar se a campanha exige confirmação de contato
+  let confirmacaoExigida = false;
+  if (campanha) {
+    try {
+      const confContato = JSON.parse(campanha.confirmacaoContato || "{}");
+      confirmacaoExigida = !!confContato.habilitada;
+    } catch { /* nada */ }
+  }
 
   // A auditoria roda ANTES de gravar. Auditar depois faria o motor encontrar a
   // própria ação recém-inserida no histórico e acusar repetição consigo mesma.
@@ -95,10 +117,10 @@ router.post("/submissions", async (req, res) => {
   const id = uid();
   try { db.transaction(() => {
     db.prepare(`
-      INSERT INTO submissions (id, sellerId, companyId, campaignId, leadId, tipo, valor, liquido, prova, status, confianca, motivo, fonte, idempotencyKey, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO submissions (id, sellerId, companyId, campaignId, leadId, tipo, valor, liquido, prova, status, confianca, motivo, fonte, idempotencyKey, confirmacaoExigida, criadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, sellerId, companyId, campaignId || null, leadId || null, tipo, valor,
-           liquido, JSON.stringify(provaComMetadados || {}), status, r.confianca, r.motivo, r.fonte, idempotencyKey || null, agora());
+           liquido, JSON.stringify(provaComMetadados || {}), status, r.confianca, r.motivo, r.fonte, idempotencyKey || null, confirmacaoExigida ? 1 : 0, agora());
     if (campaignId) {
       const dadosEvento = { tipo, status, valor };
       registrarEventoCampanha({ companyId, campaignId, tipo: "TASK_COMPLETED", actorId: req.user.id, actorRole: role, sellerId, submissionId: id, leadId: leadId || null, source: "USER", dados: dadosEvento });

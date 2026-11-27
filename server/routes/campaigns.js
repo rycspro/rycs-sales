@@ -10,6 +10,10 @@ import { atendeCertificacaoDaCampanha } from "../../shared/campaignAcademy.js";
 import { obterOperacaoCampanha, obterVisaoGeralCampanhas } from "../services/campaignOperations.js";
 import { registrarEventoCampanha } from "../services/campaignEvents.js";
 import { sanearAlcance, sanearPaisesAceitos, parsePaisesAceitos } from "../../shared/oportunidades.js";
+import { calcularPlanejamentoReverso } from "../../shared/planejamentoReverso.js";
+import { investimentoRecomendado, capacidadeOperacional } from "../../shared/otimizacaoVerba.js";
+import { criarPergunta, criarCriterio } from "../../shared/qualificacaoLeads.js";
+import { diagnosticoCampanha } from "../../shared/campaignEngine.js";
 
 const router = Router();
 
@@ -257,12 +261,14 @@ router.post("/campaigns", (req, res) => {
       "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
       "icpTipo", "versao", "processoAdmissao",
       "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
-      "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial", "vendaTipoRemuneracao", "modoAcoesRemuneradas", "passoWizard", "ordemOperacao", "modoDistribuicaoVerba"];
+      "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial", "vendaTipoRemuneracao", "modoAcoesRemuneradas", "passoWizard", "ordemOperacao", "modoDistribuicaoVerba", "metaQuantitativa"];
     const v2Bool = ["temComissao", "remuneracaoCumulativa", "incluirNovosAutomaticamente"];
     const v2Json = ["paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
       "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
       "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig",
-      "selecaoLeadsFiltros", "distribuicaoVerba"];
+      "selecaoLeadsFiltros", "distribuicaoVerba",
+      "planejamentoReverso", "perguntasQualificacao", "criteriosQualificacaoLeads",
+      "confirmacaoContato", "remuneracaoPorOrigem", "otimizacaoVerba", "recomendacoesIA"];
     const v2Sets = ["atualizadoEm = ?"]; const v2Vals = [criadoEm];
     for (const k of v2Plain) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k]); } }
     for (const k of v2Bool) { if (req.body[k] != null) { v2Sets.push(`${k} = ?`); v2Vals.push(req.body[k] ? 1 : 0); } }
@@ -300,13 +306,15 @@ router.patch("/campaigns/:id", (req, res) => {
     "temComissao", "remuneracaoCumulativa", "icpTipo", "versao", "processoAdmissao",
     "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
     "prazoContatoHoras", "prazoInatividadeHoras", "selecaoLeadsDinamica", "passoWizard", "modoDistribuicaoVerba",
-    "incluirNovosAutomaticamente"];
+    "incluirNovosAutomaticamente", "metaQuantitativa"];
   const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao",
     "etapasPipeline", "fluxoDirecionamento", "camposPersonalizados", "modelosCampos",
     "paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
     "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
     "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig",
-    "selecaoLeadsFiltros", "distribuicaoVerba"];
+    "selecaoLeadsFiltros", "distribuicaoVerba",
+    "planejamentoReverso", "perguntasQualificacao", "criteriosQualificacaoLeads",
+    "confirmacaoContato", "remuneracaoPorOrigem", "otimizacaoVerba", "recomendacoesIA"];
   const sets = [];
   const vals = [];
   for (const [k, v] of Object.entries(req.body)) {
@@ -1151,6 +1159,227 @@ router.patch("/transferencias/:id", (req, res) => {
     db.prepare("UPDATE transferencias_oportunidade SET status = ? WHERE id = ?").run(status, t.id);
   }
   res.json({ ok: true });
+});
+
+// ── Fase 01: Planejamento reverso ──────────────────────────────────────
+router.post("/campaigns/:id/planejamento-reverso", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const metaQuantidade = Number(req.body.metaQuantidade) || Number(campaign.metaQuantitativa) || 0;
+  const objetivoChave = campaign.objetivo || "vendas";
+  const tarefas = JSON.parse(campaign.tarefas || "{}");
+
+  // Buscar histórico da empresa quando disponível
+  let historico = null;
+  try {
+    const stats = db.prepare(`
+      SELECT COUNT(*) as amostra,
+        CAST(SUM(CASE WHEN s.status = 'aprovada' THEN 1 ELSE 0 END) AS REAL) / MAX(COUNT(*), 1) AS taxaAprovacao
+      FROM submissions s
+      JOIN campaigns c ON c.id = s.campaignId
+      WHERE c.companyId = ? AND c.objetivo = ?
+    `).get(entityId, objetivoChave);
+    if (stats && stats.amostra >= 10) {
+      historico = { amostra: stats.amostra, taxaFechamento: stats.taxaAprovacao || 0.25 };
+    }
+  } catch (_) { /* sem histórico */ }
+
+  const planejamento = calcularPlanejamentoReverso({ objetivoChave, metaQuantidade, historico, tarefas });
+  const investimento = investimentoRecomendado({ metaQuantidade, tarefas, etapasPlanejamento: planejamento?.etapas || [] });
+  const capacidade = capacidadeOperacional({ orcamento: Number(campaign.orcamento) || 0, tarefas, profissionais: Number(campaign.vagas) || 1, duracaoDias: Number(campaign.duracaoDias) || 30 });
+
+  // Salvar resultado no campaign
+  if (planejamento) {
+    db.prepare("UPDATE campaigns SET metaQuantitativa = ?, planejamentoReverso = ?, otimizacaoVerba = ? WHERE id = ?").run(
+      metaQuantidade,
+      JSON.stringify(planejamento),
+      JSON.stringify({ investimento, capacidade }),
+      campaign.id
+    );
+  }
+
+  res.json({ planejamento, investimento, capacidade });
+});
+
+// ── Fase 01: Gerar perguntas de qualificação por IA ────────────────────
+router.post("/campaigns/:id/gerar-qualificacao", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const empresa = db.prepare("SELECT nome, segmento, produto, ticket FROM companies WHERE id = ?").get(entityId);
+
+  // Fallback determinístico quando não há API key
+  const gerarPerguntasDeterministicas = () => {
+    const objetivo = campaign.objetivo || "vendas";
+    const base = [
+      criarPergunta({ texto: "O contato demonstrou interesse no produto/serviço?", tipo: "sim_nao", obrigatoria: true, ordem: 1 }),
+      criarPergunta({ texto: "Qual o cargo ou função do contato?", tipo: "texto_curto", ordem: 2 }),
+      criarPergunta({ texto: "O contato tem poder de decisão?", tipo: "escolha_unica", opcoes: ["Sim, decide sozinho", "Precisa consultar", "Não tem poder de decisão"], ordem: 3 }),
+    ];
+    if (["vendas", "completa", "campo"].includes(objetivo)) {
+      base.push(criarPergunta({ texto: "Qual o orçamento disponível para este tipo de solução?", tipo: "valor_monetario", ordem: 4 }));
+      base.push(criarPergunta({ texto: "Qual a urgência para resolver esse problema?", tipo: "escala", ordem: 5 }));
+    }
+    if (["reunioes", "prospeccao"].includes(objetivo)) {
+      base.push(criarPergunta({ texto: "O contato confirmou disponibilidade para reunião?", tipo: "sim_nao", ordem: 4 }));
+    }
+    if (objetivo === "reativacao") {
+      base.push(criarPergunta({ texto: "Quanto tempo desde o último contato com a empresa?", tipo: "escolha_unica", opcoes: ["Menos de 3 meses", "3 a 6 meses", "6 a 12 meses", "Mais de 1 ano"], ordem: 4 }));
+    }
+
+    const criterios = base.map((p) => criarCriterio({
+      perguntaId: p.id,
+      condicao: p.tipo === "sim_nao" ? "sim" : "nao_vazio",
+      peso: p.obrigatoria ? 2 : 1,
+      obrigatoria: p.obrigatoria,
+    }));
+
+    return { perguntas: base, criterios, fonte: "interno" };
+  };
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.json(gerarPerguntasDeterministicas());
+  }
+
+  try {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const resposta = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1500,
+      system:
+        "Você gera perguntas de qualificação de leads para campanhas comerciais. " +
+        "Responda APENAS um JSON com 'perguntas' (array de {texto, tipo, obrigatoria, opcoes, ordem}) " +
+        "e 'criterios' (array de {perguntaIndex, condicao, peso, obrigatoria, eliminatoria, respostaEsperada}). " +
+        "Tipos válidos: sim_nao, texto_curto, escolha_unica, multipla_escolha, numero, valor_monetario, escala. " +
+        "Máximo 8 perguntas. Criterio.condicao: igual, contem, maior_que, menor_que, entre, sim, nao, nao_vazio.",
+      messages: [{
+        role: "user",
+        content:
+          `Empresa: ${empresa?.nome || "—"}\nSegmento: ${empresa?.segmento || "—"}\nProduto: ${campaign.produto || empresa?.produto || "—"}\nTicket: ${empresa?.ticket || "—"}\n` +
+          `Campanha: ${campaign.titulo || "—"}\nObjetivo: ${campaign.objetivo || "vendas"}\nPúblico: ${campaign.publico || "—"}\nFunção: ${campaign.funcao || "SDR"}\n` +
+          `\nGere perguntas de qualificação específicas para esta campanha.`,
+      }],
+    });
+
+    const texto = resposta.content.map((b) => b.text || "").join("");
+    const json = JSON.parse(texto.slice(texto.indexOf("{"), texto.lastIndexOf("}") + 1));
+    if (!Array.isArray(json.perguntas)) throw new Error("formato inválido");
+
+    const perguntas = json.perguntas.slice(0, 8).map((p, i) => criarPergunta({
+      texto: String(p.texto || "").slice(0, 300),
+      tipo: p.tipo || "texto_curto",
+      obrigatoria: !!p.obrigatoria,
+      opcoes: Array.isArray(p.opcoes) ? p.opcoes.slice(0, 10) : [],
+      ordem: i + 1,
+    }));
+    const criterios = (json.criterios || []).slice(0, 8).map((c) => {
+      const idx = Number(c.perguntaIndex) || 0;
+      return criarCriterio({
+        perguntaId: perguntas[idx]?.id || perguntas[0]?.id,
+        condicao: c.condicao || "nao_vazio",
+        peso: Number(c.peso) || 1,
+        obrigatoria: !!c.obrigatoria,
+        eliminatoria: !!c.eliminatoria,
+        respostaEsperada: c.respostaEsperada || "",
+      });
+    });
+
+    res.json({ perguntas, criterios, fonte: "externo" });
+  } catch (err) {
+    console.error("[qualificacao] IA indisponível:", err.message);
+    res.json(gerarPerguntasDeterministicas());
+  }
+});
+
+// ── Fase 01: Confirmação de contato (gerar token público) ──────────────
+router.post("/campaigns/:id/confirmacao-token", (req, res) => {
+  const { leadId, submissionId, canal } = req.body;
+  if (!leadId) return res.status(400).json({ error: "leadId obrigatório" });
+
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const token = uid() + "-" + uid();
+  const expiraEm = agora() + (48 * 60 * 60 * 1000); // 48h
+
+  db.prepare("UPDATE leads SET confirmacaoToken = ?, confirmacaoStatus = 'aguardando', confirmacaoEnviadaEm = ?, confirmacaoCanal = ? WHERE id = ?")
+    .run(token, agora(), canal || "whatsapp", leadId);
+
+  if (submissionId) {
+    db.prepare("UPDATE submissions SET confirmacaoToken = ?, confirmacaoStatus = 'aguardando', confirmacaoExigida = 1 WHERE id = ?")
+      .run(token, submissionId);
+  }
+
+  res.json({ token, expiraEm, linkConfirmacao: `/confirmar/${token}` });
+});
+
+// ── Fase 01: Página pública de confirmação ─────────────────────────────
+router.get("/confirmar/:token", (req, res) => {
+  const lead = db.prepare("SELECT id, nome, confirmacaoStatus, confirmacaoEnviadaEm FROM leads WHERE confirmacaoToken = ?").get(req.params.token);
+  if (!lead) return res.status(404).json({ error: "Token inválido ou expirado" });
+  const expirado = lead.confirmacaoEnviadaEm && (agora() - lead.confirmacaoEnviadaEm > 48 * 60 * 60 * 1000);
+  if (expirado) {
+    db.prepare("UPDATE leads SET confirmacaoStatus = 'expirada' WHERE id = ?").run(lead.id);
+    return res.status(410).json({ error: "Link expirado" });
+  }
+  res.json({ leadId: lead.id, nome: lead.nome, status: lead.confirmacaoStatus });
+});
+
+router.post("/confirmar/:token", (req, res) => {
+  const lead = db.prepare("SELECT id, confirmacaoEnviadaEm, confirmacaoStatus FROM leads WHERE confirmacaoToken = ?").get(req.params.token);
+  if (!lead) return res.status(404).json({ error: "Token inválido" });
+  if (lead.confirmacaoStatus === "confirmada" || lead.confirmacaoStatus === "nao_reconhecida")
+    return res.status(409).json({ error: "Confirmação já respondida", status: lead.confirmacaoStatus });
+  const expirado = lead.confirmacaoEnviadaEm && (agora() - lead.confirmacaoEnviadaEm > 48 * 60 * 60 * 1000);
+  if (expirado) return res.status(410).json({ error: "Link expirado" });
+
+  const { confirmado } = req.body; // true = confirmado, false = não reconhecido
+  const novoStatus = confirmado ? "confirmada" : "nao_reconhecida";
+  db.prepare("UPDATE leads SET confirmacaoStatus = ?, confirmacaoRespondidaEm = ? WHERE id = ?")
+    .run(novoStatus, agora(), lead.id);
+  db.prepare("UPDATE submissions SET confirmacaoStatus = ? WHERE confirmacaoToken = ?")
+    .run(novoStatus, req.params.token);
+
+  res.json({ status: novoStatus });
+});
+
+// ── Fase 01: Recomendações inteligentes da IA (Rico) ───────────────────
+router.post("/campaigns/:id/recomendacoes", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ? AND companyId = ?").get(req.params.id, entityId);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+
+  const diagnostico = diagnosticoCampanha(campaign);
+
+  // Recomendações determinísticas baseadas no diagnóstico
+  const recomendacoes = [];
+  for (const r of diagnostico.recomendacoes || []) {
+    recomendacoes.push({ tipo: "recomendacao", texto: r, fonte: "diagnostico" });
+  }
+  for (const b of diagnostico.bloqueios || []) {
+    recomendacoes.push({ tipo: "bloqueio", texto: b, fonte: "diagnostico" });
+  }
+
+  // Recomendações adicionais baseadas no estado da campanha
+  const tarefas = JSON.parse(campaign.tarefas || "{}");
+  if (!Object.keys(tarefas).length || Object.values(tarefas).every((v) => !Number(v))) {
+    recomendacoes.push({ tipo: "recomendacao", texto: "Configure os valores de remuneração por atividade para atrair profissionais qualificados.", fonte: "analise" });
+  }
+  if (!Number(campaign.orcamento)) {
+    recomendacoes.push({ tipo: "bloqueio", texto: "Defina o orçamento da campanha antes de publicar.", fonte: "analise" });
+  }
+  if (!Number(campaign.metaQuantitativa)) {
+    recomendacoes.push({ tipo: "recomendacao", texto: "Defina uma meta quantitativa para calcular o planejamento reverso e otimizar a verba.", fonte: "analise" });
+  }
+
+  res.json({ recomendacoes, diagnostico });
 });
 
 export default router;

@@ -3543,5 +3543,31 @@ db.exec(`CREATE TABLE IF NOT EXISTS canais_conexoes (
 )`);
 adicionarColuna("canais_conexoes", "apelido", "TEXT DEFAULT ''");
 
+// ── Fase 01: Ciclo completo de campanha ───────────────────────────────
+adicionarColuna("campaigns", "metaQuantitativa", "INTEGER DEFAULT 0");
+adicionarColuna("campaigns", "planejamentoReverso", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "perguntasQualificacao", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "criteriosQualificacaoLeads", "TEXT DEFAULT '[]'");
+adicionarColuna("campaigns", "confirmacaoContato", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "remuneracaoPorOrigem", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "otimizacaoVerba", "TEXT DEFAULT '{}'");
+adicionarColuna("campaigns", "recomendacoesIA", "TEXT DEFAULT '[]'");
+
+// Leads: qualificação e confirmação
+adicionarColuna("leads", "qualificacaoScore", "INTEGER DEFAULT 0");
+adicionarColuna("leads", "qualificacaoClassificacao", "TEXT DEFAULT 'pendente'");
+adicionarColuna("leads", "qualificacaoRespostas", "TEXT DEFAULT '[]'");
+adicionarColuna("leads", "confirmacaoStatus", "TEXT DEFAULT 'nao_enviada'");
+adicionarColuna("leads", "confirmacaoToken", "TEXT DEFAULT ''");
+adicionarColuna("leads", "confirmacaoEnviadaEm", "INTEGER");
+adicionarColuna("leads", "confirmacaoRespondidaEm", "INTEGER");
+adicionarColuna("leads", "confirmacaoCanal", "TEXT DEFAULT ''");
+adicionarColuna("leads", "origemLead", "TEXT DEFAULT 'profissional'");
+
+// Submissions: confirmação e auditoria
+adicionarColuna("submissions", "confirmacaoExigida", "INTEGER DEFAULT 0");
+adicionarColuna("submissions", "confirmacaoStatus", "TEXT DEFAULT 'nao_enviada'");
+adicionarColuna("submissions", "confirmacaoToken", "TEXT DEFAULT ''");
+
 export default db;
 export { uid, agora };

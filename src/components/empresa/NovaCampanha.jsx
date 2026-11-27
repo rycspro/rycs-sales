@@ -22,6 +22,10 @@ import {
   precisaDeReuniao, precisaDePresencial,
 } from "../../../shared/campaignEngine.js";
 import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
+import { perguntaMetaQuantitativa, calcularPlanejamentoReverso } from "../../../shared/planejamentoReverso.js";
+import { TIPOS_RESPOSTA, CLASSIFICACOES, calcularScore, criarPergunta, criarCriterio, perguntasVisiveis } from "../../../shared/qualificacaoLeads.js";
+import { CANAIS_CONFIRMACAO, configConfirmacaoPadrao } from "../../../shared/confirmacaoContato.js";
+import { investimentoRecomendado, capacidadeOperacional } from "../../../shared/otimizacaoVerba.js";
 
 const OPC_PAISES = PAISES.map((p) => ({ value: p.code, label: p.nome }));
 const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
@@ -715,6 +719,52 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 onChange={(e) => set("descricao", e.target.value)}
                 placeholder="Ex.: Ligar para donos de restaurante e agendar uma demonstração do sistema." /></label>
           </div>
+
+          {/* Meta quantitativa + planejamento reverso */}
+          {campanha.objetivo && (() => {
+            const metaQ = perguntaMetaQuantitativa(campanha.objetivo);
+            const metaAtual = Number(campanha.metaQuantitativa) || 0;
+            const tarefas = campanha.tarefas || {};
+            const plan = metaAtual > 0 ? calcularPlanejamentoReverso({ objetivoChave: campanha.objetivo, metaQuantidade: metaAtual, tarefas }) : null;
+            return (
+              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <b style={{ color: "var(--brand)" }}><Target size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Meta da campanha</b>
+                  <div className="vx-mut" style={{ fontSize: 11.5 }}>Informe sua meta para calcularmos automaticamente o esforço necessário.</div>
+                </div>
+                <label><div className="vx-label">{metaQ.label}</div>
+                  <input className="vx-input" type="number" min="0" value={metaAtual || ""} placeholder={metaQ.placeholder}
+                    onChange={(e) => { const v = Math.max(0, Number(e.target.value) || 0); set("metaQuantitativa", v); }} />
+                </label>
+                {plan && plan.etapas.length > 0 && (
+                  <div style={{ marginTop: 14, padding: 14, background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
+                    <div className="vx-eyebrow" style={{ marginBottom: 10 }}>PLANEJAMENTO REVERSO {plan.fonte === "historico" ? "(dados reais)" : "(estimativa)"}</div>
+                    <div style={{ display: "grid", gap: 6 }}>
+                      {plan.etapas.map((e, i) => (
+                        <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, padding: "4px 0", borderBottom: i < plan.etapas.length - 1 ? "1px solid var(--brand-100)" : "none" }}>
+                          <span style={{ color: e.tipo === "meta" ? "var(--brand)" : "var(--ink)", fontWeight: e.tipo === "meta" ? 700 : 400 }}>{e.nome}</span>
+                          <span className="vx-mono" style={{ fontWeight: 700, color: "var(--brand)" }}>{e.quantidade}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+                      <div style={{ textAlign: "center", padding: "8px 0" }}>
+                        <div className="vx-mut" style={{ fontSize: 11 }}>Profissionais sugeridos</div>
+                        <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{plan.profissionaisRecomendados}</div>
+                      </div>
+                      {plan.investimentoEstimado > 0 && (
+                        <div style={{ textAlign: "center", padding: "8px 0" }}>
+                          <div className="vx-mut" style={{ fontSize: 11 }}>Investimento estimado</div>
+                          <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{money(plan.investimentoEstimado)}</div>
+                        </div>
+                      )}
+                    </div>
+                    {plan.aviso && <div className="vx-mut" style={{ fontSize: 11, marginTop: 8, fontStyle: "italic" }}>{plan.aviso}</div>}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Modelo de trabalho */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
@@ -1434,6 +1484,108 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             )}
           </div>}
 
+          {/* Perguntas de qualificação */}
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div>
+                <b style={{ color: "var(--brand)" }}><ClipboardCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Qualificação de leads</b>
+                <div className="vx-mut" style={{ fontSize: 11.5 }}>Perguntas que o profissional faz ao contato para qualificá-lo.</div>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button className="vx-btn vx-btn-sm" style={{ minHeight: 36, fontSize: 12 }} onClick={() => {
+                  const novas = [...(campanha.perguntasQualificacao || []), criarPergunta({ ordem: (campanha.perguntasQualificacao || []).length + 1 })];
+                  set("perguntasQualificacao", novas);
+                }}><Plus size={13} /> Pergunta</button>
+                {rascunhoId && <button className="vx-btn vx-btn-sm" style={{ minHeight: 36, fontSize: 12, background: "var(--brand-50)", color: "var(--brand)", border: "1px solid var(--brand-100)" }} onClick={async () => {
+                  const r = await api(`/campaigns/${rascunhoId}/gerar-qualificacao`, {});
+                  if (r && !r.error) {
+                    set("perguntasQualificacao", r.perguntas);
+                    set("criteriosQualificacaoLeads", r.criterios);
+                  }
+                }}><Sparkles size={13} /> Sugerir com IA</button>}
+              </div>
+            </div>
+            {(campanha.perguntasQualificacao || []).length > 0 && (
+              <div style={{ display: "grid", gap: 8 }}>
+                {(campanha.perguntasQualificacao || []).map((p, idx) => (
+                  <div key={p.id} style={{ padding: "12px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                      <span className="vx-mut" style={{ fontSize: 11, minWidth: 20, paddingTop: 8 }}>{idx + 1}.</span>
+                      <div style={{ flex: 1 }}>
+                        <input className="vx-input" style={{ marginBottom: 6, fontSize: 13 }} value={p.texto} placeholder="Texto da pergunta"
+                          onChange={(e) => { const novas = [...(campanha.perguntasQualificacao || [])]; novas[idx] = { ...p, texto: e.target.value }; set("perguntasQualificacao", novas); }} />
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <select className="vx-input" style={{ flex: 1, minWidth: 120, fontSize: 12 }} value={p.tipo}
+                            onChange={(e) => { const novas = [...(campanha.perguntasQualificacao || [])]; novas[idx] = { ...p, tipo: e.target.value }; set("perguntasQualificacao", novas); }}>
+                            {TIPOS_RESPOSTA.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                          </select>
+                          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, cursor: "pointer" }}>
+                            <input type="checkbox" checked={!!p.obrigatoria}
+                              onChange={(e) => { const novas = [...(campanha.perguntasQualificacao || [])]; novas[idx] = { ...p, obrigatoria: e.target.checked }; set("perguntasQualificacao", novas); }} /> Obrigatória
+                          </label>
+                        </div>
+                        {(p.tipo === "escolha_unica" || p.tipo === "multipla_escolha") && (
+                          <input className="vx-input" style={{ marginTop: 6, fontSize: 12 }} value={(p.opcoes || []).join(", ")} placeholder="Opções separadas por vírgula"
+                            onChange={(e) => { const novas = [...(campanha.perguntasQualificacao || [])]; novas[idx] = { ...p, opcoes: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) }; set("perguntasQualificacao", novas); }} />
+                        )}
+                      </div>
+                      <button style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--danger, #dc2626)" }}
+                        onClick={() => { const novas = (campanha.perguntasQualificacao || []).filter((_, i) => i !== idx); set("perguntasQualificacao", novas); }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!(campanha.perguntasQualificacao || []).length && (
+              <div className="vx-mut" style={{ fontSize: 12, textAlign: "center", padding: "16px 0" }}>
+                Nenhuma pergunta configurada. Clique em "Sugerir com IA" para gerar automaticamente ou adicione manualmente.
+              </div>
+            )}
+          </div>
+
+          {/* Confirmação de contato */}
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ marginBottom: 12 }}>
+              <b style={{ color: "var(--brand)" }}><ShieldCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Confirmação de contato</b>
+              <div className="vx-mut" style={{ fontSize: 11.5 }}>O cliente recebe um link para confirmar que o contato realmente aconteceu.</div>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13 }}>
+              <input type="checkbox" checked={!!(campanha.confirmacaoContato || {}).habilitada}
+                onChange={(e) => set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), habilitada: e.target.checked })} />
+              <span>Exigir confirmação do cliente por link</span>
+            </label>
+            {(campanha.confirmacaoContato || {}).habilitada && (
+              <div style={{ marginTop: 12 }}>
+                <div className="vx-label">Canais de envio</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {CANAIS_CONFIRMACAO.map((c) => {
+                    const canaisAtivos = (campanha.confirmacaoContato || {}).canais || ["whatsapp", "email"];
+                    const ativo = canaisAtivos.includes(c.id);
+                    return (
+                      <button key={c.id} style={{
+                        padding: "8px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                        border: `1px solid ${ativo ? SEL.border : SEL.borderOff}`,
+                        background: ativo ? SEL.bg : SEL.bgOff,
+                        color: ativo ? "var(--brand)" : "var(--text-2)",
+                      }} onClick={() => {
+                        const novos = ativo ? canaisAtivos.filter((x) => x !== c.id) : [...canaisAtivos, c.id];
+                        set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), canais: novos });
+                      }}>{c.nome}</button>
+                    );
+                  })}
+                </div>
+                <label style={{ display: "block", marginTop: 10 }}>
+                  <div className="vx-label">Tempo para responder (horas)</div>
+                  <input className="vx-input" type="number" min="1" max="168" style={{ maxWidth: 120 }}
+                    value={(campanha.confirmacaoContato || {}).expiracaoHoras || 48}
+                    onChange={(e) => set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), expiracaoHoras: Number(e.target.value) || 48 })} />
+                </label>
+              </div>
+            )}
+          </div>
+
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(0)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" onClick={() => setPasso(2)}>Quem vai trabalhar? <ArrowRight size={14} /></button>
@@ -1975,6 +2127,35 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           </>)}
 
+          {/* Remuneração por origem do lead */}
+          {campanha.origemLeads === "mista" && (
+            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+              <div style={{ marginBottom: 12 }}>
+                <b style={{ color: "var(--brand)" }}><HandCoins size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Remuneração por origem do lead</b>
+                <div className="vx-mut" style={{ fontSize: 11.5 }}>Leads da empresa e leads encontrados pelo profissional podem ter valores diferentes.</div>
+              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, marginBottom: 12 }}>
+                <input type="checkbox" checked={!!(campanha.remuneracaoPorOrigem || {}).diferenciarPorOrigem}
+                  onChange={(e) => set("remuneracaoPorOrigem", { ...(campanha.remuneracaoPorOrigem || {}), diferenciarPorOrigem: e.target.checked })} />
+                <span>Diferenciar valores por origem</span>
+              </label>
+              {(campanha.remuneracaoPorOrigem || {}).diferenciarPorOrigem && (
+                <div className="vx-grid vx-g2">
+                  <label><div className="vx-label">Multiplicador — Lead da empresa</div>
+                    <input className="vx-input" type="number" step="0.1" min="0" value={(campanha.remuneracaoPorOrigem || {}).fatorEmpresa || 1}
+                      onChange={(e) => set("remuneracaoPorOrigem", { ...(campanha.remuneracaoPorOrigem || {}), diferenciarPorOrigem: true, fatorEmpresa: Number(e.target.value) || 1 })} />
+                    <div className="vx-mut" style={{ fontSize: 11 }}>Valor padrão: 1x</div>
+                  </label>
+                  <label><div className="vx-label">Multiplicador — Lead do profissional</div>
+                    <input className="vx-input" type="number" step="0.1" min="0" value={(campanha.remuneracaoPorOrigem || {}).fatorProfissional || 1.5}
+                      onChange={(e) => set("remuneracaoPorOrigem", { ...(campanha.remuneracaoPorOrigem || {}), diferenciarPorOrigem: true, fatorProfissional: Number(e.target.value) || 1.5 })} />
+                    <div className="vx-mut" style={{ fontSize: 11 }}>Valor padrão: 1.5x (paga mais porque o profissional encontrou)</div>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Verba da campanha <ArrowRight size={14} /></button>
@@ -2062,6 +2243,30 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               ))}
             </div>
           </div>
+
+          {/* Otimização da verba com base na meta */}
+          {Number(campanha.metaQuantitativa) > 0 && (() => {
+            const inv = investimentoRecomendado({ metaQuantidade: campanha.metaQuantitativa, tarefas, etapasPlanejamento: (JSON.parse(campanha.planejamentoReverso || "{}")).etapas || [] });
+            if (!inv) return null;
+            const suficiente = orcamentoAtual >= inv.investimentoRecomendado;
+            return (
+              <div className="vx-card" style={{ padding: 16, marginTop: 14, background: suficiente ? "rgba(22,163,74,0.04)" : "rgba(245,158,11,0.04)", border: `1px solid ${suficiente ? "rgba(22,163,74,0.2)" : "rgba(245,158,11,0.2)"}` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <TrendingUp size={16} color={suficiente ? "#16A34A" : "#F59E0B"} />
+                  <b style={{ fontSize: 13, color: suficiente ? "#16A34A" : "#F59E0B" }}>
+                    {suficiente ? "Verba adequada para sua meta" : "Verba abaixo do recomendado"}
+                  </b>
+                </div>
+                <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.6 }}>
+                  Para atingir <b>{campanha.metaQuantitativa} {perguntaMetaQuantitativa(campanha.objetivo).unidade}</b>, o investimento recomendado é de <b className="vx-mono">{money(inv.investimentoRecomendado)}</b> (mínimo: {money(inv.investimentoMinimo)}).
+                  {!suficiente && orcamentoAtual > 0 && ` Com ${money(orcamentoAtual)}, você pode alcançar aproximadamente ${Math.round((orcamentoAtual / inv.investimentoRecomendado) * campanha.metaQuantitativa)} ${perguntaMetaQuantitativa(campanha.objetivo).unidade}.`}
+                </div>
+                {!suficiente && <button className="vx-btn vx-btn-sm" style={{ marginTop: 8, fontSize: 12 }} onClick={() => set("orcamento", inv.investimentoRecomendado)}>
+                  Usar valor recomendado: {money(inv.investimentoRecomendado)}
+                </button>}
+              </div>
+            );
+          })()}
 
           {/* Valor total + simulação */}
           {orcamentoAtual > 0 && (
@@ -2343,6 +2548,39 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               </div>
             )}
           </div>
+
+          {/* Resumo dos novos recursos configurados */}
+          {(Number(campanha.metaQuantitativa) > 0 || (campanha.perguntasQualificacao || []).length > 0 || (campanha.confirmacaoContato || {}).habilitada || (campanha.remuneracaoPorOrigem || {}).diferenciarPorOrigem) && (
+            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+              <div className="vx-eyebrow" style={{ marginBottom: 10 }}>RECURSOS AVANÇADOS</div>
+              <div style={{ display: "grid", gap: 8, fontSize: 13 }}>
+                {Number(campanha.metaQuantitativa) > 0 && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <Target size={14} color="var(--brand)" />
+                    <span>Meta: <b>{campanha.metaQuantitativa} {perguntaMetaQuantitativa(campanha.objetivo).unidade}</b></span>
+                  </div>
+                )}
+                {(campanha.perguntasQualificacao || []).length > 0 && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <ClipboardCheck size={14} color="var(--brand)" />
+                    <span><b>{(campanha.perguntasQualificacao || []).length}</b> pergunta(s) de qualificação</span>
+                  </div>
+                )}
+                {(campanha.confirmacaoContato || {}).habilitada && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <ShieldCheck size={14} color="var(--brand)" />
+                    <span>Confirmação de contato via {((campanha.confirmacaoContato || {}).canais || []).join(", ")}</span>
+                  </div>
+                )}
+                {(campanha.remuneracaoPorOrigem || {}).diferenciarPorOrigem && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <HandCoins size={14} color="var(--brand)" />
+                    <span>Remuneração diferenciada por origem ({(campanha.remuneracaoPorOrigem || {}).fatorEmpresa || 1}x empresa / {(campanha.remuneracaoPorOrigem || {}).fatorProfissional || 1.5}x profissional)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(4)}><ArrowLeft size={14} /> Voltar</button>

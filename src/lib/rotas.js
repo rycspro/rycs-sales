@@ -76,6 +76,10 @@ export function resolver(caminho = typeof window !== "undefined" ? window.locati
     const token = bruto.slice("/confirmar-email/".length).split("/")[0];
     if (token) return { tipo: "confirmar-email", token };
   }
+  if (bruto.startsWith("/confirmar/")) {
+    const token = bruto.slice("/confirmar/".length).split("/")[0];
+    if (token) return { tipo: "confirmar-contato", token };
+  }
   if (p === ROTAS.login || p === "/login") return { tipo: "login" };
   // O app não tem landing: a raiz já abre o fluxo de entrada (idioma → conta →
   // login). A LP institucional vive só em rycs.pro.

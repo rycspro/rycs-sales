@@ -13,6 +13,7 @@ import { useRota, guardarConvite, guardarConviteOnboarding, lerConviteOnboarding
 import EtapaAcesso from "./components/onboarding/EtapaAcesso.jsx";
 import EntradaEmpresa from "./components/auth/EntradaEmpresa.jsx";
 import ConfirmarEmail from "./components/auth/ConfirmarEmail.jsx";
+import ConfirmarContato from "./components/auth/ConfirmarContato.jsx";
 const LandingPage = lazy(() => import("./components/LandingPage.jsx"));
 const Vendedor = lazy(() => import("./components/vendedor/index.jsx"));
 const Empresa = lazy(() => import("./components/empresa/index.jsx"));
@@ -362,6 +363,7 @@ export default function App() {
           : rota.tipo === "onboarding" || rota.tipo === "convite-onboarding"
             ? <EtapaAcesso conviteToken={rota.tipo === "convite-onboarding" ? rota.token : null}
                 onRegister={(d) => registrar(d, { silencioso: true })} onLogin={(e, s) => login(e, s, { silencioso: true })} />
+          : rota.tipo === "confirmar-contato" ? <ConfirmarContato token={rota.token} />
           : rota.tipo === "confirmar-email" ? <ConfirmarEmail token={rota.token} onLogin={loginDireto} />
           : <Login onLogin={login} beta={environment === "beta"} />}
         <AvisoCookies />
