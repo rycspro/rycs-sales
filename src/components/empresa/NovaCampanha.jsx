@@ -1284,16 +1284,15 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <b style={{ color: "var(--brand)" }}>Como dividir os contatos entre os profissionais?</b><Tag obrigatorio={false} />
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>Defina como os contatos serão distribuídos para a equipe.</div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <CardOptionLarge
+              <div style={{ display: "grid", gap: 8 }}>
+                <CardOption
                   selected={!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica"}
                   onClick={() => { set("distribuicaoLeads", "automatica"); set("limiteLeadsSimultaneos", 0); set("limiteLeadsDia", 0); set("prazoContatoHoras", 0); set("prazoInatividadeHoras", 0); }}
                   icon={Zap}
                   title="Distribuição inteligente"
                   subtitle="A RYCS organiza a fila e distribui os contatos conforme a capacidade da equipe."
-                  badge="Recomendado"
                 />
-                <CardOptionLarge
+                <CardOption
                   selected={campanha.distribuicaoLeads === "manual"}
                   onClick={() => set("distribuicaoLeads", "manual")}
                   icon={SlidersHorizontal}
