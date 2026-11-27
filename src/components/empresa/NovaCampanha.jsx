@@ -111,6 +111,31 @@ function Tag({ obrigatorio }) {
   );
 }
 
+function CardOptionLarge({ selected, onClick, icon: Icon, title, subtitle, badge }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        position: "relative", padding: "20px 18px 18px", cursor: "pointer", textAlign: "left", width: "100%",
+        border: `1.5px solid ${selected ? "var(--brand)" : "var(--border)"}`,
+        background: selected ? "var(--brand-50, #EFF6FF)" : "var(--surface-2, #F9FAFB)",
+        borderRadius: 12, transition: "border-color .15s, background .15s",
+      }}
+    >
+      {selected && (
+        <div style={{ position: "absolute", top: 12, right: 12, width: 22, height: 22, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Check size={13} color="#fff" />
+        </div>
+      )}
+      {Icon && <Icon size={28} color="var(--brand)" style={{ marginBottom: 12 }} />}
+      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink, #171717)", marginBottom: 6 }}>{title}</div>
+      {subtitle && <div className="vx-mut" style={{ fontSize: 12.5, lineHeight: 1.5 }}>{subtitle}</div>}
+      {badge && <div style={{ marginTop: 10, fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", color: "var(--brand)", textTransform: "uppercase" }}>{badge}</div>}
+    </button>
+  );
+}
+
 function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }) {
   return (
     <button
@@ -1250,9 +1275,22 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <b style={{ color: "var(--brand)" }}>Como dividir os contatos entre os profissionais?</b><Tag obrigatorio={false} />
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>Defina como os contatos serão distribuídos para a equipe.</div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <CardOption selected={!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica"} onClick={() => { set("distribuicaoLeads", "automatica"); set("limiteLeadsSimultaneos", 0); set("limiteLeadsDia", 0); set("prazoContatoHoras", 0); set("prazoInatividadeHoras", 0); }} icon={Zap} title="Automático (recomendado)" subtitle="A plataforma distribui os contatos de forma equilibrada entre os profissionais." />
-                <CardOption selected={campanha.distribuicaoLeads === "manual"} onClick={() => set("distribuicaoLeads", "manual")} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Você define quantos contatos cada profissional recebe e os prazos." />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <CardOptionLarge
+                  selected={!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica"}
+                  onClick={() => { set("distribuicaoLeads", "automatica"); set("limiteLeadsSimultaneos", 0); set("limiteLeadsDia", 0); set("prazoContatoHoras", 0); set("prazoInatividadeHoras", 0); }}
+                  icon={Zap}
+                  title="Distribuição inteligente"
+                  subtitle="A RYCS organiza a fila e distribui os contatos conforme a capacidade da equipe."
+                  badge="Recomendado"
+                />
+                <CardOptionLarge
+                  selected={campanha.distribuicaoLeads === "manual"}
+                  onClick={() => set("distribuicaoLeads", "manual")}
+                  icon={SlidersHorizontal}
+                  title="Distribuição personalizada"
+                  subtitle="Você define os limites e prazos de atendimento."
+                />
               </div>
               {(!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica") && (
                 <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
