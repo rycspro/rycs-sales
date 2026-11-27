@@ -1852,7 +1852,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                               <select className="vx-input" value={cfg.nivelExperiencia || "indiferente"} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
                                 {NIVEIS_EXPERIENCIA.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
                               </select></label>
-                            <label><div className="vx-label">Como entra?</div>
+                            <label><div className="vx-label">Aprovação da candidatura</div>
                               <select className="vx-input" value={cfg.processoAdmissao || "manual"} onChange={(e) => setConfig("processoAdmissao", e.target.value)}>
                                 {PROCESSOS_ADMISSAO.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                               </select></label>
@@ -1932,10 +1932,23 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Nível de experiência */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Qual nível de experiência você procura?</b><Tag obrigatorio={false} /></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Experiência</b><Tag obrigatorio={false} /></div>
             <div style={{ display: "grid", gap: 8 }}>
               {NIVEIS_EXPERIENCIA.map((n) => (
                 <CardOption key={n.id} selected={campanha.nivelExperiencia === n.id} onClick={() => set("nivelExperiencia", n.id)} title={n.label} subtitle={n.descricao} />
+              ))}
+            </div>
+          </div>
+
+          {/* Aprovação da candidatura */}
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ marginBottom: 12 }}>
+              <b style={{ color: "var(--brand)" }}>Aprovação da candidatura</b><Tag obrigatorio={false} />
+              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 2 }}>Controla como os profissionais entram na campanha, não a aprovação das atividades.</div>
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {PROCESSOS_ADMISSAO.map((p) => (
+                <CardOption key={p.id} selected={campanha.processoAdmissao === p.id} onClick={() => set("processoAdmissao", p.id)} title={p.label} subtitle={p.descricao} />
               ))}
             </div>
           </div>
@@ -2156,23 +2169,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           <CardOption selected={cfg.remuneracaoCumulativa !== false} onClick={() => setConfig("remuneracaoCumulativa", true)} title="Pagar por cada etapa" subtitle="O profissional ganha por cada atividade que completar." />
                           <CardOption selected={cfg.remuneracaoCumulativa === false} onClick={() => setConfig("remuneracaoCumulativa", false)} title="Pagar só pelo resultado final" subtitle="Só paga quando o profissional chega ao último passo." />
                         </div>
-                      </div>
-                    )}
-                    {cfg.modoAtividades && (
-                      <div style={{ marginTop: 14 }}>
-                        <div className="vx-label" style={{ marginBottom: 8 }}>Gestão operacional</div>
-                        <div style={{ display: "grid", gap: 8 }}>
-                          <CardOption selected={!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", false)} icon={Zap} title="Automático (recomendado)" subtitle="A RYCS define prazos e limites automaticamente." />
-                          <CardOption selected={!!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", true)} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Defina orçamento e prazos manualmente." />
-                        </div>
-                        {!!cfg.gestaoManual && (
-                          <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
-                            <label><div className="vx-label">Orçamento para esta função</div>
-                              <CampoOrcamento value={cfg.orcamento || 0} onChange={(v) => setConfig("orcamento", v)} /></label>
-                            <label><div className="vx-label">Prazo por atividade (horas)</div>
-                              <input className="vx-input vx-mono" type="number" min="1" value={cfg.prazoHoras || 24} onChange={(e) => setConfig("prazoHoras", Number(e.target.value))} /></label>
-                          </div>
-                        )}
                       </div>
                     )}
                     {cfg.modoAtividades && (
@@ -2399,10 +2395,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                               {recomendandoEvidencias ? <><Loader size={11} style={{ animation: "spin 1s linear infinite" }} /> Sugerindo…</> : <><Sparkles size={11} /> Sugerir comprovações</>}
                             </button>
                           </div>
-                          <label><div className="vx-label">Método de aprovação</div>
-                            <select className="vx-input" value={fg.metodoAprovacao || "manual"} onChange={(e) => upd("metodoAprovacao", e.target.value)}>
-                              {METODOS_APROVACAO.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
-                            </select></label>
                           <label><div className="vx-label">Descrição (opcional)</div>
                             <input className="vx-input" placeholder="Descrição interna ou visível ao profissional" value={fg.descricao || ""} onChange={(e) => upd("descricao", e.target.value)} /></label>
 
@@ -2455,6 +2447,27 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* ── CONFIGURAÇÕES COMUNS AOS DOIS MODOS ── */}
 
+          {/* Validação de resultados — fonte única de verdade para campanhas individuais */}
+          {campanha.modoAcoesRemuneradas && (
+            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+              <div className="vx-label" style={{ marginBottom: 8 }}>Como os resultados serão validados?</div>
+              <div className="vx-mut" style={{ fontSize: 11.5, marginBottom: 10 }}>Define como os resultados entregues são aprovados para pagamento.</div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {METODOS_APROVACAO.map((m) => {
+                  const MIcon = m.icon;
+                  return (
+                    <CardOption key={m.id} selected={(campanha.aprovacaoPagamentos || "manual") === m.id}
+                      onClick={() => set("aprovacaoPagamentos", m.id)} icon={MIcon} title={m.nome}
+                      subtitle={m.id === "automatica" ? "O resultado é validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e valida dentro dos critérios definidos." : "Você revisa e aprova manualmente cada resultado entregue."} />
+                  );
+                })}
+              </div>
+              <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <ShieldCheck size={14} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <span className="vx-mut" style={{ fontSize: 11.5 }}>Independente da modalidade, as comprovações obrigatórias da RYCS, a auditoria antifraude e as regras financeiras continuam sendo respeitadas.</span>
+              </div>
+            </div>
+          )}
 
           </>)}
 
@@ -2804,24 +2817,24 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Gestão operacional</div>
-              <div className="vx-mut" style={{ fontSize: 12.5 }}>Como a campanha será acompanhada.</div>
+              <div className="vx-mut" style={{ fontSize: 12.5 }}>Como a campanha será acompanhada e distribuída.</div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: gestaoModo === "manual" ? 14 : 0 }}>
-              <div onClick={() => set("gestaoOperacionalModo", "automatico")} style={{ padding: "16px 14px", borderRadius: 12, border: `1.5px solid ${gestaoModo === "automatico" ? "var(--brand)" : "var(--border)"}`, background: gestaoModo === "automatico" ? "var(--brand-50)" : "var(--surface)", cursor: "pointer" }}>
+              <div onClick={() => set("gestaoOperacionalModo", "automatico")} style={{ padding: "16px 14px", borderRadius: 12, border: `1.5px solid ${gestaoModo !== "manual" ? "var(--brand)" : "var(--border)"}`, background: gestaoModo !== "manual" ? "var(--brand-50)" : "var(--surface)", cursor: "pointer" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <Zap size={16} color={gestaoModo === "automatico" ? "var(--brand)" : "var(--muted)"} />
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo === "automatico" ? "var(--brand)" : "var(--text)" }}>Automático</div>
-                  {gestaoModo === "automatico" && <Check size={14} color="var(--brand)" style={{ marginLeft: "auto" }} />}
+                  <Zap size={16} color={gestaoModo !== "manual" ? "var(--brand)" : "var(--muted)"} />
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo !== "manual" ? "var(--brand)" : "var(--text)" }}>Automático <span style={{ fontSize: 11, fontWeight: 600 }}>(recomendado)</span></div>
+                  {gestaoModo !== "manual" && <Check size={14} color="var(--brand)" style={{ marginLeft: "auto" }} />}
                 </div>
-                <div className="vx-mut" style={{ fontSize: 12 }}>A RYCS gerencia prazos, alertas e indicadores automaticamente.</div>
+                <div className="vx-mut" style={{ fontSize: 12 }}>A RYCS gerencia prazos, limites e distribuição dos contatos.</div>
               </div>
               <div onClick={() => set("gestaoOperacionalModo", "manual")} style={{ padding: "16px 14px", borderRadius: 12, border: `1.5px solid ${gestaoModo === "manual" ? "var(--brand)" : "var(--border)"}`, background: gestaoModo === "manual" ? "var(--brand-50)" : "var(--surface)", cursor: "pointer" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                   <SlidersHorizontal size={16} color={gestaoModo === "manual" ? "var(--brand)" : "var(--muted)"} />
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo === "manual" ? "var(--brand)" : "var(--text)" }}>Manual</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo === "manual" ? "var(--brand)" : "var(--text)" }}>Eu quero controlar</div>
                   {gestaoModo === "manual" && <Check size={14} color="var(--brand)" style={{ marginLeft: "auto" }} />}
                 </div>
-                <div className="vx-mut" style={{ fontSize: 12 }}>Você define prazo, metas diárias e cria seus próprios controles.</div>
+                <div className="vx-mut" style={{ fontSize: 12 }}>Defina prazo, metas e crie seus próprios controles.</div>
               </div>
             </div>
             {gestaoModo === "manual" && (
