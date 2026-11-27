@@ -86,7 +86,7 @@ function CampoOrcamento({ value, onChange }) {
   );
 }
 
-const SEL = { bg: "#E4F0FF", border: "#318CE7", bgOff: "#FFFFFF", borderOff: "#E2E2E2" };
+const SEL = { bg: "var(--brand-50, #E4F0FF)", border: "var(--brand, #318CE7)", bgOff: "var(--surface, #FFFFFF)", borderOff: "var(--border, #E2E2E2)" };
 
 function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }) {
   return (
@@ -103,12 +103,12 @@ function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {Icon && <Icon size={18} color={selected ? "#318CE7" : "#6b7280"} />}
+        {Icon && <Icon size={18} color={selected ? "var(--brand)" : "var(--muted)"} />}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: selected ? 600 : 400, color: "#171717" }}>{title}</div>
+          <div style={{ fontSize: 13.5, fontWeight: selected ? 600 : 400, color: "var(--ink, #171717)" }}>{title}</div>
           {subtitle && <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>{subtitle}</div>}
         </div>
-        {selected && <Check size={16} color="#318CE7" />}
+        {selected && <Check size={16} color="var(--brand)" />}
       </div>
     </button>
   );
@@ -132,7 +132,7 @@ function ChipToggle({ items, value, onChange, multi = false }) {
           fontSize: 12.5, fontWeight: 500, cursor: "pointer",
           border: `1px solid ${isActive(item.id) ? SEL.border : SEL.borderOff}`,
           background: isActive(item.id) ? SEL.bg : SEL.bgOff,
-          color: isActive(item.id) ? "#171717" : "var(--text-2)",
+          color: isActive(item.id) ? "var(--ink, #171717)" : "var(--text-2)",
           transition: "all .15s",
         }}>
           {item.icon && <item.icon size={13} />}
@@ -354,6 +354,20 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
   const vis = useMemo(() => campanha ? camposVisiveis(campanha) : {}, [campanha]);
   const diag = useMemo(() => campanha ? diagnosticoCampanha(campanha, emp) : { pronta: false, bloqueios: [], recomendacoes: [] }, [campanha, emp]);
+
+  const secaoVisivel = useMemo(() => {
+    if (!campanha) return {};
+    return {
+      dadosBasicos: true,
+      modeloTrabalho: true,
+      mercado: !!campanha.modeloTrabalho,
+      origemLeads: !!campanha.mercado,
+      canais: !!campanha.origemLeads,
+      materiais: !!(campanha.canais && campanha.canais.length > 0),
+      fonteLeads: !!(campanha.canais && campanha.canais.length > 0),
+      estrutura: !!campanha.fonteLeads,
+    };
+  }, [campanha]);
 
   const escolher = (chaveUI) => {
     const objUI = OBJETIVOS_UI[chaveUI];
@@ -716,7 +730,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Restrição geográfica do profissional (só remoto) */}
           {campanha.modeloTrabalho === "remoto" && (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>De onde ele pode ser?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Aceita profissionais de qualquer lugar ou só de algumas regiões?</div></div>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização do profissional</b><div className="vx-mut" style={{ fontSize: 11.5 }}>De onde o profissional pode trabalhar? Aceita de qualquer lugar ou só de algumas regiões?</div></div>
               <div style={{ display: "grid", gap: 8 }}>
                 {Object.values(RESTRICOES_GEO).map((r) => (
                   <CardOption key={r.id} selected={campanha.restricaoGeo === r.id} onClick={() => set("restricaoGeo", r.id)} title={r.label} />
@@ -746,7 +760,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Território (presencial/híbrido) */}
           {(campanha.modeloTrabalho === "presencial" || campanha.modeloTrabalho === "hibrido") && (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Onde ele vai atuar?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Em qual cidade ou região o profissional vai trabalhar presencialmente?</div></div>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Território de atuação do profissional</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Em qual cidade ou região o profissional vai trabalhar presencialmente?</div></div>
               <div className="vx-grid vx-g2">
                 <label><div className="vx-label">Região</div>
                   <input className="vx-input" value={campanha.regiao} onChange={(e) => set("regiao", e.target.value)} placeholder="Ex.: interior de SP" /></label>
@@ -756,8 +770,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           )}
 
           {/* Mercado de atuação do cliente */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Onde estão seus clientes?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Em qual mercado os profissionais vão vender para você?</div></div>
+          {secaoVisivel.mercado && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização dos seus clientes</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde estão os clientes que o profissional vai contatar?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {Object.values(MERCADOS).map((m) => (
                 <CardOption key={m.id} selected={campanha.mercado === m.id} onClick={() => set("mercado", m.id)} title={m.label} />
@@ -769,20 +783,20 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <MultiSelect opcoes={OPC_PAISES} valor={campanha.mercadoPaises || []} onChange={(v) => set("mercadoPaises", v)} placeholder="Selecione os países" />
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Origem dos leads */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          {secaoVisivel.origemLeads && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>De onde vêm os contatos?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Como os profissionais vão conseguir os contatos para trabalhar?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {Object.values(ORIGENS_LEAD).map((o) => (
                 <CardOption key={o.id} selected={campanha.origemLeads === o.id} onClick={() => set("origemLeads", o.id)} title={o.label} />
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Canais */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          {secaoVisivel.canais && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Por onde ele vai falar com os contatos?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione os meios de comunicação que o profissional pode usar.</div></div>
             <ChipToggle
               items={CANAIS.map((c) => ({ id: c.id, nome: c.nome, icon: ICONES_CANAL[c.id] || Globe }))}
@@ -790,10 +804,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               onChange={(v) => set("canais", v)}
               multi
             />
-          </div>
+          </div>}
 
           {/* Materiais e treinamento (unificado) */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          {secaoVisivel.materiais && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
               <b style={{ color: "var(--brand)" }}>Materiais e treinamento</b>
               <div className="vx-mut" style={{ fontSize: 11.5 }}>Adicione arquivos, treinamentos e conteúdos que vão ajudar o profissional.</div>
@@ -801,7 +815,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
               {/* Enviar arquivos */}
               <div
-                onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#318CE7"; }}
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "var(--brand)"; }}
                 onDragLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -866,7 +880,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                         {arq.status === "ok" && "Enviado"}
                         {arq.status === "erro" && <span style={{ color: "#DC2626" }}>{arq.erro || "Erro no envio"}</span>}
                       </div>
-                      {arq.status === "enviando" && <div style={{ height: 3, borderRadius: 2, background: "var(--border)", marginTop: 4, overflow: "hidden" }}><div style={{ height: "100%", width: `${uploadProgresso[arq.id] || 0}%`, background: "#318CE7", borderRadius: 2, transition: "width .2s" }} /></div>}
+                      {arq.status === "enviando" && <div style={{ height: 3, borderRadius: 2, background: "var(--border)", marginTop: 4, overflow: "hidden" }}><div style={{ height: "100%", width: `${uploadProgresso[arq.id] || 0}%`, background: "var(--brand)", borderRadius: 2, transition: "width .2s" }} /></div>}
                     </div>
                     {arq.status !== "enviando" && (
                       <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setUploadQueue((prev) => prev.filter((a) => a.id !== arq.id))} style={{ padding: 2 }}><X size={14} /></button>
@@ -874,7 +888,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   </div>
                 ))}
                 <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                  <button className="vx-btn vx-btn-primary vx-btn-sm" disabled={enviandoMateriais || uploadQueue.every((a) => a.status === "ok")} style={{ background: "#318CE7", borderColor: "#318CE7" }}
+                  <button className="vx-btn vx-btn-primary vx-btn-sm" disabled={enviandoMateriais || uploadQueue.every((a) => a.status === "ok")} style={{ background: "var(--brand)", borderColor: "var(--brand)" }}
                     onClick={async () => {
                       setEnviandoMateriais(true);
                       const vinculados = [...(campanha.materiaisVinculados || [])];
@@ -949,7 +963,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                         <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mat.nome}</div>
                         <div className="vx-mut" style={{ fontSize: 11, display: "flex", gap: 8 }}>
                           <span>{mat.categoria || "arquivo"}{mat.tamanho ? ` · ${(mat.tamanho / 1024).toFixed(0)} KB` : ""}</span>
-                          <span style={{ color: mat.origem === "upload" ? "#318CE7" : "var(--brand)" }}>{mat.origem === "upload" ? "Enviado" : "Biblioteca"}</span>
+                          <span style={{ color: "var(--brand)" }}>{mat.origem === "upload" ? "Enviado" : "Biblioteca"}</span>
                         </div>
                       </div>
                       <select className="vx-input" style={{ width: 140, fontSize: 11.5, height: 28, padding: "0 8px" }}
@@ -973,7 +987,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.5 }}>O profissional só trabalha depois de concluir os treinamentos obrigatórios.</div>
               </div>
             </label>
-          </div>
+          </div>}
 
           {/* Modal Criar com IA */}
           {modalTreinamentoIA && (
@@ -991,7 +1005,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   {Object.entries(MODELOS_TREINAMENTO).map(([k, m]) => (
                     <button key={k} onClick={() => setModeloTreinamento(k)}
                       style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", border: `1px solid ${modeloTreinamento === k ? SEL.border : SEL.borderOff}`, borderRadius: 10, background: modeloTreinamento === k ? SEL.bg : SEL.bgOff, cursor: "pointer", textAlign: "left", width: "100%", transition: "border-color .15s, background .15s" }}>
-                      <div style={{ width: 20, height: 20, borderRadius: "50%", border: `1.5px solid ${modeloTreinamento === k ? "#318CE7" : "var(--border)"}`, background: modeloTreinamento === k ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: "50%", border: `1.5px solid ${modeloTreinamento === k ? "var(--brand)" : "var(--border)"}`, background: modeloTreinamento === k ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         {modeloTreinamento === k && <Check size={12} color="#fff" />}
                       </div>
                       <div>
@@ -1003,7 +1017,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 </div>
                 <div style={{ padding: "14px 24px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "flex-end", gap: 8 }}>
                   <button className="vx-btn vx-btn-sm" onClick={() => setModalTreinamentoIA(false)}>Cancelar</button>
-                  <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={gerandoTreinamento} style={{ background: "#318CE7", borderColor: "#318CE7" }}
+                  <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={gerandoTreinamento} style={{ background: "var(--brand)", borderColor: "var(--brand)" }}
                     onClick={async () => {
                       await gerarTreinamentoComIA();
                       setModalTreinamentoIA(false);
@@ -1060,11 +1074,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           return (
                             <button key={mat.id} onClick={() => setBibliotecaSel((prev) => sel ? prev.filter((x) => x !== mat.id) : [...prev, mat.id])}
                               style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: `1px solid ${sel ? SEL.border : SEL.borderOff}`, borderRadius: 8, background: sel ? SEL.bg : SEL.bgOff, cursor: "pointer", width: "100%", textAlign: "left", transition: "border-color .15s, background .15s" }}>
-                              <div style={{ width: 20, height: 20, borderRadius: 4, border: `1.5px solid ${sel ? "#318CE7" : "var(--border)"}`, background: sel ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              <div style={{ width: 20, height: 20, borderRadius: 4, border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`, background: sel ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                                 {sel && <Check size={12} color="#fff" />}
                               </div>
                               <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                <IconeMat size={16} color={sel ? "#318CE7" : "var(--muted)"} />
+                                <IconeMat size={16} color={sel ? "var(--brand)" : "var(--muted)"} />
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 13, fontWeight: sel ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{mat.nome}</div>
@@ -1081,7 +1095,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   <span className="vx-mut" style={{ fontSize: 13 }}>{bibliotecaSel.length} material(is) selecionado(s)</span>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button className="vx-btn vx-btn-sm" onClick={() => setModalBiblioteca(false)}>Cancelar</button>
-                    <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={!bibliotecaSel.length} style={{ background: "#318CE7", borderColor: "#318CE7" }}
+                    <button className="vx-btn vx-btn-sm vx-btn-primary" disabled={!bibliotecaSel.length} style={{ background: "var(--brand)", borderColor: "var(--brand)" }}
                       onClick={() => {
                         const existentes = new Set((campanha.materiaisVinculados || []).map((m) => m.id));
                         const novos = bibliotecaSel.filter((id) => !existentes.has(id)).map((id) => {
@@ -1100,7 +1114,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           )}
 
           {/* Base de leads da campanha */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          {secaoVisivel.fonteLeads && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
               <b style={{ color: "var(--brand)" }}>Quem o profissional vai contatar?</b>
               <div className="vx-mut" style={{ fontSize: 11.5 }}>Você fornece a lista de contatos ou o profissional busca sozinho?</div>
@@ -1117,6 +1131,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   <CardOption selected={!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica"} onClick={() => { set("distribuicaoLeads", "automatica"); set("limiteLeadsSimultaneos", 0); set("limiteLeadsDia", 0); set("prazoContatoHoras", 0); set("prazoInatividadeHoras", 0); }} icon={Zap} title="Automático (recomendado)" subtitle="A plataforma distribui os contatos de forma equilibrada entre os profissionais." />
                   <CardOption selected={campanha.distribuicaoLeads === "manual"} onClick={() => set("distribuicaoLeads", "manual")} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Você define quantos contatos cada profissional recebe e os prazos." />
                 </div>
+                {(!campanha.distribuicaoLeads || campanha.distribuicaoLeads === "automatica") && (
+                  <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
+                    <Check size={14} color="var(--green, #16A34A)" style={{ flexShrink: 0 }} />
+                    <span className="vx-mut" style={{ fontSize: 12, lineHeight: 1.4 }}>A RYCS distribui os contatos automaticamente de forma equilibrada: até 5 simultâneos, 10 por dia, com prazo de 4h para primeiro contato e 48h de inatividade.</span>
+                  </div>
+                )}
                 {campanha.distribuicaoLeads === "manual" && (
                   <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
                     <label><div className="vx-label">Contatos ao mesmo tempo por profissional</div>
@@ -1136,10 +1156,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <LeadsSelectorInline campanha={campanha} set={set} rascunhoId={rascunhoIdRef.current} />
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Estrutura comercial */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          {secaoVisivel.estrutura && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Como os profissionais vão trabalhar?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Uma campanha sozinha ou em equipe com outras?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               <CardOption selected={campanha.estruturaComercial === "independente" || !campanha.estruturaComercial} onClick={() => set("estruturaComercial", "independente")} icon={Target} title="Campanha sozinha" subtitle="Funciona de forma independente, sem vínculo com outras." />
@@ -1175,7 +1195,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           background: ativa ? SEL.bg : SEL.bgOff,
                           borderRadius: 10, transition: "border-color .15s, background .15s",
                         }}>
-                          <div style={{ width: 20, height: 20, borderRadius: 5, border: `1.5px solid ${ativa ? "#318CE7" : "var(--border)"}`, background: ativa ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <div style={{ width: 20, height: 20, borderRadius: 5, border: `1.5px solid ${ativa ? "var(--brand)" : "var(--border)"}`, background: ativa ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                             {ativa && <Check size={12} color="#fff" />}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -1307,12 +1327,27 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                 });
                               })()}
                             </div>
-                            <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
-                              <label><div className="vx-label">Orçamento para esta função</div>
-                                <CampoOrcamento value={cfg.orcamento || 0} onChange={(v) => setConfig("orcamento", v)} /></label>
-                              <label><div className="vx-label">Prazo por atividade (horas)</div>
-                                <input className="vx-input vx-mono" type="number" min="1" value={cfg.prazoHoras || 24} onChange={(e) => setConfig("prazoHoras", Number(e.target.value))} /></label>
+                            <div style={{ marginTop: 14, marginBottom: 4 }}>
+                              <b style={{ fontSize: 12.5, color: "var(--brand)" }}>Gestão operacional</b>
+                              <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+                                <CardOption selected={!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", false)} icon={Zap} title="Automático (recomendado)" subtitle="A RYCS define prazos e limites automaticamente." />
+                                <CardOption selected={!!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", true)} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Defina orçamento e prazos manualmente." />
+                              </div>
+                              {!cfg.gestaoManual && (
+                                <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
+                                  <Check size={14} color="var(--green, #16A34A)" style={{ flexShrink: 0 }} />
+                                  <span className="vx-mut" style={{ fontSize: 12 }}>Prazos e limites serão gerenciados automaticamente pela RYCS.</span>
+                                </div>
+                              )}
                             </div>
+                            {!!cfg.gestaoManual && (
+                              <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
+                                <label><div className="vx-label">Orçamento para esta função</div>
+                                  <CampoOrcamento value={cfg.orcamento || 0} onChange={(v) => setConfig("orcamento", v)} /></label>
+                                <label><div className="vx-label">Prazo por atividade (horas)</div>
+                                  <input className="vx-input vx-mono" type="number" min="1" value={cfg.prazoHoras || 24} onChange={(e) => setConfig("prazoHoras", Number(e.target.value))} /></label>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -1344,7 +1379,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 Depois de criar, você poderá escolher de qual campanha os contatos vão vir e para onde vão seguir.
               </div>
             )}
-          </div>
+          </div>}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(0)}><ArrowLeft size={14} /> Voltar</button>
@@ -1533,8 +1568,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     background: on ? SEL.bg : SEL.bgOff,
                     transition: "border-color .15s, background .15s", position: "relative",
                   }}>
-                    {on && <div style={{ position: "absolute", top: 10, right: 10, width: 20, height: 20, borderRadius: "50%", background: "#318CE7", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} color="#fff" /></div>}
-                    <m.icon size={22} color={on ? "#318CE7" : "var(--muted)"} style={{ marginBottom: 8 }} />
+                    {on && <div style={{ position: "absolute", top: 10, right: 10, width: 20, height: 20, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} color="#fff" /></div>}
+                    <m.icon size={22} color={on ? "var(--brand)" : "var(--muted)"} style={{ marginBottom: 8 }} />
                     <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink, #171717)", marginBottom: 4 }}>{m.titulo}</div>
                     <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>{m.desc}</div>
                   </button>
@@ -1562,10 +1597,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     return (
                       <div key={a.id} style={{ border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`, borderRadius: 10, background: ativa ? SEL.bg : SEL.bgOff, overflow: "hidden", transition: "border-color .15s, background .15s" }}>
                         <button onClick={() => toggleAcao(a.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", width: "100%", textAlign: "left", cursor: "pointer", border: "none", background: "transparent" }}>
-                          <div style={{ width: 20, height: 20, borderRadius: 5, border: `1.5px solid ${ativa ? "#318CE7" : "var(--border)"}`, background: ativa ? "#318CE7" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <div style={{ width: 20, height: 20, borderRadius: 5, border: `1.5px solid ${ativa ? "var(--brand)" : "var(--border)"}`, background: ativa ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                             {ativa && <Check size={12} color="#fff" />}
                           </div>
-                          {AcIcon && <AcIcon size={16} color={ativa ? "#318CE7" : "var(--muted)"} />}
+                          {AcIcon && <AcIcon size={16} color={ativa ? "var(--brand)" : "var(--muted)"} />}
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13.5, fontWeight: ativa ? 600 : 400, color: ativa ? "var(--ink)" : "var(--text-2)" }}>{a.nome}</div>
                             {sugerida && !ativa && <div style={{ fontSize: 11, color: "var(--brand)", marginTop: 1 }}>Recomendada</div>}
@@ -1688,7 +1723,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                 const selecionada = (fg.evidencias || []).includes(ev.id);
                                 return (
                                   <button key={ev.id} onClick={() => upd("evidencias", selecionada ? (fg.evidencias || []).filter((e) => e !== ev.id) : [...(fg.evidencias || []), ev.id])}
-                                    style={{ padding: "5px 10px", borderRadius: 16, fontSize: 12, border: `1px solid ${selecionada ? SEL.border : SEL.borderOff}`, background: selecionada ? SEL.bg : SEL.bgOff, color: selecionada ? "#318CE7" : "var(--text-2)", cursor: "pointer", fontWeight: selecionada ? 600 : 400 }}>
+                                    style={{ padding: "5px 10px", borderRadius: 16, fontSize: 12, border: `1px solid ${selecionada ? SEL.border : SEL.borderOff}`, background: selecionada ? SEL.bg : SEL.bgOff, color: selecionada ? "var(--brand)" : "var(--text-2)", cursor: "pointer", fontWeight: selecionada ? 600 : 400 }}>
                                     {selecionada && <Check size={10} style={{ marginRight: 4 }} />}{ev.nome}
                                   </button>
                                 );
@@ -1950,7 +1985,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer",
                   border: `1px solid ${orcamentoAtual === v ? SEL.border : SEL.borderOff}`,
                   background: orcamentoAtual === v ? SEL.bg : SEL.bgOff,
-                  color: orcamentoAtual === v ? "#318CE7" : "var(--text-2)",
+                  color: orcamentoAtual === v ? "var(--brand)" : "var(--text-2)",
                   transition: "all .15s",
                 }}>
                   {money(v)}
