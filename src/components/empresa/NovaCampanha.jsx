@@ -286,6 +286,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [gerandoICP, setGerandoICP] = useState(false);
   const [recomendandoAtividades, setRecomendandoAtividades] = useState(false);
   const [recomendandoEvidencias, setRecomendandoEvidencias] = useState(false);
+  const [gerandoDescricao, setGerandoDescricao] = useState(false);
   const uploadInputRef = useRef(null);
 
   const disponivel = saldoDisponivel(emp);
@@ -485,6 +486,19 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       }
     } catch (_) { /* silently fail */ }
     setGerandoICP(false);
+  };
+
+  const gerarDescricaoIA = async () => {
+    if (!campanha || gerandoDescricao) return;
+    setGerandoDescricao(true);
+    try {
+      const r = await api("/campaigns/gerar-descricao", {
+        titulo: campanha.titulo, objetivo: campanha.objetivo,
+        funcao: campanha.funcao, publico: campanha.publico,
+      });
+      if (r.descricao) set("descricao", r.descricao);
+    } catch (e) { aviso("Não foi possível gerar a descrição."); }
+    setGerandoDescricao(false);
   };
 
   const recomendarAtividades = async () => {
@@ -850,10 +864,17 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <label><div className="vx-label">Como você quer chamar esta campanha?</div>
               <input className="vx-input" value={campanha.titulo} onChange={(e) => set("titulo", e.target.value)} /></label>
-            <label style={{ display: "block", marginTop: 12 }}><div className="vx-label">Descreva o que o profissional vai fazer</div>
+            <div style={{ marginTop: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                <div className="vx-label" style={{ margin: 0 }}>Descreva o que o profissional vai fazer</div>
+                <button className="vx-btn vx-btn-sm" style={{ gap: 5, fontSize: 11.5 }} disabled={gerandoDescricao} onClick={gerarDescricaoIA}>
+                  {gerandoDescricao ? <><Loader size={12} style={{ animation: "spin 1s linear infinite" }} /> Gerando…</> : <><Sparkles size={12} /> Gerar com IA</>}
+                </button>
+              </div>
               <textarea className="vx-input" style={{ minHeight: 62 }} value={campanha.descricao || ""}
                 onChange={(e) => set("descricao", e.target.value)}
-                placeholder="Ex.: Ligar para donos de restaurante e agendar uma demonstração do sistema." /></label>
+                placeholder="Ex.: Ligar para donos de restaurante e agendar uma demonstração do sistema." />
+            </div>
           </div>
 
           {/* Meta quantitativa + planejamento reverso */}

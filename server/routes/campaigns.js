@@ -2095,6 +2095,45 @@ router.post("/campaigns/recomendar-atividades", async (req, res) => {
   }
 });
 
+// ── Gerar descrição da campanha com IA ──────────────────────────────────
+router.post("/campaigns/gerar-descricao", async (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa") return res.status(403).json({ error: "Apenas empresa" });
+  const { titulo, objetivo, funcao, publico } = req.body;
+  const empresa = db.prepare("SELECT nome, produto, ticket, icp FROM companies WHERE id = ?").get(entityId);
+  if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+  const produto = empresa.produto || "";
+  const icp = empresa.icp || publico || "";
+  const tit = titulo || "campanha comercial";
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    const partes = [`Profissional responsável por ${objetivo || "prospecção ativa"}`];
+    if (produto) partes.push(`do produto/serviço ${produto}`);
+    if (icp) partes.push(`para ${icp}`);
+    partes.push(`na função de ${(funcao || "SDR").toUpperCase()}.`);
+    return res.json({ descricao: partes.join(" ") });
+  }
+
+  try {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 20000 });
+    const resp = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 200,
+      system: "Escreva uma descrição curta (2-3 frases) para uma vaga de campanha comercial. Descreva o que o profissional vai fazer. Responda APENAS o texto da descrição, sem aspas nem JSON. Use português do Brasil.",
+      messages: [{ role: "user", content: `Campanha: ${tit}\nEmpresa: ${empresa.nome || "—"}\nProduto: ${produto || "—"}\nTicket: ${empresa.ticket || "—"}\nCliente ideal: ${icp || "—"}\nObjetivo: ${objetivo || "vendas"}\nFunção: ${(funcao || "SDR").toUpperCase()}` }],
+    });
+    const descricao = resp.content.map(b => b.text || "").join("").trim();
+    res.json({ descricao });
+  } catch (e) {
+    const partes = [`Profissional responsável por ${objetivo || "prospecção ativa"}`];
+    if (produto) partes.push(`do produto/serviço ${produto}`);
+    if (icp) partes.push(`para ${icp}`);
+    res.json({ descricao: partes.join(" ") + "." });
+  }
+});
+
 // ── F1-020: Recomendar comprovações com IA ──────────────────────────────
 router.post("/campaigns/recomendar-comprovacoes", async (req, res) => {
   const { role } = req.user;
