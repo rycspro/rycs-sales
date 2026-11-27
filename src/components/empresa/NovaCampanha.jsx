@@ -1967,7 +1967,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Ações e pagamentos</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            {campanha.estruturaComercial === "operacao" ? "As atividades e valores de cada função foram configurados no passo anterior." : "Escolha o que o profissional faz e quanto ganha por cada resultado."}
+            {campanha.estruturaComercial === "operacao" ? "Configure as atividades, valores e aprovações para cada função da operação." : "Escolha o que o profissional faz e quanto ganha por cada resultado."}
           </p>
 
           {campanha.estruturaComercial !== "operacao" && campanha.modoAcoesRemuneradas && (
@@ -2157,6 +2157,23 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           <CardOption selected={cfg.remuneracaoCumulativa !== false} onClick={() => setConfig("remuneracaoCumulativa", true)} title="Pagar por cada etapa" subtitle="O profissional ganha por cada atividade que completar." />
                           <CardOption selected={cfg.remuneracaoCumulativa === false} onClick={() => setConfig("remuneracaoCumulativa", false)} title="Pagar só pelo resultado final" subtitle="Só paga quando o profissional chega ao último passo." />
                         </div>
+                      </div>
+                    )}
+                    {cfg.modoAtividades && (
+                      <div style={{ marginTop: 14 }}>
+                        <div className="vx-label" style={{ marginBottom: 8 }}>Gestão operacional</div>
+                        <div style={{ display: "grid", gap: 8 }}>
+                          <CardOption selected={!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", false)} icon={Zap} title="Automático (recomendado)" subtitle="A RYCS define prazos e limites automaticamente." />
+                          <CardOption selected={!!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", true)} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Defina orçamento e prazos manualmente." />
+                        </div>
+                        {!!cfg.gestaoManual && (
+                          <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
+                            <label><div className="vx-label">Orçamento para esta função</div>
+                              <CampoOrcamento value={cfg.orcamento || 0} onChange={(v) => setConfig("orcamento", v)} /></label>
+                            <label><div className="vx-label">Prazo por atividade (horas)</div>
+                              <input className="vx-input vx-mono" type="number" min="1" value={cfg.prazoHoras || 24} onChange={(e) => setConfig("prazoHoras", Number(e.target.value))} /></label>
+                          </div>
+                        )}
                       </div>
                     )}
                     {cfg.modoAtividades && (
