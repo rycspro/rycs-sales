@@ -15,5 +15,8 @@ export default defineConfig({
     // O custo é alguns kB. O benefício é o app abrir em navegador de celular
     // desatualizado, que é boa parte do público de quem vende na rua.
     target: "es2018",
+    rollupOptions: {
+      external: ["jssip"],
+    },
   },
 });
