@@ -624,8 +624,18 @@ function parseCampaign(row) {
     icpEstruturado: JSON.parse(row.icpEstruturado || "{}"),
     qualificacaoCriterios: JSON.parse(row.qualificacaoCriterios || "[]"),
     reuniaoConfig: JSON.parse(row.reuniaoConfig || "{}"),
+    selecaoLeadsFiltros: JSON.parse(row.selecaoLeadsFiltros || "{}"),
+    distribuicaoVerba: JSON.parse(row.distribuicaoVerba || "{}"),
+    planejamentoReverso: JSON.parse(row.planejamentoReverso || "{}"),
+    perguntasQualificacao: JSON.parse(row.perguntasQualificacao || "[]"),
+    criteriosQualificacaoLeads: JSON.parse(row.criteriosQualificacaoLeads || "[]"),
+    confirmacaoContato: JSON.parse(row.confirmacaoContato || "{}"),
+    remuneracaoPorOrigem: JSON.parse(row.remuneracaoPorOrigem || "{}"),
+    otimizacaoVerba: JSON.parse(row.otimizacaoVerba || "{}"),
+    recomendacoesIA: JSON.parse(row.recomendacoesIA || "{}"),
     temComissao: !!row.temComissao,
     remuneracaoCumulativa: !!row.remuneracaoCumulativa,
+    incluirNovosAutomaticamente: !!row.incluirNovosAutomaticamente,
   };
 }
 
