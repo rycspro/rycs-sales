@@ -7,6 +7,8 @@ import {
   Wallet, Users,
   Utensils, HeartPulse, Dumbbell,
   Building, Scissors, ShoppingBag, Cpu,
+  Database, Sparkles, Shield, CheckCircle2, XCircle, Briefcase, TrendingUp,
+  UserCheck, Linkedin, Mail, PhoneCall, ChevronUp,
 } from "lucide-react";
 import { api, apiPatch, apiDelete } from "../../lib/api.js";
 
@@ -699,6 +701,7 @@ function AbaContatos({ aviso, listas, isEmpresa }) {
   const [filtroSegmento, setFiltroSegmento] = useState("");
   const [filtroLista, setFiltroLista] = useState("");
   const [filtroResponsavel, setFiltroResponsavel] = useState("");
+  const [enriqLote, setEnriqLote] = useState(false);
 
   const recarregar = useCallback(() => { api("/loja-leads/revelados").then((r) => { setContatos(r?.contatos || []); setLoading(false); }); }, []);
   useEffect(recarregar, []);
@@ -749,9 +752,28 @@ function AbaContatos({ aviso, listas, isEmpresa }) {
           <div className="vx-disp" style={{ fontSize: 17 }}>Meus contatos</div>
           <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Minha carteira de contatos comerciais.</p>
         </div>
-        {selecionados.size > 0 && (
-          <span className="vx-mut" style={{ fontSize: 12 }}>{selecionados.size} selecionado(s)</span>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {selecionados.size > 0 && (
+            <>
+              <span className="vx-mut" style={{ fontSize: 12 }}>{selecionados.size} selecionado(s)</span>
+              <button className="vx-btn vx-btn-sm" disabled={enriqLote}
+                onClick={async () => {
+                  if (selecionados.size > 50) return aviso?.("Máximo 50 contatos por lote.");
+                  setEnriqLote(true);
+                  const r = await api("/enriquecimento/lote", { contatoIds: [...selecionados] });
+                  setEnriqLote(false);
+                  if (r?.error) return aviso?.(r.error);
+                  const ok = (r.resultados || []).filter((x) => x.status === "ok").length;
+                  const erros = (r.resultados || []).filter((x) => x.status === "erro").length;
+                  aviso?.(`Enriquecimento: ${ok} OK, ${erros} erro(s).`);
+                }}
+                style={{ background: "var(--grad-brand)", color: "#fff", border: "none", display: "flex", alignItems: "center", gap: 5 }}>
+                {enriqLote ? <Loader2 size={13} className="vx-spin" /> : <Sparkles size={13} />}
+                {enriqLote ? "Enriquecendo..." : "Enriquecer selecionados"}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Filtros */}
@@ -834,10 +856,25 @@ function DrawerContato({ contato: c, onClose, listas, aviso, isEmpresa }) {
   const [novoTexto, setNovoTexto] = useState("");
   const [tipoNota, setTipoNota] = useState("nota");
   const [loadingHist, setLoadingHist] = useState(true);
+  const [enriq, setEnriq] = useState(null);
+  const [enriqLoading, setEnriqLoading] = useState(false);
+  const [enriqAberto, setEnriqAberto] = useState(false);
+  const [enriqChecked, setEnriqChecked] = useState(false);
 
   useEffect(() => {
     api(`/loja-leads/contato/${c.id}/historico`).then((r) => { setHistorico(r?.historico || []); setLoadingHist(false); });
+    api(`/enriquecimento/${c.id}`).then((r) => { if (r && !r.error) { setEnriq(r); setEnriqAberto(true); } setEnriqChecked(true); });
   }, [c.id]);
+
+  const enriquecer = async () => {
+    setEnriqLoading(true);
+    const r = await api("/enriquecimento/enriquecer", { contatoId: c.id });
+    if (r?.error) { aviso?.(r.error); setEnriqLoading(false); return; }
+    const dados = await api(`/enriquecimento/${c.id}`);
+    if (dados && !dados.error) { setEnriq(dados); setEnriqAberto(true); }
+    aviso?.("Enriquecimento concluído.");
+    setEnriqLoading(false);
+  };
 
   const addToList = async (listaId) => {
     const r = await api("/loja-leads/listas/adicionar", { listaId, contatoId: c.id });
@@ -922,6 +959,36 @@ function DrawerContato({ contato: c, onClose, listas, aviso, isEmpresa }) {
           </div>
         )}
 
+        {/* Enriquecimento */}
+        <div style={{ marginTop: 18, borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span className="vx-label" style={{ margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+              <Database size={14} style={{ color: "var(--brand)" }} /> Enriquecimento de dados
+            </span>
+            {enriqChecked && !enriq && (
+              <button className="vx-btn vx-btn-sm" onClick={enriquecer} disabled={enriqLoading}
+                style={{ background: "var(--grad-brand)", color: "#fff", border: "none", display: "flex", alignItems: "center", gap: 5 }}>
+                {enriqLoading ? <Loader2 size={13} className="vx-spin" /> : <Sparkles size={13} />}
+                {enriqLoading ? "Enriquecendo..." : "Enriquecer"}
+              </button>
+            )}
+            {enriq && (
+              <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEnriqAberto(!enriqAberto)}>
+                {enriqAberto ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            )}
+          </div>
+
+          {enriqLoading && !enriq && (
+            <div style={{ padding: 16, textAlign: "center", fontSize: 12.5 }} className="vx-mut">
+              <Loader2 size={18} className="vx-spin" style={{ display: "block", margin: "0 auto 8px" }} />
+              Consultando Receita Federal, estimando faturamento, buscando decisores...
+            </div>
+          )}
+
+          {enriq && enriqAberto && <PainelEnriquecimento dados={enriq} aviso={aviso} onRefresh={enriquecer} loading={enriqLoading} />}
+        </div>
+
         {/* Histórico */}
         <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
           <span className="vx-label">Histórico de interações</span>
@@ -965,6 +1032,247 @@ function DrawerContato({ contato: c, onClose, listas, aviso, isEmpresa }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Painel de enriquecimento ─────────────────────────────────────────── */
+function PainelEnriquecimento({ dados, aviso, onRefresh, loading }) {
+  const d = dados;
+  const parseJ = (v) => { try { return typeof v === "string" ? JSON.parse(v) : v || []; } catch { return []; } };
+  const socios = d.socios || [];
+  const decisores = d.decisores || [];
+  const techs = parseJ(d.tecnologias);
+  const telsVal = parseJ(d.telefonesValidados);
+  const telsInv = parseJ(d.telefonesInvalidos);
+  const emailsVal = parseJ(d.emailsValidados);
+  const emailsInv = parseJ(d.emailsInvalidos);
+  const telsRF = parseJ(d.telefonesRF);
+  const cnaeSec = parseJ(d.cnaesSecundarios);
+
+  const statusBadge = (st) => {
+    const map = { enriquecido: { bg: "var(--green-50)", color: "var(--green)", label: "Completo" }, parcial: { bg: "var(--amber-50)", color: "var(--amber)", label: "Parcial" }, pendente: { bg: "var(--surface-2)", color: "var(--muted)", label: "Pendente" }, erro: { bg: "var(--red-50)", color: "var(--red)", label: "Erro" } };
+    const m = map[st] || map.pendente;
+    return <span style={{ fontSize: 10.5, padding: "2px 8px", borderRadius: 10, background: m.bg, color: m.color, fontWeight: 600 }}>{m.label}</span>;
+  };
+
+  const SEC = { padding: "10px 0", borderBottom: "1px solid var(--border)" };
+  const SLABEL = { fontSize: 11.5, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 };
+
+  return (
+    <div style={{ fontSize: 12.5 }}>
+      {/* Status + refresh */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        {statusBadge(d.status)}
+        {d.enriquecidoEm && <span className="vx-mut" style={{ fontSize: 11 }}>Atualizado em {new Date(d.enriquecidoEm).toLocaleDateString("pt-BR")}</span>}
+        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onRefresh} disabled={loading} title="Atualizar enriquecimento" style={{ marginLeft: "auto", padding: 2 }}>
+          <RefreshCw size={13} className={loading ? "vx-spin" : ""} />
+        </button>
+      </div>
+
+      {/* Dados empresariais */}
+      {d.cnpj && (
+        <div style={SEC}>
+          <div style={SLABEL}><Building2 size={13} /> Dados da Receita Federal</div>
+          <div style={{ display: "grid", gap: 4 }}>
+            <EnriqRow label="CNPJ" value={d.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")} />
+            {d.razaoSocial && <EnriqRow label="Razão social" value={d.razaoSocial} />}
+            {d.nomeFantasia && <EnriqRow label="Nome fantasia" value={d.nomeFantasia} />}
+            {d.situacaoCadastral && <EnriqRow label="Situação" value={d.situacaoCadastral} badge={d.situacaoCadastral === "Ativa" ? "green" : "red"} />}
+            {d.porte && <EnriqRow label="Porte" value={d.porte} />}
+            {d.naturezaJuridicaDesc && <EnriqRow label="Natureza jurídica" value={d.naturezaJuridicaDesc} />}
+            {d.capitalSocial > 0 && <EnriqRow label="Capital social" value={`R$ ${Number(d.capitalSocial).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />}
+            {d.simplesNacional != null && <EnriqRow label="Simples Nacional" value={d.simplesNacional ? "Sim" : "Não"} />}
+            {d.mei != null && <EnriqRow label="MEI" value={d.mei ? "Sim" : "Não"} />}
+            {d.dataAbertura && <EnriqRow label="Abertura" value={d.dataAbertura} />}
+            {d.idadeEmpresa && <EnriqRow label="Idade" value={d.idadeEmpresa} />}
+            {d.qtdFiliais > 0 && <EnriqRow label="Filiais" value={d.qtdFiliais} />}
+            {d.cnaePrimario && <EnriqRow label="CNAE" value={`${d.cnaePrimario} — ${d.cnaePrimarioDesc || ""}`} />}
+            {cnaeSec.length > 0 && <EnriqRow label="CNAEs sec." value={cnaeSec.map((c) => typeof c === "object" ? `${c.codigo} — ${c.descricao}` : c).join("; ")} />}
+            {d.inscricaoEstadual && <EnriqRow label="Insc. estadual" value={d.inscricaoEstadual} />}
+          </div>
+          {(d.uf || d.cidade) && (
+            <div style={{ marginTop: 6 }}>
+              <EnriqRow label="Endereço" value={[d.logradouro, d.numero, d.complemento, d.bairro, d.cidade, d.uf, d.cep].filter(Boolean).join(", ")} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Estimativas */}
+      {(d.faixaFaturamento || d.faixaFuncionarios) && (
+        <div style={SEC}>
+          <div style={SLABEL}><TrendingUp size={13} /> Estimativas</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {d.faixaFaturamento && (
+              <div style={{ padding: 10, borderRadius: 10, background: "var(--green-50)", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 2 }}>Faturamento</div>
+                <div style={{ fontWeight: 700, color: "var(--green)", fontSize: 13 }}>{d.faixaFaturamento}</div>
+                {d.faturamentoEstimado > 0 && <div className="vx-mut" style={{ fontSize: 10.5 }}>~R$ {Number(d.faturamentoEstimado).toLocaleString("pt-BR")}/ano</div>}
+              </div>
+            )}
+            {d.faixaFuncionarios && (
+              <div style={{ padding: 10, borderRadius: 10, background: "var(--brand-50)", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 2 }}>Funcionários</div>
+                <div style={{ fontWeight: 700, color: "var(--brand)", fontSize: 13 }}>{d.faixaFuncionarios}</div>
+                {d.funcionariosEstimado > 0 && <div className="vx-mut" style={{ fontSize: 10.5 }}>~{d.funcionariosEstimado} pessoas</div>}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Sócios / QSA */}
+      {socios.length > 0 && (
+        <div style={SEC}>
+          <div style={SLABEL}><Users size={13} /> Sócios / QSA ({socios.length})</div>
+          <div style={{ display: "grid", gap: 6 }}>
+            {socios.map((s) => (
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 8, background: "var(--surface-2)" }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "var(--brand)", flexShrink: 0 }}>
+                  {(s.nome || "?")[0].toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 12.5 }}>{s.nome}</div>
+                  <div className="vx-mut" style={{ fontSize: 11 }}>{s.qualificacao}{s.dataEntrada ? ` · desde ${s.dataEntrada}` : ""}{s.faixaEtaria ? ` · ${s.faixaEtaria}` : ""}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Decisores */}
+      {decisores.length > 0 && (
+        <div style={SEC}>
+          <div style={SLABEL}><UserCheck size={13} /> Decisores ({decisores.length})</div>
+          <div style={{ display: "grid", gap: 6 }}>
+            {decisores.map((dec) => (
+              <div key={dec.id} style={{ padding: "8px 10px", borderRadius: 8, background: "var(--surface-2)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {dec.foto
+                    ? <img src={dec.foto} alt="" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover" }} />
+                    : <div style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--indigo-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600, color: "var(--indigo)" }}>{(dec.nome || "?")[0].toUpperCase()}</div>
+                  }
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 12.5 }}>{dec.nome}</div>
+                    {dec.cargo && <div className="vx-mut" style={{ fontSize: 11 }}>{dec.cargo}</div>}
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                  {dec.departamento && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 8, background: "var(--brand-50)", color: "var(--brand)", fontWeight: 500 }}>{dec.departamento}</span>}
+                  {dec.nivel && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 8, background: dec.nivel === "Alto" ? "var(--green-50)" : dec.nivel === "Médio" ? "var(--amber-50)" : "var(--surface-2)", color: dec.nivel === "Alto" ? "var(--green)" : dec.nivel === "Médio" ? "var(--amber)" : "var(--muted)", fontWeight: 500 }}>{dec.nivel}</span>}
+                </div>
+                {(dec.emailProfissional || dec.linkedinUrl) && (
+                  <div style={{ display: "flex", gap: 10, marginTop: 6, fontSize: 11.5 }}>
+                    {dec.emailProfissional && (
+                      <a href={`mailto:${dec.emailProfissional}`} style={{ color: "var(--brand)", textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>
+                        <Mail size={11} /> {dec.emailProfissional}
+                      </a>
+                    )}
+                    {dec.linkedinUrl && (
+                      <a href={dec.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--brand)", textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>
+                        <Linkedin size={11} /> LinkedIn
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Validação contatos */}
+      {(telsVal.length > 0 || telsInv.length > 0 || emailsVal.length > 0 || emailsInv.length > 0 || telsRF.length > 0) && (
+        <div style={SEC}>
+          <div style={SLABEL}><Shield size={13} /> Validação de contatos</div>
+          <div style={{ display: "grid", gap: 4 }}>
+            {telsRF.length > 0 && <EnriqRow label="Telefones RF" value={telsRF.join(", ")} />}
+            {telsVal.length > 0 && telsVal.map((t, i) => <ValRow key={`tv${i}`} icon={<PhoneCall size={12} />} value={t} valid />)}
+            {telsInv.length > 0 && telsInv.map((t, i) => <ValRow key={`ti${i}`} icon={<PhoneCall size={12} />} value={t} />)}
+            {emailsVal.length > 0 && emailsVal.map((e, i) => <ValRow key={`ev${i}`} icon={<Mail size={12} />} value={e} valid />)}
+            {emailsInv.length > 0 && emailsInv.map((e, i) => <ValRow key={`ei${i}`} icon={<Mail size={12} />} value={e} />)}
+            {d.emailRF && <EnriqRow label="E-mail RF" value={d.emailRF} />}
+          </div>
+        </div>
+      )}
+
+      {/* Redes sociais */}
+      {(d.linkedinEmpresa || d.facebookEmpresa || d.instagramEmpresa || d.twitterEmpresa) && (
+        <div style={SEC}>
+          <div style={SLABEL}><Globe size={13} /> Redes sociais</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {d.linkedinEmpresa && <SocialChip href={d.linkedinEmpresa} label="LinkedIn" />}
+            {d.facebookEmpresa && <SocialChip href={d.facebookEmpresa} label="Facebook" />}
+            {d.instagramEmpresa && <SocialChip href={d.instagramEmpresa} label="Instagram" />}
+            {d.twitterEmpresa && <SocialChip href={d.twitterEmpresa} label="Twitter/X" />}
+          </div>
+        </div>
+      )}
+
+      {/* Tecnologias */}
+      {techs.length > 0 && (
+        <div style={SEC}>
+          <div style={SLABEL}><Cpu size={13} /> Tecnologias detectadas</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {techs.map((t, i) => <span key={i} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: "var(--indigo-50)", color: "var(--indigo)", fontWeight: 500 }}>{t}</span>)}
+          </div>
+        </div>
+      )}
+
+      {/* Contexto regional */}
+      {(d.pibMunicipio > 0 || d.populacaoMunicipio > 0) && (
+        <div style={{ ...SEC, borderBottom: "none" }}>
+          <div style={SLABEL}><MapPin size={13} /> Contexto regional</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {d.pibMunicipio > 0 && (
+              <div style={{ padding: 8, borderRadius: 8, background: "var(--surface-2)", textAlign: "center" }}>
+                <div className="vx-mut" style={{ fontSize: 10.5 }}>PIB municipal</div>
+                <div style={{ fontWeight: 600, fontSize: 12.5 }}>R$ {(d.pibMunicipio / 1e6).toFixed(0)}M</div>
+              </div>
+            )}
+            {d.populacaoMunicipio > 0 && (
+              <div style={{ padding: 8, borderRadius: 8, background: "var(--surface-2)", textAlign: "center" }}>
+                <div className="vx-mut" style={{ fontSize: 10.5 }}>População</div>
+                <div style={{ fontWeight: 600, fontSize: 12.5 }}>{Number(d.populacaoMunicipio).toLocaleString("pt-BR")}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EnriqRow({ label, value, badge }) {
+  return (
+    <div style={{ display: "flex", gap: 8, fontSize: 12.5, padding: "3px 0", alignItems: "baseline" }}>
+      <span className="vx-mut" style={{ minWidth: 90, fontSize: 11, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontWeight: 500, wordBreak: "break-word" }}>
+        {value}
+        {badge && <span style={{ marginLeft: 6, fontSize: 10, padding: "1px 6px", borderRadius: 8, background: badge === "green" ? "var(--green-50)" : "var(--red-50)", color: badge === "green" ? "var(--green)" : "var(--red)", fontWeight: 600 }}>{badge === "green" ? "Ativa" : "Inativa"}</span>}
+      </span>
+    </div>
+  );
+}
+
+function ValRow({ icon, value, valid }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "2px 0" }}>
+      {valid ? <CheckCircle2 size={13} style={{ color: "var(--green)", flexShrink: 0 }} /> : <XCircle size={13} style={{ color: "var(--red)", flexShrink: 0 }} />}
+      {icon}
+      <span style={{ fontWeight: 500 }}>{value}</span>
+      <span className="vx-mut" style={{ fontSize: 10.5, marginLeft: "auto" }}>{valid ? "Válido" : "Inválido"}</span>
+    </div>
+  );
+}
+
+function SocialChip({ href, label }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer"
+      style={{ fontSize: 11, padding: "3px 10px", borderRadius: 12, background: "var(--brand-50)", color: "var(--brand)", fontWeight: 500, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+      <Globe size={11} /> {label}
+    </a>
   );
 }
 
