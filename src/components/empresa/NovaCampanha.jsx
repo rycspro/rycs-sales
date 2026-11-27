@@ -2789,7 +2789,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <Wallet size={20} color="var(--brand)" />
               <div>
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>Saldo disponível na conta</div>
-                <div className="vx-mono" style={{ fontSize: 22, fontWeight: 700, color: "var(--brand)" }}>{money(disponivel)}</div>
+                <div className="vx-disp vx-mono" style={{ fontSize: 22, fontWeight: 700, color: "var(--brand)" }}>{money(disponivel)}</div>
               </div>
             </div>
           </div>
