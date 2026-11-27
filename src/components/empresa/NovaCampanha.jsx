@@ -1173,29 +1173,30 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <CardOption selected={campanha.origemLeads === "profissional"} onClick={() => { set("origemLeads", "profissional"); set("fonteLeads", "profissional"); }} icon={UserPlus} title="O profissional encontrará os leads" subtitle="Ele mesmo prospecta e cadastra novos contatos." />
               <CardOption selected={campanha.origemLeads === "ambos"} onClick={() => { set("origemLeads", "ambos"); set("fonteLeads", "ambos"); }} icon={Shuffle} title="Ambas as opções" subtitle="Você fornece contatos e o profissional também pode buscar mais." />
             </div>
-            {(campanha.origemLeads === "empresa" || campanha.origemLeads === "ambos") && (
-              <>
-                <FontesContatosSelector campanha={campanha} set={set} />
-                <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                    <input type="checkbox" checked={!!campanha.incluirNovosAutomaticamente} onChange={(e) => set("incluirNovosAutomaticamente", e.target.checked)} style={{ accentColor: "var(--brand)" }} />
-                    <span style={{ fontSize: 13, fontWeight: 500 }}>Incluir novos contatos automaticamente</span>
-                  </label>
-                  <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, paddingLeft: 26 }}>
-                    {campanha.incluirNovosAutomaticamente
-                      ? "Novos leads recebidos pelas fontes selecionadas entrarão automaticamente na campanha enquanto ela estiver ativa."
-                      : "Somente os contatos selecionados manualmente farão parte da campanha."}
-                  </div>
-                </div>
-                {!campanha.incluirNovosAutomaticamente && (campanha.leadsSelecionados || []).length === 0 && (campanha.listasSelecionadas || []).length === 0 && !campanha.planilhaUrl && (
-                  <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--amber-50, #FFFBEB)", borderRadius: 8, border: "1px solid var(--amber-200, #FDE68A)", display: "flex", gap: 8, alignItems: "flex-start" }}>
-                    <AlertCircle size={14} color="var(--amber, #F59E0B)" style={{ flexShrink: 0, marginTop: 1 }} />
-                    <span style={{ fontSize: 12, color: "var(--amber-700, #92400E)" }}>Selecione ao menos uma fonte de contatos ou ative a inclusão automática para poder publicar esta campanha.</span>
-                  </div>
-                )}
-              </>
-            )}
           </div>}
+
+          {secaoVisivel.origemLeads && (campanha.origemLeads === "empresa" || campanha.origemLeads === "ambos") && (
+            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+              <FontesContatosSelector campanha={campanha} set={set} />
+              <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  <input type="checkbox" checked={!!campanha.incluirNovosAutomaticamente} onChange={(e) => set("incluirNovosAutomaticamente", e.target.checked)} style={{ accentColor: "var(--brand)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>Incluir novos contatos automaticamente</span>
+                </label>
+                <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, paddingLeft: 26 }}>
+                  {campanha.incluirNovosAutomaticamente
+                    ? "Novos leads recebidos pelas fontes selecionadas entrarão automaticamente na campanha enquanto ela estiver ativa."
+                    : "Somente os contatos selecionados manualmente farão parte da campanha."}
+                </div>
+              </div>
+              {!campanha.incluirNovosAutomaticamente && (campanha.leadsSelecionados || []).length === 0 && (campanha.listasSelecionadas || []).length === 0 && !campanha.planilhaUrl && (
+                <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--amber-50, #FFFBEB)", borderRadius: 8, border: "1px solid var(--amber-200, #FDE68A)", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <AlertCircle size={14} color="var(--amber, #F59E0B)" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <span style={{ fontSize: 12, color: "var(--amber-700, #92400E)" }}>Selecione ao menos uma fonte de contatos ou ative a inclusão automática para poder publicar esta campanha.</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Distribuição de contatos — card separado */}
           {secaoVisivel.origemLeads && (campanha.origemLeads === "empresa" || campanha.origemLeads === "ambos") && (
