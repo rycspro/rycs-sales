@@ -3604,6 +3604,143 @@ adicionarColuna("leads", "confirmacaoTokenHash", "TEXT");
 adicionarColuna("leads", "confirmacaoExpiraEm", "INTEGER");
 adicionarColuna("leads", "qualificacaoEm", "INTEGER");
 
+// Tabelas de campanhas usadas em código mas criadas antes da migração formal
+db.exec(`
+  CREATE TABLE IF NOT EXISTS campaign_reunioes (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    leadId TEXT DEFAULT '',
+    sellerSdrId TEXT DEFAULT '',
+    sellerCloserId TEXT NOT NULL,
+    titulo TEXT DEFAULT 'Reunião',
+    data TEXT NOT NULL,
+    horaInicio TEXT NOT NULL,
+    horaFim TEXT NOT NULL,
+    status TEXT DEFAULT 'agendada',
+    tipo TEXT DEFAULT 'reuniao',
+    linkReuniao TEXT DEFAULT '',
+    local TEXT DEFAULT '',
+    anotacoes TEXT DEFAULT '',
+    resultado TEXT DEFAULT '',
+    valorVenda REAL DEFAULT 0,
+    motivoPerda TEXT DEFAULT '',
+    dadosQualificacao TEXT DEFAULT '{}',
+    canceladoEm INTEGER,
+    atualizadoEm INTEGER,
+    reagendadoDe TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_reuniao_camp ON campaign_reunioes(campaignId, status);
+  CREATE INDEX IF NOT EXISTS idx_reuniao_closer ON campaign_reunioes(sellerCloserId, data);
+`);
+
+// Mensagens de canais externos vinculadas à empresa
+db.exec(`
+  CREATE TABLE IF NOT EXISTS mensagens (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    remetente TEXT DEFAULT '',
+    destinatario TEXT DEFAULT '',
+    conteudo TEXT DEFAULT '',
+    canal TEXT DEFAULT 'whatsapp',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_mensagens_company ON mensagens(companyId, criadoEm);
+`);
+
+// Listas de contatos da Loja de Leads
+db.exec(`
+  CREATE TABLE IF NOT EXISTS lista_contatos (
+    id TEXT PRIMARY KEY,
+    listaId TEXT NOT NULL,
+    contatoId TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_listacont_lista ON lista_contatos(listaId);
+`);
+
+// Meta Ads: conexões OAuth por empresa
+db.exec(`
+  CREATE TABLE IF NOT EXISTS meta_connections (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    accessToken TEXT DEFAULT '',
+    whatsappId TEXT DEFAULT '',
+    pageId TEXT DEFAULT '',
+    ativo INTEGER DEFAULT 1,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_metaconn_company ON meta_connections(companyId);
+`);
+
+// Colunas adicionais de campanhas e leads para quiz e WhatsApp
+adicionarColuna("campaigns", "qualificacaoPerguntas", "TEXT DEFAULT '[]'");
+adicionarColuna("leads", "whatsapp", "TEXT DEFAULT ''");
+
+// campaign_contacts: colunas usadas no fluxo de confirmação
+adicionarColuna("campaign_contacts", "token", "TEXT DEFAULT ''");
+adicionarColuna("campaign_contacts", "leadId", "TEXT DEFAULT ''");
+adicionarColuna("campaign_contacts", "atualizadoEm", "INTEGER");
+adicionarColuna("campaign_contacts", "confirmacaoEnvios", "INTEGER DEFAULT 0");
+adicionarColuna("campaign_contacts", "confirmacaoUltimoEnvio", "INTEGER");
+// leads: contadores de envio de confirmação
+adicionarColuna("leads", "confirmacaoEnvios", "INTEGER DEFAULT 0");
+adicionarColuna("leads", "confirmacaoUltimoEnvio", "INTEGER");
+// formas_ganho: coluna tipo legada
+adicionarColuna("formas_ganho", "tipo", "TEXT DEFAULT ''");
+
+// Listas (Loja de Leads): container de listas de prospecção
+db.exec(`
+  CREATE TABLE IF NOT EXISTS listas (
+    id TEXT PRIMARY KEY,
+    entityId TEXT NOT NULL,
+    nome TEXT DEFAULT '',
+    descricao TEXT DEFAULT '',
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_listas_entity ON listas(entityId);
+`);
+
+// campaign_sellers e dados em leads (referências pré-existentes)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS campaign_sellers (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_campsellers_uniq ON campaign_sellers(campaignId, sellerId);
+`);
+adicionarColuna("leads", "dados", "TEXT DEFAULT '{}'");
+// submissions: coluna evidencias e formaGanhoId (usadas em concluir atividade)
+adicionarColuna("submissions", "evidencias", "TEXT DEFAULT '[]'");
+adicionarColuna("submissions", "formaGanhoId", "TEXT DEFAULT ''");
+// lead_events: coluna dados (usada em leads.js qualificacao/handoff)
+adicionarColuna("lead_events", "dados", "TEXT DEFAULT '{}'");
+// campaign_sellers: coluna status (usada em leads.js atribuição)
+adicionarColuna("campaign_sellers", "status", "TEXT DEFAULT 'ativo'");
+// sellers: coluna funcao (usada em leads.js atribuição/handoff)
+adicionarColuna("sellers", "funcao", "TEXT DEFAULT ''")
+
+// Disponibilidade de horários dos profissionais por campanha
+db.exec(`
+  CREATE TABLE IF NOT EXISTS campaign_disponibilidade (
+    id TEXT PRIMARY KEY,
+    campaignId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    diaSemana INTEGER NOT NULL,
+    horaInicio TEXT NOT NULL,
+    horaFim TEXT NOT NULL,
+    ativo INTEGER DEFAULT 1,
+    criadoEm INTEGER NOT NULL,
+    FOREIGN KEY (campaignId) REFERENCES campaigns(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_disp_camp_seller ON campaign_disponibilidade(campaignId, sellerId, ativo);
+  CREATE INDEX IF NOT EXISTS idx_disp_camp_dia ON campaign_disponibilidade(campaignId, diaSemana, ativo);
+`);
+
 // Notificações internas (agenda, tarefas, etc.)
 db.exec(`
   CREATE TABLE IF NOT EXISTS notificacoes (
