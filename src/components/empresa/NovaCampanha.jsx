@@ -1111,10 +1111,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 0: TIPO DE CAMPANHA ═══════════════════════ */}
       {passo === 0 && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Tipo de campanha</h2>
-          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Como você deseja organizar sua operação comercial?</p>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Tipo de campanha</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Como você deseja organizar sua operação comercial?</p>
 
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
             <div style={{ marginBottom: 12 }}>
               <b style={{ color: "var(--brand)" }}>Selecione o tipo de campanha</b><Tag obrigatorio={true} />
             </div>
@@ -1134,8 +1134,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 1: OBJETIVO ═══════════════════════ */}
       {passo === 1 && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>O que você quer que aconteça?</h2>
-          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>O que você quer que aconteça?</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
             {iniciarComIA
               ? `Converse com o ${nome}, seu assessor de vendas: ele pergunta, calcula o retorno e monta tudo para você revisar.`
               : "Escolha o resultado que você espera. A gente cuida do resto."}
@@ -1184,9 +1184,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         <>
           {/* Dados básicos */}
           <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Como vai funcionar?</h2>
-          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Defina o nome e as atividades desta campanha.</p>
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Como vai funcionar?</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina o nome e as atividades desta campanha.</p>
+          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
             <label><div className="vx-label">Como você quer chamar esta campanha? <Tag obrigatorio={true} /></div>
               <input className="vx-input" value={campanha.titulo} onChange={(e) => set("titulo", e.target.value)} /></label>
             <div style={{ marginTop: 12 }}>
@@ -1216,9 +1216,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Mercado de atuação do cliente */}
           {secaoVisivel.mercado && (<>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Localização dos clientes</h2>
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização dos seus clientes</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde estão os clientes que o profissional vai contatar?</div></div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Localização dos clientes</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 12, fontSize: 13 }}>Onde estão os clientes que o profissional vai contatar?</p>
+          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
             <div style={{ display: "grid", gap: 8 }}>
               {[
                 { id: "pais_todo", label: "Em todo o meu país", icon: MapPin, subtitle: "O profissional pode atuar em qualquer estado ou cidade." },
@@ -1240,12 +1240,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Origem dos leads */}
           {secaoVisivel.origemLeads && (<>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>De onde vêm os contatos?</h2>
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}>
-              <b style={{ color: "var(--brand)" }}>De onde vêm os contatos?</b><Tag obrigatorio={false} />
-              <div className="vx-mut" style={{ fontSize: 11.5 }}>Você fornece a lista de contatos ou o profissional busca sozinho?</div>
-            </div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>De onde vêm os contatos?</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 12, fontSize: 13 }}>Você fornece a lista de contatos ou o profissional busca sozinho?</p>
+          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
             <div style={{ display: "grid", gap: 8 }}>
               <CardOption selected={campanha.origemLeads === "empresa"} onClick={() => { set("origemLeads", "empresa"); set("fonteLeads", "empresa"); }} icon={Database} title="Minha empresa fornecerá os leads" subtitle="Você envia a lista e o profissional trabalha só esses contatos." />
               <CardOption selected={campanha.origemLeads === "profissional"} onClick={() => { set("origemLeads", "profissional"); set("fonteLeads", "profissional"); }} icon={UserPlus} title="O profissional encontrará os leads" subtitle="Ele mesmo prospecta e cadastra novos contatos." />
@@ -1256,9 +1253,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Fontes de contatos + Distribuição */}
           {secaoVisivel.origemLeads && (campanha.origemLeads === "empresa" || campanha.origemLeads === "ambos") && (<>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Contatos e distribuição</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Contatos e distribuição</h2>
           {true && (
-            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div className="vx-card" style={{ padding: 18, marginTop: 10 }}>
               <FontesContatosSelector campanha={campanha} set={set} />
               <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
@@ -1348,8 +1345,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             ];
             const totalSel = canaisSel.length;
             return (<>
-              <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Por onde o profissional vai falar?</h2>
-              <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Selecione um ou mais canais de atendimento para esta campanha.</p>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Por onde o profissional vai falar?</h2>
+              <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Selecione um ou mais canais de atendimento para esta campanha.</p>
               {totalSel > 0 && (
                 <div style={{ marginBottom: 10, fontSize: 12, fontWeight: 600, color: "var(--brand)" }}>
                   {totalSel} canal{totalSel > 1 ? "is" : ""} selecionado{totalSel > 1 ? "s" : ""}
@@ -1428,12 +1425,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Materiais e treinamento (unificado) */}
           {secaoVisivel.materiais && (<>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Materiais e treinamento</h2>
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}>
-              <b style={{ color: "var(--brand)" }}>Materiais e treinamento</b><Tag obrigatorio={false} />
-              <div className="vx-mut" style={{ fontSize: 11.5 }}>Adicione arquivos, treinamentos e conteúdos que vão ajudar o profissional.</div>
-            </div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Materiais e treinamento</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 12, fontSize: 13 }}>Adicione arquivos, treinamentos e conteúdos que vão ajudar o profissional.</p>
+          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
               {/* Enviar arquivos */}
               <div
@@ -1739,11 +1733,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
 
           {/* Perguntas de qualificação */}
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Qualificação de leads</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Qualificação de leads</h2>
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div>
-                <b style={{ color: "var(--brand)" }}><ClipboardCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Qualificação de leads</b><Tag obrigatorio={false} />
+  
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>Perguntas que o profissional faz ao contato para qualificá-lo.</div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
@@ -1858,9 +1852,9 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             ];
             const isSelected = (id) => id === "rycs" ? isRycs : canaisAtivos.includes(id);
             return (<>
-              <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Confirmação de contato</h2>
-              <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Defina como a RYCS deverá comprovar que o profissional realmente conversou com seu cliente.</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 14 }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Confirmação de contato</h2>
+              <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina como a RYCS deverá comprovar que o profissional realmente conversou com seu cliente.</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 0 }}>
                 {CARDS_CONFIRMACAO.map(({ id, Icon, iconColor, titulo, descricao, criterios, rodape, disabled, badge }) => {
                   const sel = isSelected(id);
                   return (
@@ -1926,8 +1920,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 3: PERFIL PROFISSIONAL ═══════════════════════ */}
       {passo === 3 && campanha && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Quem vai trabalhar?</h2>
-          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Defina o perfil do profissional para esta campanha.</p>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Quem vai trabalhar?</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina o perfil do profissional para esta campanha.</p>
 
           {campanha.estruturaComercial === "operacao" ? (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
@@ -2264,8 +2258,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
 
           {/* Validação de resultados */}
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Validação de resultados</h2>
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Validação de resultados</h2>
+          <div className="vx-card" style={{ padding: 18, marginTop: 10 }}>
             <div style={{ marginBottom: 10 }}>
               <b style={{ color: "var(--brand)" }}>Como os resultados serão validados?</b><Tag obrigatorio={false} />
               <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 2 }}>Defina como você aprova um lead qualificado, uma reunião agendada ou outro resultado desta atividade.</div>
@@ -2305,7 +2299,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             const ativs = getAtivs(funcaoAtiva);
             const listaRapida = SELECAO_RAPIDA[funcaoAtiva] || [];
             return (
-              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+              <div className="vx-card" style={{ padding: 18, marginTop: 20 }}>
                 <div style={{ marginBottom: 14 }}>
                   <b style={{ color: "var(--brand)" }}>Monte a rotina comercial</b><Tag obrigatorio={false} />
                   <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4 }}>Defina o que cada profissional fará na sua campanha.</div>
@@ -2439,8 +2433,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 4: AÇÕES & REMUNERAÇÃO ═══════════════════════ */}
       {passo === 4 && campanha && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Ações e pagamentos</h2>
-          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Ações e pagamentos</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
             {campanha.estruturaComercial === "operacao" ? "Configure as atividades, valores e aprovações para cada função da operação." : "Escolha o que o profissional faz e quanto ganha por cada resultado."}
           </p>
 
@@ -2501,8 +2495,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
         return (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Pagamentos</h2>
-          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Pagamentos</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
             Defina seu investimento e descubra o potencial da sua campanha.
           </p>
 
@@ -2527,8 +2521,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             const regraAcao = (id) => ACOES[id]?.regra || "Critérios definidos pela RYCS de acordo com as evidências exigidas.";
             return (
               <>
-                <h2 className="vx-disp" style={{ fontSize: 20, margin: "20px 0 4px" }}>Remuneração da jornada</h2>
-                <p className="vx-mut" style={{ marginTop: 0, fontSize: 13 }}>Defina quanto cada profissional receberá pelas atividades da campanha.</p>
+                <h2 className="vx-disp" style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 6px" }}>Remuneração da jornada</h2>
+                <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina quanto cada profissional receberá pelas atividades da campanha.</p>
 
                 {/* Banner IA */}
                 <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 12, marginTop: 10 }}>
@@ -2658,7 +2652,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           })()}
 
           {/* 1. Saldo disponível */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14, background: "linear-gradient(135deg, var(--brand-50) 0%, var(--surface) 100%)", border: "1.5px solid var(--brand-100)" }}>
+          <div className="vx-card" style={{ padding: 18, marginTop: 20, background: "linear-gradient(135deg, var(--brand-50) 0%, var(--surface) 100%)", border: "1.5px solid var(--brand-100)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Wallet size={20} color="var(--brand)" />
               <div>
@@ -3030,12 +3024,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 6: REVISÃO ═══════════════════════ */}
       {passo === 6 && campanha && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Tudo certo?</h2>
-          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Tudo certo?</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
             Confira o resumo. A campanha será salva como rascunho — você publica quando quiser.
           </p>
 
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
             {/* Resumo */}
             <div className="vx-grid vx-g2" style={{ fontSize: 13 }}>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Nome</span><div style={{ fontWeight: 600 }}>{campanha.titulo}</div></div>
