@@ -2139,20 +2139,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
-          {/* ICP */}
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Cliente ideal <Tag obrigatorio={false} /></h2>
-          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Descreva o tipo de empresa ou pessoa que o profissional deve procurar.</p>
-          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
-            <textarea className="vx-input" style={{ minHeight: 64 }} value={campanha.publico || ""}
-              onChange={(e) => set("publico", e.target.value)}
-              placeholder="Ex.: distribuidoras de bebida com 10 a 80 funcionários" />
-            <label style={{ display: "block", marginTop: 12 }}><div className="vx-label">Produto ou serviço ofertado</div>
-              <input className="vx-input" value={campanha.produto || ""} onChange={(e) => set("produto", e.target.value)} placeholder="Ex.: Software de gestão" /></label>
-            <button className="vx-btn vx-btn-sm" style={{ marginTop: 10, gap: 6 }} disabled={gerandoICP} onClick={gerarICP}>
-              {gerandoICP ? <><Loader size={13} style={{ animation: "spin 1s linear infinite" }} /> Gerando ICP…</> : <><Sparkles size={13} /> Gerar ICP com IA</>}
-            </button>
-          </div>
-
           {/* Nível de experiência */}
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Nível de experiência <Tag obrigatorio={false} /></h2>
           <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
