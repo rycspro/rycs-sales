@@ -13,6 +13,12 @@ registrar(MobileProvider);
 registrar(MockProvider);
 registrar(SipProvider);
 
+if (process.env.ASTERISK_ARI_URL) {
+  providers.get("sip").initialize().then((r) => {
+    console.log(r.ok ? `[voice] Asterisk conectado (${r.versao})` : `[voice] SIP inativo: ${r.motivo}`);
+  });
+}
+
 export function getProvider(id) {
   return providers.get(id) || null;
 }
