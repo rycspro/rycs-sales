@@ -413,9 +413,9 @@ function FontesContatosSelector({ campanha, set }) {
             <div key={id} style={{ marginTop: 10, padding: "12px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
               <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6, color: "var(--brand)" }}>Importar contatos</div>
               <div className="vx-mut" style={{ fontSize: 12, marginBottom: 8 }}>Importe um arquivo CSV ou Excel com seus contatos.</div>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "10px 12px", border: "1px dashed var(--border)", borderRadius: 6, fontSize: 12 }}>
-                <Upload size={14} color="var(--text-2)" />
-                <span className="vx-mut">Clique para selecionar arquivo (.csv, .xlsx)</span>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "9px 16px", background: "var(--brand)", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", userSelect: "none", transition: "opacity .15s" }} onMouseEnter={e => e.currentTarget.style.opacity=".85"} onMouseLeave={e => e.currentTarget.style.opacity="1"}>
+                <Upload size={14} color="#fff" />
+                <span>Selecionar arquivo (.csv, .xlsx)</span>
                 <input type="file" accept=".csv,.xlsx,.xls" style={{ display: "none" }} onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
