@@ -33,8 +33,8 @@ const OPC_PAISES = PAISES.map((p) => ({ value: p.code, label: p.nome }));
 const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
 const nomePais = (code) => NOME_PAIS[String(code || "").toUpperCase()] || code || "seu país";
 
-const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Ações", "Pagamentos", "Tudo certo?"];
-const PASSOS_CURTOS = ["Tipo", "Objetivo", "Operação", "Profissionais", "Ações", "Pagamentos", "Revisão"];
+const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Configurações", "Quem vai trabalhar?", "Ações", "Pagamentos", "Tudo certo?"];
+const PASSOS_CURTOS = ["Tipo", "Objetivo", "Campanha", "Operação", "Profissionais", "Ações", "Pagamentos", "Revisão"];
 
 const ICONES_OBJETIVO_UI = {
   encontrar_clientes: Search, qualificar: Filter, agendar_reunioes: CalendarCheck,
@@ -1221,6 +1221,18 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
           </>
+          <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
+            <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Continuar <ArrowRight size={14} /></button>
+          </div>
+        </>
+      )}
+
+      {/* ═══════════════════════ PASSO 3: CONFIGURAÇÕES DA OPERAÇÃO ═══════════════════════ */}
+      {passo === 3 && campanha && (
+        <>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Como vai operar?</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Configure localização, canais, materiais e validação desta campanha.</p>
 
           {/* Mercado de atuação do cliente */}
           {secaoVisivel.mercado && (<>
@@ -1897,11 +1909,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             {etapaConfirmacao ? (
               <>
                 <button className="vx-btn" onClick={() => { setEtapaConfirmacao(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}><ArrowLeft size={14} /> Voltar</button>
-                <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Profissionais <ArrowRight size={14} /></button>
+                <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Profissionais <ArrowRight size={14} /></button>
               </>
             ) : (
               <>
-                <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
+                <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
                 <button className="vx-btn vx-btn-primary" onClick={() => { setEtapaConfirmacao(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Confirmação de contato <ArrowRight size={14} /></button>
               </>
             )}
@@ -1909,8 +1921,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         </>
       )}
 
-      {/* ═══════════════════════ PASSO 3: PERFIL PROFISSIONAL ═══════════════════════ */}
-      {passo === 3 && campanha && (
+      {/* ═══════════════════════ PASSO 4: PERFIL PROFISSIONAL ═══════════════════════ */}
+      {passo === 4 && campanha && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Quem vai trabalhar?</h2>
           <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina o perfil do profissional para esta campanha.</p>
@@ -2416,14 +2428,14 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           })()}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Ações e pagamentos <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={() => setPasso(3)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(5)}>Ações e pagamentos <ArrowRight size={14} /></button>
           </div>
         </>
       )}
 
-      {/* ═══════════════════════ PASSO 4: AÇÕES & REMUNERAÇÃO ═══════════════════════ */}
-      {passo === 4 && campanha && (
+      {/* ═══════════════════════ PASSO 5: AÇÕES & REMUNERAÇÃO ═══════════════════════ */}
+      {passo === 5 && campanha && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Ações e pagamentos</h2>
           <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
@@ -2461,14 +2473,14 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           )}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(3)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(5)}>Pagamentos <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={() => setPasso(4)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(6)}>Pagamentos <ArrowRight size={14} /></button>
           </div>
         </>
       )}
 
       {/* ═══════════════════════ PASSO 5: VERBA DA CAMPANHA ═══════════════════════ */}
-      {passo === 5 && campanha && (() => {
+      {passo === 6 && campanha && (() => {
         const orcamentoAtual = Number(campanha.orcamento) || 0;
         const precisaAdicionar = orcamentoAtual > disponivel ? orcamentoAtual - disponivel : 0;
         const produtosSelecionados = campanha.produtosCampanha || [];
@@ -3006,15 +3018,15 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(4)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(6)}>Revisar tudo <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={() => setPasso(5)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(7)}>Revisar tudo <ArrowRight size={14} /></button>
           </div>
         </>
         );
       })()}
 
-      {/* ═══════════════════════ PASSO 6: REVISÃO ═══════════════════════ */}
-      {passo === 6 && campanha && (
+      {/* ═══════════════════════ PASSO 7: REVISÃO ═══════════════════════ */}
+      {passo === 7 && campanha && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Tudo certo?</h2>
           <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
@@ -3165,7 +3177,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           )}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(5)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn" onClick={() => setPasso(6)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={criar}>
               {salvando ? "Salvando…" : <>Salvar rascunho <Check size={14} /></>}
             </button>
