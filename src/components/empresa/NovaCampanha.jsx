@@ -1848,7 +1848,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             {campanha.estruturaComercial === "operacao" ? "As atividades e valores de cada função foram configurados no passo anterior." : "Escolha o que o profissional faz e quanto ganha por cada resultado."}
           </p>
 
-          {campanha.estruturaComercial !== "operacao" && (
+          {campanha.estruturaComercial !== "operacao" && campanha.modoAcoesRemuneradas && (
             <button className="vx-btn vx-btn-sm" style={{ marginTop: 4, marginBottom: 10, gap: 6 }} disabled={recomendandoAtividades} onClick={recomendarAtividades}>
               {recomendandoAtividades ? <><Loader size={13} style={{ animation: "spin 1s linear infinite" }} /> Recomendando…</> : <><Sparkles size={13} /> Recomendar atividades com IA</>}
             </button>
@@ -1885,17 +1885,20 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           ) : (<>
           {/* Seletor de modo */}
-          <div style={{ marginTop: 14, marginBottom: 14 }}>
-            <div className="vx-eyebrow" style={{ marginBottom: 8 }}>COMO QUER MONTAR OS PAGAMENTOS?</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div className="vx-card" style={{ padding: 20, marginTop: 14 }}>
+            <div style={{ marginBottom: 14 }}>
+              <b style={{ fontSize: 15, color: "var(--ink)" }}>Atividades e pagamentos — {FUNCOES[campanha.funcao]?.nome || campanha.funcao || "SDR"}</b>
+              <div className="vx-mut" style={{ fontSize: 12.5, marginTop: 2 }}>Defina o que o profissional fará e quanto receberá.</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {[
-                { id: "rapido", icon: Zap, titulo: "Usar sugestões prontas", desc: "Escolha entre atividades já montadas e defina o valor de cada uma." },
-                { id: "personalizado", icon: SlidersHorizontal, titulo: "Montar do zero", desc: "Crie suas próprias atividades, valores e regras de pagamento." },
+                { id: "rapido", icon: Zap, titulo: "Seleção rápida", desc: "Escolha atividades recomendadas para esta função e defina quanto deseja pagar." },
+                { id: "personalizado", icon: SlidersHorizontal, titulo: "Personalizado", desc: "Configure suas próprias atividades, valores e formas de pagamento." },
               ].map((m) => {
-                const on = (campanha.modoAcoesRemuneradas || "rapido") === m.id;
+                const on = campanha.modoAcoesRemuneradas === m.id;
                 return (
                   <button key={m.id} onClick={() => {
-                    if (m.id === "personalizado" && (campanha.modoAcoesRemuneradas || "rapido") === "rapido") {
+                    if (m.id === "personalizado" && campanha.modoAcoesRemuneradas !== "personalizado") {
                       const existentes = (campanha.formasGanhoRascunho || []);
                       const convertidas = (campanha.acoesAtivas || []).filter((k) => !existentes.some((f) => f.modeloOriginalId === k)).map((k) => ({
                         tempId: `fg-${k}-${Date.now()}`, nome: ACOES_DISPONIVEIS.find((a) => a.id === k)?.nome || ACOES[k]?.nome || k,
@@ -1906,16 +1909,19 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                       set("formasGanhoRascunho", [...convertidas, ...existentes.filter((f) => f.origem !== "predefinido")]);
                     }
                     set("modoAcoesRemuneradas", m.id);
-                  }} style={{
-                    padding: "18px 16px", cursor: "pointer", textAlign: "left", width: "100%", borderRadius: 12,
-                    border: `1px solid ${on ? SEL.border : SEL.borderOff}`,
-                    background: on ? SEL.bg : SEL.bgOff,
-                    transition: "border-color .15s, background .15s", position: "relative",
+                  }} className="vx-card" style={{
+                    padding: "22px 18px", cursor: "pointer", textAlign: "left", width: "100%", borderRadius: 14,
+                    border: `2px solid ${on ? "var(--brand)" : "var(--border)"}`,
+                    background: on ? "var(--brand-50)" : "var(--surface-solid)",
+                    transition: "border-color .2s, background .2s, box-shadow .2s", position: "relative",
+                    boxShadow: on ? "0 0 0 3px var(--brand-50)" : "none",
                   }}>
-                    {on && <div style={{ position: "absolute", top: 10, right: 10, width: 20, height: 20, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} color="#fff" /></div>}
-                    <m.icon size={22} color={on ? "var(--brand)" : "var(--muted)"} style={{ marginBottom: 8 }} />
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink, #171717)", marginBottom: 4 }}>{m.titulo}</div>
-                    <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.5 }}>{m.desc}</div>
+                    {on && <div style={{ position: "absolute", top: 12, right: 12, width: 22, height: 22, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} color="#fff" /></div>}
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: on ? "var(--brand-100, rgba(37,99,235,.12))" : "var(--surface-2, #f3f4f6)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                      <m.icon size={20} color={on ? "var(--brand)" : "var(--muted)"} />
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: on ? "var(--brand)" : "var(--ink)", marginBottom: 5 }}>{m.titulo}</div>
+                    <div style={{ fontSize: 12.5, color: "var(--muted)", lineHeight: 1.55 }}>{m.desc}</div>
                   </button>
                 );
               })}
@@ -1923,7 +1929,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
 
           {/* ── MODO SELEÇÃO RÁPIDA ── */}
-          {(campanha.modoAcoesRemuneradas || "rapido") === "rapido" && (<>
+          {campanha.modoAcoesRemuneradas === "rapido" && (<>
             <div className="vx-card" style={{ padding: 18 }}>
               <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Por quais resultados você paga?</b><Tag obrigatorio={true} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Marque cada atividade e defina o valor. As mais comuns para {FUNCOES[campanha.funcao]?.nome || campanha.funcao || "SDR"} aparecem primeiro.</div></div>
               <div style={{ display: "grid", gap: 8 }}>
@@ -2134,7 +2140,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* ── CONFIGURAÇÕES COMUNS AOS DOIS MODOS ── */}
 
             {/* Sugestão com IA */}
-            {(campanha.modoAcoesRemuneradas || "rapido") === "rapido" && (
+            {campanha.modoAcoesRemuneradas === "rapido" && (
               <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
                 <div className="vx-row" style={{ marginBottom: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}><TrendingUp size={14} color="var(--brand)" /><b style={{ fontSize: 13 }}>Sugestão com IA</b></div>
@@ -2212,7 +2218,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             )}
 
             {/* Comissão */}
-            {(campanha.modoAcoesRemuneradas || "rapido") === "rapido" && (
+            {campanha.modoAcoesRemuneradas === "rapido" && (
               <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
                 <label style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}>
                   <input type="checkbox" checked={campanha.temComissao || false} onChange={(e) => set("temComissao", e.target.checked)} />
