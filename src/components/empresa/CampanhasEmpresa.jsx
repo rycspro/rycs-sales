@@ -1008,6 +1008,9 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
         // Criar campanha (manual ou com IA) é liberado em todos os planos,
         // inclusive o gratuito: todo mundo tem direito à campanha criada por IA.
         // O plano e o caixa só pesam na hora de PUBLICAR, não de criar.
+        // Limpa rascunho local para garantir wizard sempre em branco.
+        removerArmazenado(`rycs-wizard-${emp.id}`);
+        setRascunhoEdicao(null);
         setCriarComIA(ia); setCriando(true);
       }}
       onArquivar={arquivarCampanha}
