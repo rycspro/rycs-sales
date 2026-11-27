@@ -164,6 +164,248 @@ function ChipToggle({ items, value, onChange, multi = false }) {
   );
 }
 
+function FontesContatosSelector({ campanha, set }) {
+  const fontesSelecionadas = campanha.fontesContatosSelecionadas || [];
+  const leadsSelecionados = campanha.leadsSelecionados || [];
+  const listasSelecionadas = campanha.listasSelecionadas || [];
+
+  const [dadosFontes, setDadosFontes] = useState({});
+  const [buscas, setBuscas] = useState({});
+  const [pastasAbertas, setPastasAbertas] = useState({});
+
+  const FONTES = [
+    { id: "meus-contatos", Icon: Users, label: "Meus contatos", desc: "Sua base de contatos" },
+    { id: "listas-leads", Icon: Library, label: "Listas de leads", desc: "Listas salvas na plataforma" },
+    { id: "meta-ads", Icon: Target, label: "Meta Ads", desc: "Leads do Facebook/Instagram" },
+    { id: "loja-leads", Icon: Database, label: "Loja de Leads", desc: "Leads adquiridos" },
+    { id: "google-sheets", Icon: FileSpreadsheet, label: "Google Planilhas", desc: "Importar de planilha pública" },
+    { id: "importar", Icon: Upload, label: "Importar contatos", desc: "CSV ou arquivo de contatos" },
+  ];
+
+  const carregarFonte = (id) => {
+    if (id === "meus-contatos") {
+      setDadosFontes((d) => ({ ...d, [id]: { items: [], loading: true } }));
+      api("/leads").then((r) => {
+        setDadosFontes((d) => ({ ...d, [id]: { items: Array.isArray(r) ? r : [], loading: false } }));
+      }).catch(() => setDadosFontes((d) => ({ ...d, [id]: { items: [], loading: false } })));
+    } else if (id === "meta-ads") {
+      setDadosFontes((d) => ({ ...d, [id]: { items: [], loading: true } }));
+      api("/meta/leads").then((r) => {
+        const items = Array.isArray(r) ? r : (r?.leads || []);
+        setDadosFontes((d) => ({ ...d, [id]: { items, loading: false } }));
+      }).catch(() => setDadosFontes((d) => ({ ...d, [id]: { items: [], loading: false } })));
+    } else if (id === "listas-leads" || id === "loja-leads") {
+      setDadosFontes((d) => ({ ...d, [id]: { pastas: [], loading: true } }));
+      api("/loja-leads/pastas").then(async (r) => {
+        const pastas = r?.pastas || [];
+        const pastasComListas = await Promise.all(
+          pastas.map(async (p) => {
+            const lr = await api(`/loja-leads/listas/${p.id}`).catch(() => ({ listas: [] }));
+            return { ...p, listas: lr?.listas || [] };
+          })
+        );
+        setDadosFontes((d) => ({ ...d, [id]: { pastas: pastasComListas, loading: false } }));
+      }).catch(() => setDadosFontes((d) => ({ ...d, [id]: { pastas: [], loading: false } })));
+    }
+  };
+
+  const toggleFonte = (id) => {
+    const ativa = fontesSelecionadas.includes(id);
+    const novas = ativa ? fontesSelecionadas.filter((f) => f !== id) : [...fontesSelecionadas, id];
+    set("fontesContatosSelecionadas", novas);
+    if (!ativa && !dadosFontes[id]) carregarFonte(id);
+  };
+
+  const toggleLead = (id) => {
+    const novos = leadsSelecionados.includes(id)
+      ? leadsSelecionados.filter((x) => x !== id)
+      : [...leadsSelecionados, id];
+    set("leadsSelecionados", novos);
+  };
+
+  const toggleLista = (id) => {
+    const novos = listasSelecionadas.includes(id)
+      ? listasSelecionadas.filter((x) => x !== id)
+      : [...listasSelecionadas, id];
+    set("listasSelecionadas", novos);
+  };
+
+  const totalSelecionados = leadsSelecionados.length + listasSelecionadas.length;
+
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ marginBottom: 10 }}>
+        <b style={{ fontSize: 13 }}>Fontes de contatos</b>
+        <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>Selecione de onde virão os contatos desta campanha.</div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        {FONTES.map(({ id, Icon, label, desc }) => {
+          const ativo = fontesSelecionadas.includes(id);
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => toggleFonte(id)}
+              style={{
+                display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                background: ativo ? "var(--brand-50)" : "var(--surface)",
+                border: `1px solid ${ativo ? "var(--brand)" : "var(--border)"}`,
+                borderRadius: 8, cursor: "pointer", textAlign: "left",
+              }}
+            >
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: ativo ? "var(--brand)" : "var(--border-muted, var(--border))", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Icon size={15} color={ativo ? "#fff" : "var(--text-2)"} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: ativo ? "var(--brand)" : "var(--text)" }}>{label}</div>
+                <div className="vx-mut" style={{ fontSize: 11 }}>{desc}</div>
+              </div>
+              {ativo && <Check size={14} color="var(--brand)" style={{ flexShrink: 0 }} />}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Painéis expandidos por fonte */}
+      {fontesSelecionadas.map((id) => {
+        const d = dadosFontes[id] || {};
+        const busca = buscas[id] || "";
+
+        if (id === "meus-contatos" || id === "meta-ads") {
+          const items = d.items || [];
+          const filtrados = items.filter((l) => {
+            if (!busca.trim()) return true;
+            const t = busca.toLowerCase();
+            return (l.nome || "").toLowerCase().includes(t) || (l.empresa || "").toLowerCase().includes(t) || (l.telefone || "").includes(t) || (l.email || "").toLowerCase().includes(t);
+          });
+          const fonteLabel = id === "meus-contatos" ? "Meus contatos" : "Meta Ads";
+          return (
+            <div key={id} style={{ marginTop: 10, padding: "12px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8, color: "var(--brand)" }}>{fonteLabel}</div>
+              <div style={{ position: "relative", marginBottom: 8 }}>
+                <Search size={13} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--text-2)" }} />
+                <input className="vx-input" placeholder="Buscar por nome, empresa, telefone…" value={busca} onChange={(e) => setBuscas((b) => ({ ...b, [id]: e.target.value }))} style={{ paddingLeft: 26, fontSize: 12 }} />
+              </div>
+              {d.loading ? (
+                <div className="vx-mut" style={{ fontSize: 12 }}><Loader size={12} style={{ animation: "spin 1s linear infinite", marginRight: 4 }} />Carregando…</div>
+              ) : items.length === 0 ? (
+                <div className="vx-mut" style={{ fontSize: 12, padding: 8, textAlign: "center" }}>Nenhum contato encontrado</div>
+              ) : (
+                <>
+                  <div style={{ maxHeight: 180, overflowY: "auto", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg)" }}>
+                    {filtrados.map((l) => (
+                      <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", cursor: "pointer", borderBottom: "1px solid var(--border)", fontSize: 12 }}>
+                        <input type="checkbox" checked={leadsSelecionados.includes(l.id)} onChange={() => toggleLead(l.id)} style={{ accentColor: "var(--brand)" }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 500 }}>{l.nome || "Sem nome"}</div>
+                          <div className="vx-mut" style={{ fontSize: 11 }}>{[l.empresa, l.telefone, l.email].filter(Boolean).join(" · ")}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                    <button type="button" className="vx-btn vx-btn-sm" style={{ fontSize: 11 }} onClick={() => { const ids = items.map((l) => l.id); const novos = Array.from(new Set([...leadsSelecionados, ...ids])); set("leadsSelecionados", novos); }}>Selecionar todos</button>
+                    <button type="button" className="vx-btn vx-btn-sm" style={{ fontSize: 11 }} onClick={() => { const ids = new Set(items.map((l) => l.id)); set("leadsSelecionados", leadsSelecionados.filter((x) => !ids.has(x))); }}>Remover todos</button>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        }
+
+        if (id === "listas-leads" || id === "loja-leads") {
+          const pastas = d.pastas || [];
+          const fonteLabel = id === "listas-leads" ? "Listas de leads" : "Loja de Leads";
+          return (
+            <div key={id} style={{ marginTop: 10, padding: "12px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8, color: "var(--brand)" }}>{fonteLabel}</div>
+              {d.loading ? (
+                <div className="vx-mut" style={{ fontSize: 12 }}><Loader size={12} style={{ animation: "spin 1s linear infinite", marginRight: 4 }} />Carregando…</div>
+              ) : pastas.length === 0 ? (
+                <div className="vx-mut" style={{ fontSize: 12, padding: 8, textAlign: "center" }}>Nenhuma lista encontrada</div>
+              ) : (
+                <div style={{ maxHeight: 220, overflowY: "auto", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg)" }}>
+                  {pastas.map((p) => (
+                    <div key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => setPastasAbertas((pa) => ({ ...pa, [`${id}-${p.id}`]: !pa[`${id}-${p.id}`] }))}
+                        style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", padding: "8px 10px", background: "var(--surface-raised, var(--surface))", border: "none", borderBottom: "1px solid var(--border)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+                      >
+                        {pastasAbertas[`${id}-${p.id}`] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                        {p.nome || "Pasta"}
+                        <span className="vx-mut" style={{ fontWeight: 400, marginLeft: "auto" }}>{(p.listas || []).length} lista(s)</span>
+                      </button>
+                      {pastasAbertas[`${id}-${p.id}`] && (p.listas || []).map((l) => (
+                        <label key={l.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 14px", cursor: "pointer", borderBottom: "1px solid var(--border)", fontSize: 12, background: "var(--bg)" }}>
+                          <input type="checkbox" checked={listasSelecionadas.includes(l.id)} onChange={() => toggleLista(l.id)} style={{ accentColor: "var(--brand)" }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 500 }}>{l.nome || "Lista"}</div>
+                            {l.total != null && <div className="vx-mut" style={{ fontSize: 11 }}>{l.total} contatos</div>}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        if (id === "google-sheets") {
+          return (
+            <div key={id} style={{ marginTop: 10, padding: "12px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6, color: "var(--brand)" }}>Google Planilhas</div>
+              <div className="vx-mut" style={{ fontSize: 12, marginBottom: 8 }}>Cole o link de uma planilha pública do Google Sheets com os contatos.</div>
+              <input className="vx-input" placeholder="https://docs.google.com/spreadsheets/d/…" value={campanha.planilhaUrl || ""} onChange={(e) => set("planilhaUrl", e.target.value)} style={{ fontSize: 12 }} />
+            </div>
+          );
+        }
+
+        if (id === "importar") {
+          return (
+            <div key={id} style={{ marginTop: 10, padding: "12px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6, color: "var(--brand)" }}>Importar contatos</div>
+              <div className="vx-mut" style={{ fontSize: 12, marginBottom: 8 }}>Importe um arquivo CSV ou Excel com seus contatos.</div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "10px 12px", border: "1px dashed var(--border)", borderRadius: 6, fontSize: 12 }}>
+                <Upload size={14} color="var(--text-2)" />
+                <span className="vx-mut">Clique para selecionar arquivo (.csv, .xlsx)</span>
+                <input type="file" accept=".csv,.xlsx,.xls" style={{ display: "none" }} onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const fd = new FormData();
+                  fd.append("file", file);
+                  try {
+                    await fetch(`${API_URL}/api/leads/import`, { method: "POST", body: fd, credentials: "include" });
+                    if (fontesSelecionadas.includes("meus-contatos")) carregarFonte("meus-contatos");
+                    else { toggleFonte("meus-contatos"); carregarFonte("meus-contatos"); }
+                  } catch (_) { /* ignore */ }
+                }} />
+              </label>
+            </div>
+          );
+        }
+
+        return null;
+      })}
+
+      {/* Resumo de contatos vinculados */}
+      {totalSelecionados > 0 && (
+        <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)", display: "flex", alignItems: "center", gap: 8 }}>
+          <Users size={14} color="var(--brand)" />
+          <span style={{ fontSize: 13, color: "var(--brand)", fontWeight: 500 }}>
+            {[
+              leadsSelecionados.length > 0 && `${leadsSelecionados.length} contato(s) selecionado(s)`,
+              listasSelecionadas.length > 0 && `${listasSelecionadas.length} lista(s) vinculada(s)`,
+            ].filter(Boolean).join(" · ")}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LeadsSelectorInline({ campanha, set, rascunhoId }) {
   const [leads, setLeads] = useState([]);
   const [carregando, setCarregando] = useState(false);
@@ -614,6 +856,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ leadIds }), credentials: "include",
       });
+    }
+    const listaIds = c.listasSelecionadas || [];
+    for (const listaId of listaIds) {
+      await api("/loja-leads/vincular", { listaId, campaignId: id, modo: "inclusao" });
     }
   };
 
@@ -1334,7 +1580,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                         onChange={(e) => set("prazoInatividadeHoras", Number(e.target.value))} placeholder="0 = sem prazo" /></label>
                   </div>
                 )}
-                <LeadsSelectorInline campanha={campanha} set={set} rascunhoId={rascunhoIdRef.current} />
+                <FontesContatosSelector campanha={campanha} set={set} />
                 <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
                   <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                     <input type="checkbox" checked={!!campanha.incluirNovosAutomaticamente} onChange={(e) => set("incluirNovosAutomaticamente", e.target.checked)} style={{ accentColor: "var(--brand)" }} />
@@ -1346,6 +1592,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                       : "Somente os contatos selecionados manualmente farão parte da campanha."}
                   </div>
                 </div>
+                {/* Aviso: sem contatos nem fonte automática */}
+                {!campanha.incluirNovosAutomaticamente && (campanha.leadsSelecionados || []).length === 0 && (campanha.listasSelecionadas || []).length === 0 && !campanha.planilhaUrl && (
+                  <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--amber-50, #FFFBEB)", borderRadius: 8, border: "1px solid var(--amber-200, #FDE68A)", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                    <AlertCircle size={14} color="var(--amber, #F59E0B)" style={{ flexShrink: 0, marginTop: 1 }} />
+                    <span style={{ fontSize: 12, color: "var(--amber-700, #92400E)" }}>Selecione ao menos uma fonte de contatos ou ative a inclusão automática para poder publicar esta campanha.</span>
+                  </div>
+                )}
               </div>
             )}
           </div>}
