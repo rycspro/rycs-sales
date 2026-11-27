@@ -3238,6 +3238,49 @@ db.exec(`
   );
 `);
 
+// ── Roteiros comerciais guiados (discadora e videochamada) ─────────────
+// O roteiro estruturado (blocos, tópicos, perguntas, condições) fica em
+// voice_scripts.estrutura. Scripts antigos continuam publicados como antes.
+adicionarColuna("voice_scripts", "estrutura", "TEXT DEFAULT ''");
+adicionarColuna("voice_scripts", "status", "TEXT DEFAULT 'publicado'");
+adicionarColuna("voice_scripts", "origem", "TEXT DEFAULT 'manual'");
+adicionarColuna("voice_scripts", "fonteNome", "TEXT DEFAULT ''");
+adicionarColuna("voice_scripts", "publicadoEm", "INTEGER");
+adicionarColuna("voice_scripts", "excluidoEm", "INTEGER");
+db.exec(`
+  -- Uma campanha tem no máximo um roteiro guiado.
+  CREATE TABLE IF NOT EXISTS voice_script_campanhas (
+    campaignId TEXT PRIMARY KEY,
+    scriptId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    criadoEm INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_script_camp_script ON voice_script_campanhas(scriptId);
+
+  -- Execução do roteiro numa ligação ou videochamada. Só guarda o estado e a
+  -- evidência de cada resposta; a transcrição não fica armazenada.
+  CREATE TABLE IF NOT EXISTS voice_roteiro_execucoes (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    scriptId TEXT NOT NULL,
+    sellerId TEXT NOT NULL,
+    leadId TEXT NOT NULL,
+    callId TEXT,
+    reuniaoId TEXT,
+    contexto TEXT DEFAULT 'ligacao',
+    status TEXT DEFAULT 'em_andamento',
+    estado TEXT DEFAULT '{}',
+    contextoFala TEXT DEFAULT '',
+    iaChamadas INTEGER DEFAULT 0,
+    iaTokens INTEGER DEFAULT 0,
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    salvoEm INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_voice_rot_exec_seller ON voice_roteiro_execucoes(sellerId, status);
+  CREATE INDEX IF NOT EXISTS idx_voice_rot_exec_lead ON voice_roteiro_execucoes(leadId);
+`);
+
 criarSchemaAgenda(db);
 criarSchemaCalendario(db);
 criarSchemaGestaoInterna(db);

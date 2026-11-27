@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { api } from "../../lib/api.js";
 import { useVoice } from "./useVoice.js";
 import { useSipPhone } from "./useSipPhone.js";
+import RoteiroGuiado from "./RoteiroGuiado.jsx";
+import { lerEstrutura, contarPerguntas } from "../../../shared/roteiroComercial.js";
 import {
   Phone, PhoneOff, Play, Pause, SkipForward, Clock, Target,
   CheckCircle2, User, Building2, ChevronRight, AlertTriangle,
@@ -88,6 +90,13 @@ export default function DiscadoraProfissional({ aviso }) {
   const capsSip = providers.find((p) => p.id === "sip");
   const sipDisponivel = !!capsSip?.capabilities?.canInitiate;
   const [statusSip, setStatusSip] = useState("");
+  // Roteiro guiado (estruturado) da campanha; scripts antigos seguem no formato de abas.
+  const roteiroRef = useRef(null);
+  const roteiroGuiado = useMemo(() => {
+    const estrutura = lerEstrutura(voice.scriptAtual?.estrutura);
+    return estrutura && contarPerguntas(estrutura) ? { id: voice.scriptAtual.id, nome: voice.scriptAtual.nome, estrutura } : null;
+  }, [voice.scriptAtual]);
+  const obterAudioRemoto = useCallback(() => sip.audioRef.current?.srcObject || null, [sip.audioRef]);
   const callIdSip = modalidade === "sip" ? voice.ligacaoAtual?.callId : null;
 
   // Andamento real da ligação vem dos eventos do Asterisk gravados no servidor.
@@ -146,6 +155,8 @@ export default function DiscadoraProfissional({ aviso }) {
       if (!isNaN(dt.getTime())) dados.agendarRetorno = dt.getTime();
     }
 
+    // Respostas do roteiro vão para o CRM junto com o resultado.
+    if (roteiroRef.current) await roteiroRef.current.salvar({ silencioso: true });
     const r = await voice.registrarResultado(voice.ligacaoAtual.callId, dados);
     if (r?.ok) {
       setResultado("");
@@ -409,8 +420,17 @@ export default function DiscadoraProfissional({ aviso }) {
                   </div>
                 )}
 
-                {/* Script */}
-                {voice.scriptAtual && (
+                {/* Roteiro guiado: prévia antes da ligação; durante, ocupa a linha inteira abaixo */}
+                {roteiroGuiado && !temLigacao && temLead && (
+                  <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12, fontSize: 13 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "var(--muted)", letterSpacing: ".04em" }}>Roteiro guiado</div>
+                    <div style={{ fontWeight: 600, marginTop: 2 }}>{roteiroGuiado.nome} · {contarPerguntas(roteiroGuiado.estrutura)} perguntas</div>
+                    <div style={{ color: "var(--muted)", marginTop: 4 }}>Ao iniciar a ligação, o roteiro aparece abaixo e a IA acompanha a conversa.</div>
+                  </div>
+                )}
+
+                {/* Script (formato antigo) */}
+                {voice.scriptAtual && !roteiroGuiado && (
                   <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
                     <div style={{ display: "flex", gap: 4, marginBottom: 8, flexWrap: "wrap" }}>
                       {["abertura", "qualificacao", "argumentacao", "objecoes", "encerramento", "agendamento"].map((s) => (
@@ -509,6 +529,14 @@ export default function DiscadoraProfissional({ aviso }) {
                   </div>
                 )}
               </Card>
+
+              {/* Roteiro guiado durante a ligação: linha inteira, abaixo das colunas */}
+              {roteiroGuiado && temLigacao && (
+                <Card style={{ padding: 20, gridColumn: "1 / -1" }}>
+                  <RoteiroGuiado ref={roteiroRef} roteiro={roteiroGuiado} leadId={voice.leadAtual.id} callId={voice.ligacaoAtual.callId}
+                    contexto="ligacao" obterAudioRemoto={modalidade === "sip" ? obterAudioRemoto : undefined} aviso={aviso} alturaLista={360} />
+                </Card>
+              )}
             </div>
           )}
         </>

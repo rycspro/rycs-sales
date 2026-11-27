@@ -227,7 +227,7 @@ async function ocrPdf(buffer, pasta) {
   return textos.filter(Boolean).join("\n\n");
 }
 
-const TIPO_AUDIO = { mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4" };
+const TIPO_AUDIO = { mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", webm: "audio/webm", ogg: "audio/ogg" };
 
 async function transcreverOpenAI(caminho, ext = "mp3") {
   const form = new FormData();
@@ -267,6 +267,26 @@ async function transcreverFala(arquivo, ext, pasta) {
     if (TIPO_AUDIO[ext] && statSync(arquivo).size <= MAX_AUDIO_TRANSCRICAO) return { fala: await transcreverOpenAI(arquivo, ext), nota: "fala transcrita" };
   }
   return { fala: "", nota: "fala não transcrita (transcrição indisponível no servidor)" };
+}
+
+// Trecho curto de áudio ao vivo (roteiro guiado da discadora/videochamada).
+// Mesmo caminho da leitura de materiais: whisper local quando houver, senão a
+// API de transcrição. Nada do áudio fica guardado.
+export async function transcricaoDisponivel() {
+  if (transcricaoExterna()) return true;
+  return (await ffmpegDisponivel()) && (await temWhisper());
+}
+
+export async function transcreverTrechoAudio(buffer, ext = "webm") {
+  const pasta = mkdtempSync(join(tmpdir(), "rycs-fala-"));
+  try {
+    const arquivo = join(pasta, `trecho.${ext}`);
+    writeFileSync(arquivo, buffer);
+    const { fala } = await transcreverFala(arquivo, ext, pasta);
+    return fala;
+  } finally {
+    rmSync(pasta, { recursive: true, force: true });
+  }
 }
 
 // ---------------------------------------------------------------------------

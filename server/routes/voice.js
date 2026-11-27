@@ -5,6 +5,12 @@ import {
   proximoLead, renovarReserva, liberarReserva, registrarTentativa,
   adicionarLeadsNaFila, estatisticasFila,
 } from "../services/voice/queueEngine.js";
+import { estruturarDocumento, analisarTrecho, limparTranscricao, resumoRespostas, iaDisponivel as roteiroIaDisponivel, MAX_TEXTO_DOCUMENTO } from "../services/roteiroGuiado.js";
+import { transcricaoDisponivel, transcreverTrechoAudio } from "../services/leituraMateriais.js";
+import {
+  normalizarEstrutura, lerEstrutura, contarPerguntas, listarPerguntas, proximaPergunta,
+  progresso as progressoRoteiro, avaliarCriterios, valorDoCampo,
+} from "../../shared/roteiroComercial.js";
 
 const router = Router();
 
@@ -418,13 +424,16 @@ router.post("/voice/next-lead", (req, res) => {
 
   // Buscar script da campanha/fila
   const fila = db.prepare("SELECT * FROM voice_queues WHERE id = ?").get(queueId);
+  // Roteiro guiado vinculado à campanha tem prioridade; rascunho nunca aparece.
   let script = null;
-  if (fila?.campaignId) {
-    script = db.prepare("SELECT * FROM voice_scripts WHERE (campaignId = ? OR queueId = ?) AND ativo = 1 ORDER BY queueId DESC LIMIT 1").get(fila.campaignId, queueId);
+  const campanhaDoLead = resultado.lead.campaignId || fila?.campaignId;
+  if (campanhaDoLead) script = roteiroPublicadoDaCampanha(campanhaDoLead, resultado.lead.companyId);
+  if (!script && fila?.campaignId) {
+    script = db.prepare("SELECT * FROM voice_scripts WHERE (campaignId = ? OR queueId = ?) AND ativo = 1 AND COALESCE(status, 'publicado') = 'publicado' AND excluidoEm IS NULL ORDER BY queueId DESC LIMIT 1").get(fila.campaignId, queueId);
   }
   if (!script) {
     const companyId = companyIdDoUsuario(req);
-    script = db.prepare("SELECT * FROM voice_scripts WHERE companyId = ? AND campaignId IS NULL AND queueId IS NULL AND ativo = 1 LIMIT 1").get(companyId);
+    script = db.prepare("SELECT * FROM voice_scripts WHERE companyId = ? AND campaignId IS NULL AND queueId IS NULL AND ativo = 1 AND COALESCE(status, 'publicado') = 'publicado' AND excluidoEm IS NULL AND id NOT IN (SELECT scriptId FROM voice_script_campanhas) ORDER BY COALESCE(publicadoEm, criadoEm) DESC LIMIT 1").get(companyId);
   }
 
   // Buscar callbacks pendentes deste lead
@@ -780,6 +789,386 @@ router.put("/voice/scripts/:id", (req, res) => {
     db.prepare(`UPDATE voice_scripts SET ${campos.join(",")} WHERE id = ?`).run(...vals, script.id);
   }
   res.json({ ok: true });
+});
+
+// ── Roteiros comerciais guiados ──────────────────────────────────────
+// A empresa cria (à mão ou a partir de PDF/TXT/texto, lido uma única vez),
+// edita, publica e vincula a campanhas. O profissional executa o roteiro na
+// ligação ou na videochamada; a IA acompanha a fala e o profissional corrige.
+// Rascunho (inclusive o que a IA gerou) não aparece para o profissional.
+
+const MAX_ARQUIVO_ROTEIRO = 10 * 1024 * 1024;
+const MAX_AUDIO_TRECHO = 2 * 1024 * 1024;
+const MAX_GERACOES_DIA = 30;
+const FORMATOS_AUDIO = new Set(["webm", "ogg", "wav", "mp3", "m4a"]);
+
+const lerJson = (s, padrao) => { try { return JSON.parse(s) ?? padrao; } catch { return padrao; } };
+
+function campanhasDoRoteiro(scriptId) {
+  return db.prepare("SELECT v.campaignId AS id, c.titulo AS titulo FROM voice_script_campanhas v LEFT JOIN campaigns c ON c.id = v.campaignId WHERE v.scriptId = ?").all(scriptId);
+}
+
+function roteiroPublicadoDaCampanha(campaignId, companyId) {
+  return db.prepare(`SELECT s.* FROM voice_script_campanhas v JOIN voice_scripts s ON s.id = v.scriptId
+    WHERE v.campaignId = ? AND s.companyId = ? AND s.status = 'publicado' AND s.ativo = 1 AND s.excluidoEm IS NULL`).get(campaignId, companyId) || null;
+}
+
+// Script antigo (seções de texto) vira blocos de orientação no editor novo.
+const SECOES_LEGADO = [["abertura", "Abertura"], ["qualificacao", "Qualificação"], ["argumentacao", "Argumentação"], ["objecoes", "Objeções"], ["encerramento", "Encerramento"], ["agendamento", "Agendamento"]];
+function estruturaDoLegado(s) {
+  return normalizarEstrutura({ blocos: SECOES_LEGADO.filter(([c]) => String(s[c] || "").trim()).map(([c, titulo]) => ({ titulo, orientacao: s[c], topicos: [] })), criterios: [] });
+}
+
+function serializarRoteiro(s, completo = false) {
+  const estrutura = lerEstrutura(s.estrutura);
+  const r = {
+    id: s.id, nome: s.nome, status: s.status || "publicado", origem: s.origem || "manual", fonteNome: s.fonteNome || "",
+    perguntas: contarPerguntas(estrutura), legado: !estrutura, campanhas: campanhasDoRoteiro(s.id),
+    criadoEm: s.criadoEm, atualizadoEm: s.atualizadoEm, publicadoEm: s.publicadoEm || null,
+  };
+  if (completo) r.estrutura = estrutura || estruturaDoLegado(s);
+  return r;
+}
+
+function roteiroDaEmpresa(id, companyId) {
+  return db.prepare("SELECT * FROM voice_scripts WHERE id = ? AND companyId = ? AND excluidoEm IS NULL").get(id, companyId);
+}
+
+function vincularCampanhas(scriptId, companyId, campanhas) {
+  if (!Array.isArray(campanhas)) return;
+  const daEmpresa = db.prepare("SELECT 1 FROM campaigns WHERE id = ? AND companyId = ?");
+  const validas = [...new Set(campanhas.map(String))].filter((cid) => daEmpresa.get(cid, companyId));
+  db.transaction(() => {
+    db.prepare("DELETE FROM voice_script_campanhas WHERE scriptId = ?").run(scriptId);
+    const ins = db.prepare(`INSERT INTO voice_script_campanhas (campaignId, scriptId, companyId, criadoEm) VALUES (?, ?, ?, ?)
+      ON CONFLICT(campaignId) DO UPDATE SET scriptId = excluded.scriptId, criadoEm = excluded.criadoEm`);
+    for (const cid of validas) ins.run(cid, scriptId, companyId, agora());
+  })();
+}
+
+function criarRoteiro({ companyId, nome, estrutura, origem, fonteNome }) {
+  const id = uid();
+  const now = agora();
+  db.prepare(`INSERT INTO voice_scripts (id, companyId, nome, estrutura, status, origem, fonteNome, ativo, criadoEm, atualizadoEm)
+    VALUES (?, ?, ?, ?, 'rascunho', ?, ?, 1, ?, ?)`).run(id, companyId, nome, JSON.stringify(estrutura), origem, fonteNome || "", now, now);
+  return db.prepare("SELECT * FROM voice_scripts WHERE id = ?").get(id);
+}
+
+router.get("/voice/roteiros", (req, res) => {
+  const companyId = exigirEmpresa(req, res);
+  if (!companyId) return;
+  const lista = db.prepare("SELECT * FROM voice_scripts WHERE companyId = ? AND excluidoEm IS NULL ORDER BY atualizadoEm DESC").all(companyId);
+  res.json({ roteiros: lista.map((s) => serializarRoteiro(s)), ia: { disponivel: roteiroIaDisponivel() } });
+});
+
+router.get("/voice/roteiros/:id", (req, res) => {
+  const companyId = exigirEmpresa(req, res);
+  if (!companyId) return;
+  const s = roteiroDaEmpresa(req.params.id, companyId);
+  if (!s) return res.status(404).json({ error: "Roteiro não encontrado." });
+  res.json(serializarRoteiro(s, true));
+});
+
+router.post("/voice/roteiros", (req, res) => {
+  const companyId = exigirEmpresa(req, res);
+  if (!companyId) return;
+  const { nome, estrutura, campanhas } = req.body || {};
+  if (!String(nome || "").trim()) return res.status(400).json({ error: "Dê um nome ao roteiro." });
+  const s = criarRoteiro({ companyId, nome: String(nome).trim().slice(0, 120), estrutura: normalizarEstrutura(estrutura || {}), origem: "manual" });
+  vincularCampanhas(s.id, companyId, campanhas);
+  auditLog(companyId, req.user.id, "roteiro_criado", "voice_script", s.id, { origem: "manual" });
+  res.json(serializarRoteiro(s, true));
+});
+
+// Lê o documento uma única vez e salva o roteiro estruturado como rascunho.
+router.post("/voice/roteiros/gerar", async (req, res) => {
+  const companyId = exigirEmpresa(req, res);
+  if (!companyId) return;
+  const { nome, texto, arquivo } = req.body || {};
+  const geracoes = db.prepare("SELECT COUNT(*) AS n FROM voice_audit_logs WHERE companyId = ? AND acao = 'roteiro_gerado' AND criadoEm > ?").get(companyId, agora() - 86400000).n;
+  if (geracoes >= MAX_GERACOES_DIA) return res.status(429).json({ error: `Limite de ${MAX_GERACOES_DIA} importações por dia atingido. Tente amanhã ou crie o roteiro à mão.` });
+
+  const entrada = {};
+  let fonteNome = "Texto colado";
+  if (arquivo?.base64) {
+    const buffer = Buffer.from(String(arquivo.base64), "base64");
+    if (!buffer.length) return res.status(400).json({ error: "Arquivo vazio." });
+    if (buffer.length > MAX_ARQUIVO_ROTEIRO) return res.status(413).json({ error: "O arquivo deve ter até 10 MB." });
+    fonteNome = String(arquivo.nome || "documento").slice(0, 160);
+    entrada.arquivo = { nome: fonteNome, buffer };
+  } else if (String(texto || "").trim()) {
+    if (String(texto).length > MAX_TEXTO_DOCUMENTO) return res.status(413).json({ error: "Texto longo demais. Divida o roteiro em partes." });
+    entrada.texto = String(texto);
+  } else {
+    return res.status(400).json({ error: "Envie um PDF ou TXT, ou cole o texto do roteiro." });
+  }
+
+  let r;
+  try { r = await estruturarDocumento(entrada); } catch (e) { return res.status(422).json({ error: e.message || "Não foi possível ler o documento." }); }
+  const titulo = String(nome || "").trim() || r.nome || fonteNome.replace(/\.(pdf|txt)$/i, "") || "Roteiro importado";
+  const s = criarRoteiro({ companyId, nome: titulo.slice(0, 120), estrutura: r.estrutura, origem: r.origem, fonteNome });
+  auditLog(companyId, req.user.id, "roteiro_gerado", "voice_script", s.id, { origem: r.origem, fonteNome, perguntas: contarPerguntas(r.estrutura) });
+  res.json({ ...serializarRoteiro(s, true), avisos: r.avisos || [] });
+});
+
+router.put("/voice/roteiros/:id", (req, res) => {
+  const companyId = exigirEmpresa(req, res);
+  if (!companyId) return;
+  const s = roteiroDaEmpresa(req.params.id, companyId);
+  if (!s) return res.status(404).json({ error: "Roteiro não encontrado." });
+  const { nome, estrutura, campanhas } = req.body || {};
+  const sets = ["atualizadoEm = ?"];
+  const vals = [agora()];
+  if (nome !== undefined) {
+    if (!String(nome).trim()) return res.status(400).json({ error: "Dê um nome ao roteiro." });
+    sets.push("nome = ?"); vals.push(String(nome).trim().slice(0, 120));
+  }
+  if (estrutura !== undefined) {
+    const est = normalizarEstrutura(estrutura);
+    if (s.status === "publicado" && !contarPerguntas(est)) return res.status(400).json({ error: "Um roteiro publicado precisa de ao menos uma pergunta." });
+    sets.push("estrutura = ?"); vals.push(JSON.stringify(est));
+  }
+  db.prepare(`UPDATE voice_scripts SET ${sets.join(", ")} WHERE id = ?`).run(...vals, s.id);
+  vincularCampanhas(s.id, companyId, campanhas);
+  auditLog(companyId, req.user.id, "roteiro_editado", "voice_script", s.id, {});
+  res.json(serializarRoteiro(db.prepare("SELECT * FROM voice_scripts WHERE id = ?").get(s.id), true));
+});
+
+router.post("/voice/roteiros/:id/publicar", (req, res) => {
+  const companyId = exigirEmpresa(req, res);
+  if (!companyId) return;
+  const s = roteiroDaEmpresa(req.params.id, companyId);
+  if (!s) return res.status(404).json({ error: "Roteiro não encontrado." });
+  const publicar = req.body?.publicar !== false;
+  if (publicar && !contarPerguntas(lerEstrutura(s.estrutura))) return res.status(400).json({ error: "Adicione ao menos uma pergunta antes de publicar." });
+  const now = agora();
+  db.prepare("UPDATE voice_scripts SET status = ?, ativo = 1, publicadoEm = ?, atualizadoEm = ? WHERE id = ?").run(publicar ? "publicado" : "rascunho", publicar ? now : s.publicadoEm, now, s.id);
+  auditLog(companyId, req.user.id, publicar ? "roteiro_publicado" : "roteiro_despublicado", "voice_script", s.id, {});
+  res.json(serializarRoteiro(db.prepare("SELECT * FROM voice_scripts WHERE id = ?").get(s.id), true));
+});
+
+router.post("/voice/roteiros/:id/duplicar", (req, res) => {
+  const companyId = exigirEmpresa(req, res);
+  if (!companyId) return;
+  const s = roteiroDaEmpresa(req.params.id, companyId);
+  if (!s) return res.status(404).json({ error: "Roteiro não encontrado." });
+  const estrutura = lerEstrutura(s.estrutura) || estruturaDoLegado(s);
+  const copia = criarRoteiro({ companyId, nome: `${s.nome} (cópia)`.slice(0, 120), estrutura, origem: s.origem || "manual", fonteNome: s.fonteNome });
+  auditLog(companyId, req.user.id, "roteiro_duplicado", "voice_script", copia.id, { de: s.id });
+  res.json(serializarRoteiro(copia, true));
+});
+
+// Exclusão lógica: o roteiro some das telas e das campanhas, mas respostas já
+// salvas no CRM e o histórico continuam.
+router.delete("/voice/roteiros/:id", (req, res) => {
+  const companyId = exigirEmpresa(req, res);
+  if (!companyId) return;
+  const s = roteiroDaEmpresa(req.params.id, companyId);
+  if (!s) return res.status(404).json({ error: "Roteiro não encontrado." });
+  const now = agora();
+  db.transaction(() => {
+    db.prepare("UPDATE voice_scripts SET excluidoEm = ?, ativo = 0, status = 'rascunho', atualizadoEm = ? WHERE id = ?").run(now, now, s.id);
+    db.prepare("DELETE FROM voice_script_campanhas WHERE scriptId = ?").run(s.id);
+  })();
+  auditLog(companyId, req.user.id, "roteiro_excluido", "voice_script", s.id, {});
+  res.json({ ok: true });
+});
+
+// ── Execução (profissional) ──
+
+function sellerAtuaNaEmpresa(sellerId, companyId) {
+  return !!(db.prepare("SELECT 1 FROM applications WHERE sellerId = ? AND companyId = ? AND status = 'aprovado'").get(sellerId, companyId)
+    || db.prepare("SELECT 1 FROM campaign_applications ca JOIN campaigns c ON c.id = ca.campaignId WHERE ca.sellerId = ? AND c.companyId = ? AND ca.status = 'aprovado' LIMIT 1").get(sellerId, companyId)
+    || db.prepare("SELECT 1 FROM voice_queue_members m JOIN voice_queues q ON q.id = m.queueId WHERE m.sellerId = ? AND q.companyId = ? AND m.ativo = 1 LIMIT 1").get(sellerId, companyId));
+}
+
+// Roteiro publicado da campanha, para a videochamada.
+router.get("/voice/roteiros/campanha/:campaignId", (req, res) => {
+  const { role, entityId } = req.user;
+  const camp = db.prepare("SELECT id, companyId FROM campaigns WHERE id = ?").get(req.params.campaignId);
+  if (!camp) return res.status(404).json({ error: "Campanha não encontrada." });
+  if (role === "empresa" && camp.companyId !== entityId) return res.status(403).json({ error: "Sem permissão." });
+  if (role === "vendedor" && !db.prepare("SELECT 1 FROM campaign_applications WHERE campaignId = ? AND sellerId = ? AND status = 'aprovado'").get(camp.id, entityId)) {
+    return res.status(403).json({ error: "Sem acesso a esta campanha." });
+  }
+  if (!["empresa", "vendedor", "admin"].includes(role)) return res.status(403).json({ error: "Sem permissão." });
+  const s = roteiroPublicadoDaCampanha(camp.id, camp.companyId);
+  const estrutura = lerEstrutura(s?.estrutura);
+  res.json({ roteiro: s && estrutura ? { id: s.id, nome: s.nome, estrutura } : null });
+});
+
+function serializarExecucao(row, estrutura) {
+  const estado = lerJson(row.estado, {});
+  return {
+    id: row.id, scriptId: row.scriptId, leadId: row.leadId, callId: row.callId, reuniaoId: row.reuniaoId,
+    contexto: row.contexto, status: row.status, salvoEm: row.salvoEm || null, iaChamadas: row.iaChamadas,
+    estado: { perguntaAtual: estado.perguntaAtual || null, feitas: estado.feitas || {}, respostas: estado.respostas || {} },
+    progresso: progressoRoteiro(estrutura, estado),
+    qualificacao: avaliarCriterios(estrutura, estado.respostas || {}),
+  };
+}
+
+// Carrega a execução do profissional logado, com o roteiro estruturado.
+function carregarExecucao(req, res) {
+  const sellerId = sellerIdDoUsuario(req);
+  if (!sellerId) { res.status(403).json({ error: "Apenas profissionais." }); return null; }
+  const row = db.prepare("SELECT * FROM voice_roteiro_execucoes WHERE id = ? AND sellerId = ?").get(req.params.id, sellerId);
+  if (!row) { res.status(404).json({ error: "Execução não encontrada." }); return null; }
+  const script = db.prepare("SELECT * FROM voice_scripts WHERE id = ? AND companyId = ?").get(row.scriptId, row.companyId);
+  const estrutura = lerEstrutura(script?.estrutura);
+  if (!estrutura) { res.status(404).json({ error: "Roteiro não encontrado." }); return null; }
+  return { row, script, estrutura, sellerId };
+}
+
+router.post("/voice/roteiros/execucoes", async (req, res) => {
+  const sellerId = sellerIdDoUsuario(req);
+  if (!sellerId) return res.status(403).json({ error: "Apenas profissionais." });
+  const { scriptId, leadId, callId, reuniaoId } = req.body || {};
+  const script = db.prepare("SELECT * FROM voice_scripts WHERE id = ? AND status = 'publicado' AND ativo = 1 AND excluidoEm IS NULL").get(String(scriptId || ""));
+  const estrutura = lerEstrutura(script?.estrutura);
+  if (!script || !estrutura) return res.status(404).json({ error: "Roteiro não encontrado ou não publicado." });
+  const lead = db.prepare("SELECT id, companyId FROM leads WHERE id = ?").get(String(leadId || ""));
+  if (!lead || lead.companyId !== script.companyId) return res.status(404).json({ error: "Contato não encontrado." });
+  if (!sellerAtuaNaEmpresa(sellerId, script.companyId)) return res.status(403).json({ error: "Você não atua para esta empresa." });
+  let contexto = "ligacao";
+  if (callId && !db.prepare("SELECT 1 FROM voice_calls WHERE id = ? AND sellerId = ? AND leadId = ?").get(callId, sellerId, lead.id)) {
+    return res.status(404).json({ error: "Ligação não encontrada." });
+  }
+  if (reuniaoId) {
+    if (!db.prepare("SELECT 1 FROM campaign_reunioes WHERE id = ? AND leadId = ? AND companyId = ? AND (sellerSdrId = ? OR sellerCloserId = ?)").get(reuniaoId, lead.id, script.companyId, sellerId, sellerId)) {
+      return res.status(404).json({ error: "Reunião não encontrada." });
+    }
+    contexto = "videochamada";
+  }
+
+  // Retoma a execução em andamento da mesma ligação/reunião.
+  let row = db.prepare(`SELECT * FROM voice_roteiro_execucoes WHERE sellerId = ? AND leadId = ? AND scriptId = ? AND status = 'em_andamento'
+    AND COALESCE(callId, '') = ? AND COALESCE(reuniaoId, '') = ? ORDER BY criadoEm DESC LIMIT 1`).get(sellerId, lead.id, script.id, callId || "", reuniaoId || "");
+  if (!row) {
+    const id = uid();
+    const now = agora();
+    const estado = { perguntaAtual: proximaPergunta(estrutura, { feitas: {}, respostas: {} }), feitas: {}, respostas: {} };
+    db.prepare(`INSERT INTO voice_roteiro_execucoes (id, companyId, scriptId, sellerId, leadId, callId, reuniaoId, contexto, status, estado, criadoEm, atualizadoEm)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'em_andamento', ?, ?, ?)`).run(id, script.companyId, script.id, sellerId, lead.id, callId || null, reuniaoId || null, contexto, JSON.stringify(estado), now, now);
+    row = db.prepare("SELECT * FROM voice_roteiro_execucoes WHERE id = ?").get(id);
+  }
+  res.json({
+    execucao: serializarExecucao(row, estrutura),
+    roteiro: { id: script.id, nome: script.nome, estrutura },
+    recursos: { ia: roteiroIaDisponivel(), transcricaoServidor: await transcricaoDisponivel().catch(() => false) },
+  });
+});
+
+// Processa só o trecho novo e grava o estado. O estado é lido de novo depois
+// da IA para não perder correção manual feita nesse meio-tempo.
+async function processarTrecho(ctx, texto) {
+  const { row, estrutura } = ctx;
+  const r = await analisarTrecho({ estrutura, estado: lerJson(row.estado, {}), contextoFala: row.contextoFala || "", trecho: texto, chamadasIA: row.iaChamadas || 0 });
+  const fresco = db.prepare("SELECT * FROM voice_roteiro_execucoes WHERE id = ?").get(row.id);
+  const estado = r.aplicar(lerJson(fresco.estado, {}));
+  const usouIA = r.ia === "ok" || r.ia === "falhou" ? 1 : 0;
+  db.prepare("UPDATE voice_roteiro_execucoes SET estado = ?, contextoFala = ?, iaChamadas = iaChamadas + ?, iaTokens = iaTokens + ?, atualizadoEm = ? WHERE id = ?")
+    .run(JSON.stringify(estado), r.contextoFala, usouIA, r.tokens || 0, agora(), row.id);
+  return { execucao: serializarExecucao(db.prepare("SELECT * FROM voice_roteiro_execucoes WHERE id = ?").get(row.id), estrutura), ia: r.ia };
+}
+
+router.post("/voice/roteiros/execucoes/:id/trecho", async (req, res) => {
+  const ctx = carregarExecucao(req, res);
+  if (!ctx) return;
+  const texto = String(req.body?.texto || "").slice(0, 4000);
+  if (!texto.trim()) return res.json({ execucao: serializarExecucao(ctx.row, ctx.estrutura), ia: "pulada" });
+  res.json(await processarTrecho(ctx, texto));
+});
+
+// Trecho de áudio (ligação pelo navegador ou áudio da reunião): transcreve com
+// o serviço existente e analisa. O áudio não é guardado.
+router.post("/voice/roteiros/execucoes/:id/audio", async (req, res) => {
+  const ctx = carregarExecucao(req, res);
+  if (!ctx) return;
+  if (!(await transcricaoDisponivel().catch(() => false))) return res.status(503).json({ error: "Transcrição no servidor indisponível." });
+  const buffer = Buffer.from(String(req.body?.base64 || ""), "base64");
+  if (!buffer.length) return res.status(400).json({ error: "Áudio vazio." });
+  if (buffer.length > MAX_AUDIO_TRECHO) return res.status(413).json({ error: "Trecho de áudio grande demais." });
+  const formato = FORMATOS_AUDIO.has(req.body?.formato) ? req.body.formato : "webm";
+  let texto = "";
+  try { texto = limparTranscricao(await transcreverTrechoAudio(buffer, formato)); } catch (e) {
+    console.warn("[roteiro] transcrição do trecho falhou:", e.message);
+    return res.status(502).json({ error: "Não foi possível transcrever este trecho." });
+  }
+  if (!texto) return res.json({ texto: "", execucao: serializarExecucao(ctx.row, ctx.estrutura), ia: "pulada" });
+  res.json({ texto, ...(await processarTrecho(ctx, texto)) });
+});
+
+// Navegação e correção manual. Manual nunca é sobrescrito pela IA.
+router.patch("/voice/roteiros/execucoes/:id", (req, res) => {
+  const ctx = carregarExecucao(req, res);
+  if (!ctx) return;
+  const { row, estrutura } = ctx;
+  const porId = new Map(listarPerguntas(estrutura).map((p) => [p.id, p]));
+  const estado = lerJson(row.estado, {});
+  estado.feitas ||= {};
+  estado.respostas ||= {};
+  const now = agora();
+  const { perguntaAtual, resposta, feita } = req.body || {};
+
+  if (perguntaAtual !== undefined) {
+    if (perguntaAtual !== null && !porId.has(perguntaAtual)) return res.status(400).json({ error: "Pergunta não existe neste roteiro." });
+    estado.perguntaAtual = perguntaAtual;
+  }
+  if (feita?.perguntaId) {
+    if (!porId.has(feita.perguntaId)) return res.status(400).json({ error: "Pergunta não existe neste roteiro." });
+    if (feita.feita === false) delete estado.feitas[feita.perguntaId];
+    else {
+      estado.feitas[feita.perguntaId] ||= { em: now, origem: "manual", trecho: "" };
+      if (estado.perguntaAtual === feita.perguntaId) estado.perguntaAtual = proximaPergunta(estrutura, estado, feita.perguntaId);
+    }
+  }
+  if (resposta?.perguntaId) {
+    const p = porId.get(resposta.perguntaId);
+    if (!p) return res.status(400).json({ error: "Pergunta não existe neste roteiro." });
+    if (!String(resposta.valor ?? "").trim()) {
+      delete estado.respostas[p.id];
+    } else {
+      const valor = valorDoCampo(p, resposta.valor);
+      if (valor === null) return res.status(400).json({ error: p.campo?.tipo === "opcao" ? "Escolha uma das opções." : "Valor inválido para este campo." });
+      estado.respostas[p.id] = { valor, origem: "manual", trecho: "", em: now };
+      estado.feitas[p.id] ||= { em: now, origem: "manual", trecho: "" };
+      if (estado.perguntaAtual === p.id) estado.perguntaAtual = proximaPergunta(estrutura, estado, p.id);
+    }
+  }
+  db.prepare("UPDATE voice_roteiro_execucoes SET estado = ?, atualizadoEm = ? WHERE id = ?").run(JSON.stringify(estado), now, row.id);
+  res.json({ execucao: serializarExecucao(db.prepare("SELECT * FROM voice_roteiro_execucoes WHERE id = ?").get(row.id), estrutura) });
+});
+
+// Salva as respostas no CRM: ficha do lead (dados.roteiros) e linha do tempo.
+router.post("/voice/roteiros/execucoes/:id/salvar", (req, res) => {
+  const ctx = carregarExecucao(req, res);
+  if (!ctx) return;
+  const { row, script, estrutura, sellerId } = ctx;
+  const estado = lerJson(row.estado, {});
+  const qualificacao = avaliarCriterios(estrutura, estado.respostas || {});
+  const respostas = listarPerguntas(estrutura).filter((p) => String(estado.respostas?.[p.id]?.valor ?? "").trim()).map((p) => ({
+    perguntaId: p.id, pergunta: p.texto, bloco: p.blocoTitulo, valor: estado.respostas[p.id].valor, origem: estado.respostas[p.id].origem,
+  }));
+  const lead = db.prepare("SELECT dados FROM leads WHERE id = ? AND companyId = ?").get(row.leadId, row.companyId);
+  if (!lead) return res.status(404).json({ error: "Contato não encontrado." });
+  const dados = lerJson(lead.dados || "{}", {}) || {};
+  const now = agora();
+  dados.roteiros = {
+    ...(dados.roteiros || {}),
+    [script.id]: { nome: script.nome, execucaoId: row.id, contexto: row.contexto, qualificacao: qualificacao.status, motivos: qualificacao.motivos, respostas, atualizadoEm: now },
+  };
+  const mudou = !row.salvoEm || row.atualizadoEm > row.salvoEm;
+  db.transaction(() => {
+    db.prepare("UPDATE leads SET dados = ?, atualizadoEm = ? WHERE id = ?").run(JSON.stringify(dados), now, row.leadId);
+    if (mudou) {
+      db.prepare(`INSERT INTO lead_events (id, leadId, sellerId, tipo, resultado, observacao, criadoEm) VALUES (?, ?, ?, 'roteiro', ?, ?, ?)`)
+        .run(uid(), row.leadId, sellerId, qualificacao.status, resumoRespostas(script.nome, estrutura, estado), now);
+      if (row.callId) db.prepare("INSERT INTO voice_call_events (id, callId, tipo, dados, criadoEm) VALUES (?, ?, 'roteiro', ?, ?)").run(uid(), row.callId, JSON.stringify({ execucaoId: row.id, respostas: respostas.length }), now);
+    }
+    db.prepare("UPDATE voice_roteiro_execucoes SET status = 'salva', salvoEm = ?, atualizadoEm = ?, contextoFala = '' WHERE id = ?").run(now, now, row.id);
+  })();
+  res.json({ ok: true, respostas: respostas.length, qualificacao });
 });
 
 // ── DNC (Não ligar) ──────────────────────────────────────────────────

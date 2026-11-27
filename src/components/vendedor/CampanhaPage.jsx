@@ -3,7 +3,7 @@ import {
   ArrowLeft, Target, BookOpen, Zap, Users, BarChart2, Award,
   CheckCircle, XCircle, TrendingUp, Calendar,
   DollarSign, Shield, ChevronDown, ChevronUp, ClipboardCheck,
-  ShieldCheck, AlertCircle, ArrowRight, MessageCircle
+  ShieldCheck, AlertCircle, ArrowRight, MessageCircle, FileText, Video, X
 } from "lucide-react";
 import { money } from "../../lib/utils.js";
 import { ACOES, TAXA } from "../../lib/constants.js";
@@ -13,6 +13,7 @@ import Tarefas from "./Tarefas.jsx";
 import MeusEnvios from "./MeusEnvios.jsx";
 import Curso from "./Curso.jsx";
 import Chat from "../Chat.jsx";
+import RoteiroGuiado from "../voice/RoteiroGuiado.jsx";
 import { TIPOS_RESPOSTA, CLASSIFICACOES, calcularScore } from "../../../shared/qualificacaoLeads.js";
 import { STATUS_CONFIRMACAO } from "../../../shared/confirmacaoContato.js";
 
@@ -758,6 +759,13 @@ function AgendaCampanhaTab({ campanha, eu, aviso }) {
   const [reunioes, setReunioes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [novoSlot, setNovoSlot] = useState({ diaSemana: "seg", horaInicio: "09:00", horaFim: "10:00" });
+  // Roteiro guiado da campanha para a videochamada (só o publicado).
+  const [roteiro, setRoteiro] = useState(null);
+  const [reuniaoGuiada, setReuniaoGuiada] = useState(null);
+
+  useEffect(() => {
+    api(`/voice/roteiros/campanha/${campanha.id}`).then((r) => setRoteiro(r?.roteiro || null));
+  }, [campanha.id]);
 
   useEffect(() => {
     setLoading(true);
@@ -859,6 +867,16 @@ function AgendaCampanhaTab({ campanha, eu, aviso }) {
                 {r.sdrNome && <span>SDR: {r.sdrNome}</span>}
               </div>
               {r.anotacoes && <p style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 6 }}>{r.anotacoes}</p>}
+              {(r.linkReuniao || (roteiro && r.leadId)) && ["agendada", "confirmada", "realizada", "negociacao"].includes(r.status) && (
+                <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                  {/^https?:\/\//i.test(r.linkReuniao || "") && (
+                    <a className="vx-btn vx-btn-sm" style={{ minHeight: 44, textDecoration: "none" }} href={r.linkReuniao} target="_blank" rel="noopener noreferrer"><Video size={14} /> Abrir videochamada</a>
+                  )}
+                  {roteiro && r.leadId && (
+                    <button className="vx-btn vx-btn-sm vx-btn-primary" style={{ minHeight: 44 }} onClick={() => setReuniaoGuiada(r)}><FileText size={14} /> Roteiro guiado</button>
+                  )}
+                </div>
+              )}
               {r.status === "agendada" && (
                 <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                   <button className="vx-btn vx-btn-sm" onClick={() => atualizarReuniao(r.id, { status: "confirmada" })}>Confirmar</button>
@@ -882,6 +900,42 @@ function AgendaCampanhaTab({ campanha, eu, aviso }) {
           ))}
         </div>
       )}
+      {reuniaoGuiada && roteiro && (
+        <ModalRoteiroReuniao roteiro={roteiro} reuniao={reuniaoGuiada} aviso={aviso} onFechar={() => setReuniaoGuiada(null)} />
+      )}
+    </div>
+  );
+}
+
+// Roteiro guiado durante a videochamada (a reunião acontece no link externo;
+// aqui a IA acompanha pelo microfone e, se compartilhado, pelo áudio da aba).
+function ModalRoteiroReuniao({ roteiro, reuniao, aviso, onFechar }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const esc = (e) => { if (e.key === "Escape") onFechar(); };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [onFechar]);
+  const fechar = async () => { await ref.current?.salvar({ silencioso: true }); onFechar(); };
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="titulo-roteiro-reuniao"
+      style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(15, 23, 42, .45)", display: "flex", justifyContent: "flex-end" }}
+      onClick={(e) => { if (e.target === e.currentTarget) fechar(); }}>
+      <div className="vx-card" style={{ width: "min(520px, 100%)", height: "100%", borderRadius: 0, padding: 18, overflow: "auto", display: "grid", gap: 12, alignContent: "start" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <div>
+            <h3 id="titulo-roteiro-reuniao" style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{reuniao.titulo || "Reunião"}</h3>
+            <div className="vx-mut" style={{ fontSize: 12.5 }}>{new Date(reuniao.data + "T12:00:00").toLocaleDateString("pt-BR")} {reuniao.horaInicio}–{reuniao.horaFim}</div>
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {/^https?:\/\//i.test(reuniao.linkReuniao || "") && (
+              <a className="vx-btn vx-btn-sm" style={{ minHeight: 44, textDecoration: "none" }} href={reuniao.linkReuniao} target="_blank" rel="noopener noreferrer"><Video size={14} /> Abrir</a>
+            )}
+            <button className="vx-btn vx-btn-sm vx-btn-ghost" style={{ minHeight: 44, minWidth: 44 }} aria-label="Fechar roteiro" onClick={fechar}><X size={16} /></button>
+          </div>
+        </div>
+        <RoteiroGuiado ref={ref} roteiro={roteiro} leadId={reuniao.leadId} reuniaoId={reuniao.id} contexto="videochamada" aviso={aviso} alturaLista={420} />
+      </div>
     </div>
   );
 }

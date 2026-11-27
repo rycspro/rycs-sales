@@ -7,6 +7,7 @@ import {
   Edit3, Save, ChevronDown, ChevronUp, Eye, PhoneOff, Upload
 } from "lucide-react";
 import ConfigurarDiscadora from "./ConfigurarDiscadora.jsx";
+import RoteirosComerciais from "./RoteirosComerciais.jsx";
 
 function Card({ children, style, ...p }) {
   return <div style={{ background: "var(--surface-solid)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", boxShadow: "var(--shadow-card)", ...style }} {...p}>{children}</div>;
@@ -29,6 +30,7 @@ const ABAS = [
   { id: "configurar", label: "Configurar", Icon: Upload },
   { id: "visao", label: "Visão geral", Icon: BarChart3 },
   { id: "operacao", label: "Operação", Icon: Zap },
+  { id: "roteiros", label: "Roteiros Comerciais", Icon: FileText },
   { id: "historico", label: "Histórico", Icon: History },
   { id: "desempenho", label: "Desempenho", Icon: TrendingUp },
   { id: "consumo", label: "Telefonia", Icon: Phone },
@@ -111,6 +113,7 @@ export default function DiscadoraEmpresa({ emp, aviso, time = [] }) {
       {abaAtual === "configurar" && <ConfigurarDiscadora time={time} filas={filas} settings={settings} aviso={aviso} onAtualizar={carregar} />}
       {abaAtual === "visao" && <VisaoGeral stats={stats} sellers={sellers} filas={filas} settings={settings} uso={uso} />}
       {abaAtual === "operacao" && <Operacao sellers={sellers} stats={stats} />}
+      {abaAtual === "roteiros" && <RoteirosComerciais aviso={aviso} />}
       {abaAtual === "historico" && <HistoricoCalls calls={calls} />}
       {abaAtual === "desempenho" && <DesempenhoSellers sellers={sellers} />}
       {abaAtual === "consumo" && <Consumo uso={uso} />}
