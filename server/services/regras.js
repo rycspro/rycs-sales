@@ -246,6 +246,19 @@ export function avaliar({ tipo, prova, camposReq, contexto = {} }) {
       : "fotos com metadados de câmera íntegros", { peso: 28 });
   }
 
+  if (tipo === "visita") {
+    const semGeo = contexto.totalFotos > 0 && contexto.fotosSemMetadados === contexto.totalFotos;
+    const semFoto = contexto.totalFotos === 0;
+    registrar(!semFoto, "visita_foto_presente", semFoto
+      ? "visita sem foto enviada"
+      : "foto da visita presente", { fatal: semFoto, peso: 55 });
+    if (!semFoto) {
+      registrar(!semGeo, "visita_geo", semGeo
+        ? "foto da visita sem localização GPS — exige verificação humana reforçada"
+        : "localização GPS presente na foto da visita", { peso: 35 });
+    }
+  }
+
   if (contexto.primeiraAcaoNaEmpresa) {
     problemas.push("primeira ação nesta empresa exige conferência reforçada");
     penalidade += 12;

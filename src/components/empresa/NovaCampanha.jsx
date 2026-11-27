@@ -25,6 +25,7 @@ import { FUNCOES, ORDEM_FUNCOES } from "../../../shared/funcoes.js";
 import { perguntaMetaQuantitativa, calcularPlanejamentoReverso } from "../../../shared/planejamentoReverso.js";
 import { TIPOS_RESPOSTA, CLASSIFICACOES, calcularScore, criarPergunta, criarCriterio, perguntasVisiveis } from "../../../shared/qualificacaoLeads.js";
 import { CANAIS_CONFIRMACAO, configConfirmacaoPadrao } from "../../../shared/confirmacaoContato.js";
+import { EVIDENCE_SLOTS, RYCS_MINIMOS } from "../../../shared/evidenceMatrix.js";
 import { investimentoRecomendado, capacidadeOperacional } from "../../../shared/otimizacaoVerba.js";
 
 const OPC_PAISES = PAISES.map((p) => ({ value: p.code, label: p.nome }));
@@ -369,6 +370,20 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const vis = useMemo(() => campanha ? camposVisiveis(campanha) : {}, [campanha]);
   const diag = useMemo(() => campanha ? diagnosticoCampanha(campanha, emp) : { pronta: false, bloqueios: [], recomendacoes: [] }, [campanha, emp]);
 
+  const perfilICP = useMemo(() => {
+    const campos = [
+      { chave: "nome", label: "Nome da empresa" },
+      { chave: "segmento", label: "Segmento" },
+      { chave: "produto", label: "Produto ou serviço" },
+      { chave: "regiao", label: "Região atendida" },
+      { chave: "ticket", label: "Ticket médio" },
+      { chave: "icp", label: "Perfil de cliente ideal" },
+    ];
+    const faltam = campos.filter((c) => !(emp[c.chave] || "").toString().trim());
+    const pct = Math.round(((campos.length - faltam.length) / campos.length) * 100);
+    return { pct, faltam, ok: pct >= 80 };
+  }, [emp]);
+
   const secaoVisivel = useMemo(() => {
     if (!campanha) return {};
     return {
@@ -442,22 +457,40 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     if (Array.isArray(r.modulos) && r.modulos.length > 0) set("treinamento", r.modulos);
   };
 
-  const gerarICP = async () => {
+  const icpAutoRef = useRef(false);
+
+  const gerarICPComDados = async (useEmpData) => {
     if (!campanha || gerandoICP) return;
     setGerandoICP(true);
     try {
       const r = await api("/campaigns/gerar-icp", {
         objetivo: campanha.objetivo, funcao: campanha.funcao,
-        produto: campanha.produto || emp.produto || "", regiao: campanha.regiao || "",
-        mercado: campanha.mercado || "", empresa: { nome: emp.nome, segmento: emp.segmento },
+        produto: useEmpData ? (emp.produto || "") : (campanha.produto || emp.produto || ""),
+        regiao: useEmpData ? (emp.regiao || "") : (campanha.regiao || ""),
+        mercado: campanha.mercado || "",
+        empresa: { nome: emp.nome, segmento: emp.segmento, icp: emp.icp, ticket: emp.ticket },
       });
       if (r && !r.error && r.icp) {
         set("publico", r.icp);
+        if (useEmpData && !campanha.produto) set("produto", emp.produto || "");
         if (r.icpEstruturado) set("icpEstruturado", r.icpEstruturado);
       }
     } catch (_) { /* silently fail */ }
     setGerandoICP(false);
   };
+
+  const gerarICP = () => gerarICPComDados(false);
+
+  useEffect(() => {
+    if (!campanha) return;
+    const modo = campanha.modoICP || "auto";
+    if (modo !== "auto") return;
+    if (campanha.publico || gerandoICP || icpAutoRef.current) return;
+    if (!perfilICP.ok) return;
+    icpAutoRef.current = true;
+    gerarICPComDados(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campanha?.modoICP, campanha?.id]);
 
   const recomendarAtividades = async () => {
     if (!campanha || recomendandoAtividades) return;
@@ -1700,18 +1733,96 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
-          {/* ICP */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Quem é o cliente ideal?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Descreva o tipo de empresa ou pessoa que o profissional deve procurar.</div></div>
-            <textarea className="vx-input" style={{ minHeight: 64 }} value={campanha.publico || ""}
-              onChange={(e) => set("publico", e.target.value)}
-              placeholder="Ex.: distribuidoras de bebida com 10 a 80 funcionários" />
-            <label style={{ display: "block", marginTop: 12 }}><div className="vx-label">Produto ou serviço ofertado</div>
-              <input className="vx-input" value={campanha.produto || ""} onChange={(e) => set("produto", e.target.value)} placeholder="Ex.: Software de gestão" /></label>
-            <button className="vx-btn vx-btn-sm" style={{ marginTop: 10, gap: 6 }} disabled={gerandoICP} onClick={gerarICP}>
-              {gerandoICP ? <><Loader size={13} style={{ animation: "spin 1s linear infinite" }} /> Gerando ICP…</> : <><Sparkles size={13} /> Gerar ICP com IA</>}
-            </button>
-          </div>
+          {/* ICP — bloco unificado */}
+          {(() => {
+            const modoICP = campanha.modoICP || "auto";
+            return (
+              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <b style={{ color: "var(--brand)" }}>Quem é o cliente ideal?</b>
+                  <div className="vx-mut" style={{ fontSize: 11.5 }}>Define quem o profissional vai contatar e o que oferecer.</div>
+                </div>
+                <div style={{ display: "grid", gap: 8 }}>
+                  <CardOption
+                    selected={modoICP === "auto"}
+                    onClick={() => { set("modoICP", "auto"); icpAutoRef.current = false; }}
+                    icon={Sparkles}
+                    title="Usar informações e materiais da empresa"
+                    subtitle="O Rico gera automaticamente o ICP, produto e critérios com base no perfil da empresa."
+                  />
+                  <CardOption
+                    selected={modoICP === "personalizado"}
+                    onClick={() => set("modoICP", "personalizado")}
+                    icon={Pencil}
+                    title="Personalizar para esta campanha"
+                    subtitle="Complemente ou substitua as informações geradas, sem alterar o perfil original."
+                  />
+                </div>
+
+                {modoICP === "auto" && (
+                  <div style={{ marginTop: 14 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, marginBottom: 4 }}>
+                      <span className="vx-mut">Completude do perfil da empresa</span>
+                      <span style={{ fontWeight: 700, color: perfilICP.ok ? "var(--green, #16A34A)" : "var(--amber, #D97706)" }}>{perfilICP.pct}%</span>
+                    </div>
+                    <div style={{ height: 6, background: "var(--border)", borderRadius: 4, overflow: "hidden", marginBottom: 10 }}>
+                      <div style={{ height: "100%", width: `${perfilICP.pct}%`, background: perfilICP.ok ? "var(--green, #16A34A)" : "var(--amber, #D97706)", borderRadius: 4, transition: "width .3s" }} />
+                    </div>
+
+                    {perfilICP.ok ? (
+                      gerandoICP ? (
+                        <div className="vx-mut" style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                          <Loader size={13} style={{ animation: "spin 1s linear infinite" }} /> Gerando ICP com base no perfil da empresa…
+                        </div>
+                      ) : campanha.publico ? (
+                        <div>
+                          <div className="vx-label" style={{ marginBottom: 4 }}>ICP gerado</div>
+                          <div style={{ background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 8, padding: "10px 12px", fontSize: 13, marginBottom: 8 }}>{campanha.publico}</div>
+                          {campanha.produto && <div className="vx-mut" style={{ fontSize: 12, marginBottom: 8 }}>Produto: <b>{campanha.produto}</b></div>}
+                          <button className="vx-btn vx-btn-sm" style={{ gap: 6 }} disabled={gerandoICP} onClick={() => { icpAutoRef.current = false; gerarICPComDados(true); }}>
+                            <Sparkles size={13} /> Regenerar com Rico
+                          </button>
+                        </div>
+                      ) : (
+                        <button className="vx-btn vx-btn-sm" style={{ gap: 6 }} disabled={gerandoICP} onClick={() => gerarICPComDados(true)}>
+                          <Sparkles size={13} /> Gerar com Rico
+                        </button>
+                      )
+                    ) : (
+                      <div style={{ background: "var(--surface-2, var(--surface))", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px" }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--amber, #D97706)" }}>
+                          <AlertCircle size={13} style={{ marginRight: 5, verticalAlign: -2 }} />Perfil incompleto — preencha pelo menos 80% para usar a geração automática
+                        </div>
+                        <div className="vx-mut" style={{ fontSize: 12, marginBottom: 8 }}>Faltam: {perfilICP.faltam.map((f) => f.label).join(", ")}</div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <a className="vx-btn vx-btn-sm" href="#configuracoes" style={{ fontSize: 12 }} onClick={(e) => { e.preventDefault(); aviso?.("Acesse Configurações > Perfil da empresa para completar."); }}>
+                            Completar perfil
+                          </a>
+                          <button className="vx-btn vx-btn-sm" style={{ fontSize: 12 }} onClick={() => set("modoICP", "personalizado")}>
+                            Usar modo personalizado
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {modoICP === "personalizado" && (
+                  <div style={{ marginTop: 14 }}>
+                    <div className="vx-label" style={{ marginBottom: 4 }}>Quem o profissional deve contatar?</div>
+                    <textarea className="vx-input" style={{ minHeight: 64 }} value={campanha.publico || ""}
+                      onChange={(e) => set("publico", e.target.value)}
+                      placeholder="Ex.: distribuidoras de bebida com 10 a 80 funcionários" />
+                    <label style={{ display: "block", marginTop: 10 }}><div className="vx-label">Produto ou serviço ofertado</div>
+                      <input className="vx-input" value={campanha.produto || ""} onChange={(e) => set("produto", e.target.value)} placeholder={emp.produto || "Ex.: Software de gestão"} /></label>
+                    <button className="vx-btn vx-btn-sm" style={{ marginTop: 10, gap: 6 }} disabled={gerandoICP} onClick={gerarICP}>
+                      {gerandoICP ? <><Loader size={13} style={{ animation: "spin 1s linear infinite" }} /> Gerando ICP…</> : <><Sparkles size={13} /> Sugerir ICP com IA</>}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Nível de experiência */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
@@ -1941,6 +2052,22 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                     </div>
                                   </div>
                                 )}
+                              </div>
+                            )}
+                            {RYCS_MINIMOS[a.id] && (
+                              <div style={{ gridColumn: "1 / -1", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                                <div className="vx-label" style={{ marginBottom: 6 }}>
+                                  <Lock size={12} style={{ marginRight: 4, verticalAlign: -1 }} />Comprovações mínimas RYCS
+                                </div>
+                                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 6 }}>Critérios obrigatórios da plataforma. Você pode exigir mais, mas não pode remover estes.</div>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                  {RYCS_MINIMOS[a.id].map((slot) => (
+                                    <span key={slot} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 20, background: "var(--surface-2)", border: "1px solid var(--border)", fontSize: 11, color: "var(--ink-2)", fontWeight: 500 }}>
+                                      <Lock size={10} style={{ color: "var(--muted)" }} />
+                                      {(EVIDENCE_SLOTS[slot] || { label: slot }).label}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>

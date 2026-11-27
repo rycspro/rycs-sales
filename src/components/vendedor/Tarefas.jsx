@@ -3,7 +3,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { uid, agora, money } from "../../lib/utils.js";
 import { ACOES, CAMPOS, ORDEM_ACOES, TAXA } from "../../lib/constants.js";
-import { EVIDENCE_MATRIX, EVIDENCE_SLOTS, validateProva } from "../../../shared/evidenceMatrix.js";
+import { EVIDENCE_MATRIX, EVIDENCE_SLOTS, AUTO_COLETADOS_POR_TIPO, validateProva } from "../../../shared/evidenceMatrix.js";
 import { Campo, Vazio } from "../ui.jsx";
 import UploadEvidencia from "./UploadEvidencia.jsx";
 
@@ -207,9 +207,16 @@ export default function Tarefas({ campanha, empresa, eu, db, setDb, aviso, liber
               </div>
               <p className="vx-mut" style={{ fontSize: 12.5, margin: "10px 0 4px" }}>{ACOES[k].regra}</p>
               {m && (
-                <p className="vx-mut" style={{ fontSize: 11, margin: "0 0 10px", fontWeight: 600 }}>
-                  {m.minEvidence} evidência{m.minEvidence > 1 ? "s" : ""} obrigatória{m.minEvidence > 1 ? "s" : ""}
-                </p>
+                <div style={{ marginBottom: 10 }}>
+                  <p className="vx-mut" style={{ fontSize: 11, margin: "0 0 4px", fontWeight: 600 }}>
+                    {m.minEvidence} evidência{m.minEvidence > 1 ? "s" : ""} obrigatória{m.minEvidence > 1 ? "s" : ""}
+                  </p>
+                  {AUTO_COLETADOS_POR_TIPO[k] && (
+                    <p className="vx-mut" style={{ fontSize: 11, margin: 0 }}>
+                      Auto-coletado: {AUTO_COLETADOS_POR_TIPO[k].join(" · ")}
+                    </p>
+                  )}
+                </div>
               )}
               <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => abrirTipo(k)}>Registrar ação</button>
             </div>
@@ -306,6 +313,11 @@ export default function Tarefas({ campanha, empresa, eu, db, setDb, aviso, liber
                 {tipo === "realizada" && (
                   <div style={{ background: "var(--amber-50)", border: "1px solid var(--amber-100)", color: "var(--ink)", borderRadius: 8, padding: "8px 10px", marginBottom: 10, fontSize: 12 }}>
                     <b>Atenção:</b> Reunião agendada ≠ Reunião realizada. Para marcar como realizada é obrigatório: gravação/vídeo <b>e</b> resumo estruturado.
+                  </div>
+                )}
+                {tipo === "visita" && (
+                  <div style={{ background: "var(--brand-50)", border: "1px solid var(--brand-100)", color: "var(--ink)", borderRadius: 8, padding: "8px 10px", marginBottom: 10, fontSize: 12 }}>
+                    <b>GPS obrigatório:</b> Tire a foto <b>no local</b> pelo aplicativo. A localização é registrada automaticamente. Fotos enviadas pelo WhatsApp perdem o GPS e ficam com verificação reforçada.
                   </div>
                 )}
 

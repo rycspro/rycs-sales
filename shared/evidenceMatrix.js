@@ -70,6 +70,25 @@ export const EVIDENCE_MATRIX = {
   },
 };
 
+// Critérios mínimos RYCS por atividade — a empresa não pode remover estes.
+export const RYCS_MINIMOS = {
+  contato:         ["contact_proof"],
+  lead_qualificado:["contact_proof", "qualification_summary"],
+  follow:          ["follow_proof"],
+  agendamento:     ["scheduling_confirmation", "meeting_data"],
+  realizada:       ["video_or_recording", "meeting_summary"],
+  ligacao:         ["call_log"],
+  visita:          ["visit_proof", "visit_result"],
+  venda:           ["closing_proof", "sale_data"],
+};
+
+// O que a plataforma coleta automaticamente por atividade (geo, timestamp, device).
+export const AUTO_COLETADOS_POR_TIPO = {
+  visita:   ["Localização GPS (capturada na foto)", "Horário da captura"],
+  realizada:["Metadados da gravação"],
+  agendamento: ["Horário do envio"],
+};
+
 // Resolve a configuração efetiva: base + sobrescrita da campanha
 export function resolveMatrix(tipo, campanhaConfig) {
   const base = EVIDENCE_MATRIX[tipo];
