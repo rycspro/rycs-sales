@@ -1747,8 +1747,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                       background: ativa ? SEL.bg : SEL.bgOff,
                       borderRadius: 10, transition: "border-color .15s, background .15s", position: "relative",
                     }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: ativa ? "var(--brand)" : "var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <IconFuncao size={18} color={ativa ? "#fff" : "var(--text-2)"} />
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: ativa ? "var(--brand)" : "var(--brand-50)", border: ativa ? "none" : "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <IconFuncao size={18} color={ativa ? "#fff" : "var(--brand)"} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: ativa ? "var(--brand)" : "var(--text)" }}>{nomeAmigavel}</div>
