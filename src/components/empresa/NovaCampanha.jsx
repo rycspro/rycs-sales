@@ -165,6 +165,49 @@ function ChipToggle({ items, value, onChange, multi = false }) {
   );
 }
 
+function SelectDropdown({ value, onChange, options }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  const selected = options.find((o) => o.value === value) || options[0];
+  React.useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button type="button" onClick={() => setOpen((v) => !v)} style={{
+        width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "9px 12px", background: "var(--surface)", border: `1px solid ${open ? "var(--brand)" : "var(--border)"}`,
+        borderRadius: 8, cursor: "pointer", fontSize: 13.5, fontWeight: 500, color: "var(--text)",
+        boxShadow: open ? "0 0 0 3px var(--brand-100)" : "none", transition: "border-color .15s, box-shadow .15s",
+      }}>
+        <span>{selected?.label}</span>
+        <ChevronDown size={15} color="var(--muted)" style={{ transition: "transform .15s", transform: open ? "rotate(180deg)" : "none", flexShrink: 0 }} />
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
+          background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10,
+          boxShadow: "0 8px 24px rgba(0,0,0,.12)", overflow: "hidden",
+        }}>
+          {options.map((o) => (
+            <button key={o.value} type="button" onClick={() => { onChange(o.value); setOpen(false); }} style={{
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 14px", background: o.value === value ? "var(--brand-50)" : "transparent",
+              border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: o.value === value ? 600 : 400,
+              color: o.value === value ? "var(--brand)" : "var(--text)", textAlign: "left",
+            }}>
+              <span>{o.label}</span>
+              {o.value === value && <Check size={14} color="var(--brand)" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FontesContatosSelector({ campanha, set }) {
   const fontesSelecionadas = campanha.fontesContatosSelecionadas || [];
   const leadsSelecionados = campanha.leadsSelecionados || [];
@@ -1785,9 +1828,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                             {/* Origem */}
                             <div>
                               <div className="vx-label" style={{ marginBottom: 6 }}>Origem dos profissionais <Tag obrigatorio={true} /></div>
-                              <select className="vx-input" value={cfg.origemProfissionais || "rycs"} onChange={(e) => setConfig("origemProfissionais", e.target.value)}>
-                                {Object.values(ORIGENS_PROFISSIONAIS).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                              </select>
+                              <SelectDropdown
+                                value={cfg.origemProfissionais || "rycs"}
+                                onChange={(v) => setConfig("origemProfissionais", v)}
+                                options={Object.values(ORIGENS_PROFISSIONAIS).map((o) => ({ value: o.id, label: o.label }))}
+                              />
                               {(cfg.origemProfissionais === "interno" || cfg.origemProfissionais === "ambos") && (
                                 <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8, padding: "8px 10px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)" }}>
                                   Os colaboradores da sua empresa podem ser selecionados em <b>Gestão interna → Meu time</b> após a publicação.
@@ -1797,17 +1842,21 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                             {/* Experiência */}
                             <div>
                               <div className="vx-label" style={{ marginBottom: 6 }}>Experiência <Tag obrigatorio={false} /></div>
-                              <select className="vx-input" value={cfg.nivelExperiencia || "indiferente"} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
-                                {NIVEIS_EXPERIENCIA.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
-                              </select>
+                              <SelectDropdown
+                                value={cfg.nivelExperiencia || "indiferente"}
+                                onChange={(v) => setConfig("nivelExperiencia", v)}
+                                options={NIVEIS_EXPERIENCIA.map((n) => ({ value: n.id, label: n.label }))}
+                              />
                             </div>
                             {/* Aprovação — oculta se só equipe interna */}
                             {cfg.origemProfissionais !== "interno" && (
                               <div>
                                 <div className="vx-label" style={{ marginBottom: 6 }}>Aprovação da candidatura <Tag obrigatorio={false} /></div>
-                                <select className="vx-input" value={cfg.processoAdmissao || "manual"} onChange={(e) => setConfig("processoAdmissao", e.target.value)}>
-                                  {PROCESSOS_ADMISSAO.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-                                </select>
+                                <SelectDropdown
+                                  value={cfg.processoAdmissao || "manual"}
+                                  onChange={(v) => setConfig("processoAdmissao", v)}
+                                  options={PROCESSOS_ADMISSAO.map((p) => ({ value: p.id, label: p.label }))}
+                                />
                               </div>
                             )}
                             <button type="button" className="vx-btn vx-btn-brand" style={{ justifyContent: "center" }} onClick={() => set("abaFuncaoAtiva", null)}>
