@@ -2027,10 +2027,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Visibilidade */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div>
-              <div className="vx-label">Quem pode ver esta campanha? <Tag obrigatorio={false} /></div>
+              <div className="vx-label">Quem pode se candidatar a esta campanha? <Tag obrigatorio={false} /></div>
               <div style={{ display: "grid", gap: 8, marginTop: 6 }}>
-                <CardOption selected={campanha.visibilidade === "publica"} onClick={() => set("visibilidade", "publica")} icon={Eye} title="Todos podem ver" subtitle="Qualquer profissional que se encaixe no perfil pode se candidatar." />
-                <CardOption selected={campanha.visibilidade === "privada"} onClick={() => set("visibilidade", "privada")} icon={EyeOff} title="Só convidados" subtitle="Apenas profissionais que você convidar verão a campanha." />
+                <CardOption selected={campanha.visibilidade === "publica"} onClick={() => set("visibilidade", "publica")} icon={Eye} title="Qualquer profissional" subtitle="Qualquer profissional que se encaixe no perfil pode se candidatar." />
+                <CardOption selected={campanha.visibilidade === "privada"} onClick={() => set("visibilidade", "privada")} icon={EyeOff} title="Só convidados" subtitle="Apenas profissionais que você convidar poderão se candidatar." />
                 <CardOption selected={campanha.visibilidade === "oculta"} onClick={() => set("visibilidade", "oculta")} icon={Lock} title="Oculta" subtitle="Não aparece em buscas. Só entra quem tiver o link." />
               </div>
             </div>
@@ -2897,7 +2897,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Meios de contato</span><div style={{ fontWeight: 600 }}>{(campanha.canais || []).map((c) => CANAIS.find((x) => x.id === c)?.nome || c).join(", ") || "—"}</div></div>
               {campanha.estruturaComercial !== "operacao" && (<>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Como entra</span><div style={{ fontWeight: 600 }}>{PROCESSOS_ADMISSAO.find((p) => p.id === campanha.processoAdmissao)?.label || "Manual"}</div></div>
-              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Quem pode ver</span><div style={{ fontWeight: 600 }}>{campanha.visibilidade === "publica" ? "Todos" : campanha.visibilidade === "privada" ? "Só convidados" : "Oculta"}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Candidaturas</span><div style={{ fontWeight: 600 }}>{campanha.visibilidade === "publica" ? "Qualquer profissional" : campanha.visibilidade === "privada" ? "Só convidados" : "Oculta"}</div></div>
               </>)}
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Treinamento obrigatório</span><div style={{ fontWeight: 600 }}>{campanha.exigeCertificacao ? "Sim" : "Não"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Treinamento</span><div style={{ fontWeight: 600 }}>{(campanha.treinamento || []).length} módulo(s)</div></div>
