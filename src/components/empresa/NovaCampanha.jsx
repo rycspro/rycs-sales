@@ -1939,15 +1939,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
-          {/* Processo de admissão */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Como o profissional entra na campanha?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Ele pode começar na hora ou precisa da sua aprovação?</div></div>
-            <div style={{ display: "grid", gap: 8 }}>
-              {PROCESSOS_ADMISSAO.map((p) => (
-                <CardOption key={p.id} selected={campanha.processoAdmissao === p.id} onClick={() => set("processoAdmissao", p.id)} title={p.label} subtitle={p.descricao} />
-              ))}
-            </div>
-          </div>
           </>)}
 
           {/* Visibilidade */}
@@ -2185,14 +2176,15 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     )}
                     {cfg.modoAtividades && (
                       <div style={{ marginTop: 14 }}>
-                        <div className="vx-label" style={{ marginBottom: 8 }}>Como os pagamentos serão aprovados?</div>
+                        <div className="vx-label" style={{ marginBottom: 8 }}>Como os resultados serão validados?</div>
+                        <div className="vx-mut" style={{ fontSize: 11.5, marginBottom: 8 }}>Defina como você aprova um lead qualificado, uma reunião agendada ou outro resultado desta atividade.</div>
                         <div style={{ display: "grid", gap: 8 }}>
                           {METODOS_APROVACAO.map((m) => {
                             const MIcon = m.icon;
                             return (
                               <CardOption key={m.id} selected={(cfg.aprovacaoPagamentos || "manual") === m.id}
                                 onClick={() => setConfig("aprovacaoPagamentos", m.id)} icon={MIcon} title={m.nome}
-                                subtitle={m.id === "automatica" ? "Validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e aprova dentro dos critérios." : "Você revisa e aprova manualmente cada pagamento."} />
+                                subtitle={m.id === "automatica" ? "O resultado é validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e valida dentro dos critérios definidos." : "Você revisa e aprova manualmente cada resultado entregue."} />
                             );
                           })}
                         </div>
