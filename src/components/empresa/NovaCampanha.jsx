@@ -1928,8 +1928,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {/* ═══════════════════════ PASSO 5: PERFIL PROFISSIONAL ═══════════════════════ */}
       {passo === 5 && campanha && (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Quem vai trabalhar?</h2>
-          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina o perfil do profissional para esta campanha.</p>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Sobre os profissionais</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina o perfil, as responsabilidades e a rotina comercial de cada profissional.</p>
 
           {campanha.estruturaComercial === "operacao" ? (<>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Profissionais que vão trabalhar <Tag obrigatorio={true} /></h2>
