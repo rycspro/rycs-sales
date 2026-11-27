@@ -247,20 +247,20 @@ function FontesContatosSelector({ campanha, set }) {
               type="button"
               onClick={() => toggleFonte(id)}
               style={{
-                display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
                 background: ativo ? "var(--brand-50)" : "var(--surface)",
                 border: `1px solid ${ativo ? "var(--brand)" : "var(--border)"}`,
-                borderRadius: 8, cursor: "pointer", textAlign: "left",
+                borderRadius: 10, cursor: "pointer", textAlign: "left",
               }}
             >
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: ativo ? "var(--brand)" : "var(--brand-50)", border: ativo ? "none" : "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Icon size={15} color={ativo ? "#fff" : "var(--brand)"} />
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: ativo ? "var(--brand)" : "var(--brand-50)", border: ativo ? "none" : "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Icon size={19} color={ativo ? "#fff" : "var(--brand)"} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: ativo ? "var(--brand)" : "var(--text)" }}>{label}</div>
-                <div className="vx-mut" style={{ fontSize: 11 }}>{desc}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: ativo ? "var(--brand)" : "var(--text)" }}>{label}</div>
+                <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>{desc}</div>
               </div>
-              {ativo && <Check size={14} color="var(--brand)" style={{ flexShrink: 0 }} />}
+              {ativo && <Check size={16} color="var(--brand)" style={{ flexShrink: 0 }} />}
             </button>
           );
         })}
