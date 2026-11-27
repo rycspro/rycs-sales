@@ -851,58 +851,78 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             );
           })()}
 
-          {/* Modelo de trabalho */}
+          {/* Modelo de trabalho + localização do profissional (unificado) */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>De onde o profissional trabalha?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Ele trabalha de casa, na rua ou mistura os dois?</div></div>
+            <div style={{ marginBottom: 12 }}>
+              <b style={{ color: "var(--brand)" }}>Como o profissional vai trabalhar?</b><Tag obrigatorio={true} />
+              <div className="vx-mut" style={{ fontSize: 11.5 }}>Ele trabalha de casa, na rua ou mistura os dois?</div>
+            </div>
             <div style={{ display: "grid", gap: 8 }}>
               {Object.values(MODELOS_TRABALHO).map((m) => {
                 const Ic = ICONES_MODELO[m.id] || Globe;
                 return <CardOption key={m.id} selected={campanha.modeloTrabalho === m.id} onClick={() => set("modeloTrabalho", m.id)} icon={Ic} title={m.nome} subtitle={m.descricao} />;
               })}
             </div>
+
+            {/* Remoto: opção de restringir localização */}
+            {campanha.modeloTrabalho === "remoto" && (
+              <div style={{ marginTop: 14, borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={!!campanha.restricaoGeo && campanha.restricaoGeo !== "nenhuma"}
+                    onChange={(e) => set("restricaoGeo", e.target.checked ? "regioes" : "nenhuma")}
+                    style={{ width: 16, height: 16, accentColor: "var(--brand)", flexShrink: 0 }}
+                  />
+                  <span style={{ fontWeight: 500, fontSize: 14 }}>Restringir a localização dos profissionais</span>
+                </label>
+                {(!campanha.restricaoGeo || campanha.restricaoGeo === "nenhuma") ? (
+                  <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 6, marginLeft: 26 }}>Profissionais de qualquer localização podem participar.</div>
+                ) : (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ display: "grid", gap: 8 }}>
+                      {Object.values(RESTRICOES_GEO).filter((r) => r.id !== "nenhuma").map((r) => (
+                        <CardOption key={r.id} selected={campanha.restricaoGeo === r.id} onClick={() => set("restricaoGeo", r.id)} title={r.label} />
+                      ))}
+                    </div>
+                    {vis.paisesRestritos && (
+                      <div style={{ marginTop: 12 }}>
+                        <div className="vx-label">Países aceitos</div>
+                        <MultiSelect opcoes={OPC_PAISES} valor={campanha.paisesRestritos || []} onChange={(v) => set("paisesRestritos", v)} placeholder="Selecione os países" />
+                      </div>
+                    )}
+                    {vis.regioesRestritas && (
+                      <div style={{ marginTop: 12 }}>
+                        <div className="vx-label">Regiões aceitas</div>
+                        <input className="vx-input" value={(campanha.regioesRestritas || []).join(", ")} onChange={(e) => set("regioesRestritas", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="Ex.: Sudeste, Sul" />
+                      </div>
+                    )}
+                    {vis.cidadesRestritas && (
+                      <div style={{ marginTop: 12 }}>
+                        <div className="vx-label">Cidades aceitas</div>
+                        <input className="vx-input" value={(campanha.cidadesRestritas || []).join(", ")} onChange={(e) => set("cidadesRestritas", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="Ex.: São Paulo, Rio de Janeiro" />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Presencial/Híbrido: território obrigatório */}
+            {(campanha.modeloTrabalho === "presencial" || campanha.modeloTrabalho === "hibrido") && (
+              <div style={{ marginTop: 14, borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+                <div style={{ marginBottom: 10 }}>
+                  <b style={{ color: "var(--brand)", fontSize: 13 }}>Território de atuação</b><Tag obrigatorio={true} />
+                  <div className="vx-mut" style={{ fontSize: 11.5 }}>Em qual cidade ou região o profissional vai trabalhar presencialmente?</div>
+                </div>
+                <div className="vx-grid vx-g2">
+                  <label><div className="vx-label">Região</div>
+                    <input className="vx-input" value={campanha.regiao} onChange={(e) => set("regiao", e.target.value)} placeholder="Ex.: interior de SP" /></label>
+                </div>
+                <CidadeEstadoSelector estado={campanha.estado || ""} cidade={campanha.cidade || ""} onEstado={(v) => set("estado", v)} onCidade={(v) => set("cidade", v)} />
+              </div>
+            )}
           </div>
-
-          {/* Restrição geográfica do profissional (só remoto) */}
-          {campanha.modeloTrabalho === "remoto" && (
-            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização do profissional</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>De onde o profissional pode trabalhar? Aceita de qualquer lugar ou só de algumas regiões?</div></div>
-              <div style={{ display: "grid", gap: 8 }}>
-                {Object.values(RESTRICOES_GEO).map((r) => (
-                  <CardOption key={r.id} selected={campanha.restricaoGeo === r.id} onClick={() => set("restricaoGeo", r.id)} title={r.label} />
-                ))}
-              </div>
-              {vis.paisesRestritos && (
-                <div style={{ marginTop: 12 }}>
-                  <div className="vx-label">Países aceitos</div>
-                  <MultiSelect opcoes={OPC_PAISES} valor={campanha.paisesRestritos || []} onChange={(v) => set("paisesRestritos", v)} placeholder="Selecione os países" />
-                </div>
-              )}
-              {vis.regioesRestritas && (
-                <div style={{ marginTop: 12 }}>
-                  <div className="vx-label">Regiões aceitas</div>
-                  <input className="vx-input" value={(campanha.regioesRestritas || []).join(", ")} onChange={(e) => set("regioesRestritas", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="Ex.: Sudeste, Sul" />
-                </div>
-              )}
-              {vis.cidadesRestritas && (
-                <div style={{ marginTop: 12 }}>
-                  <div className="vx-label">Cidades aceitas</div>
-                  <input className="vx-input" value={(campanha.cidadesRestritas || []).join(", ")} onChange={(e) => set("cidadesRestritas", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="Ex.: São Paulo, Rio de Janeiro" />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Território (presencial/híbrido) */}
-          {(campanha.modeloTrabalho === "presencial" || campanha.modeloTrabalho === "hibrido") && (
-            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Território de atuação do profissional</b><Tag obrigatorio={true} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Em qual cidade ou região o profissional vai trabalhar presencialmente?</div></div>
-              <div className="vx-grid vx-g2">
-                <label><div className="vx-label">Região</div>
-                  <input className="vx-input" value={campanha.regiao} onChange={(e) => set("regiao", e.target.value)} placeholder="Ex.: interior de SP" /></label>
-              </div>
-              <CidadeEstadoSelector estado={campanha.estado || ""} cidade={campanha.cidade || ""} onEstado={(v) => set("estado", v)} onCidade={(v) => set("cidade", v)} />
-            </div>
-          )}
 
           {/* Mercado de atuação do cliente */}
           {secaoVisivel.mercado && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
