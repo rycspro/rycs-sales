@@ -95,7 +95,7 @@ const SEL = { bg: "var(--brand-50, #E4F0FF)", border: "var(--brand, #318CE7)", b
 function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }) {
   return (
     <button
-      className="vx-card"
+      className={`vx-card${selected ? " vx-card--sel" : ""}`}
       disabled={disabled}
       onClick={onClick}
       style={{
