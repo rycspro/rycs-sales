@@ -733,20 +733,20 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
       {dados.reunioes && dados.reunioes.length > 0 ? (
         <div className="vx-compact-list">
           {dados.reunioes.map((r) => <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-            <CalendarCheck size={16} color={r.status === "realizada" ? "var(--brand)" : r.status === "cancelada" ? "var(--danger)" : "var(--amber)"} />
+            <CalendarCheck size={16} color={r.status === "realizada" || r.status === "venda" ? "var(--brand)" : r.status === "cancelada" ? "var(--danger)" : "var(--amber)"} />
             <div style={{ flex: 1 }}>
               <b style={{ fontSize: 13 }}>{r.titulo || (r.status === "realizada" ? "Reunião realizada" : "Reunião agendada")}</b>
               <div className="vx-mut" style={{ fontSize: 12 }}>
-                {r.dataHora ? new Date(r.dataHora).toLocaleString("pt-BR") : ""}
+                {r.data ? new Date(r.data + "T12:00:00").toLocaleDateString("pt-BR") : r.dataHora ? new Date(r.dataHora).toLocaleString("pt-BR") : ""}
+                {r.horaInicio ? ` ${r.horaInicio}–${r.horaFim}` : ""}
                 {r.closerNome ? ` · ${r.closerNome}` : ""}
                 {r.leadNome ? ` · ${r.leadNome}` : ""}
+                {r.valorVenda > 0 ? ` · R$ ${Number(r.valorVenda).toFixed(2)}` : ""}
               </div>
             </div>
-            <span className={`vx-chip ${r.status === "realizada" ? "is-brand" : r.status === "cancelada" ? "is-danger" : ""}`}>{r.status}</span>
+            <span className={`vx-chip ${r.status === "realizada" || r.status === "venda" ? "is-brand" : r.status === "cancelada" ? "is-danger" : ""}`}>{r.status}</span>
           </div>)}
         </div>
-      ) : reunioes.length > 0 ? (
-        <div className="vx-compact-list">{reunioes.slice(0, 20).map((item) => <div key={item.id}><div><b>{item.tipo === "realizada" ? "Reunião realizada" : "Reunião agendada"}</b><span>{new Date(item.criadoEm).toLocaleString("pt-BR")}</span></div><span className="vx-chip">{item.status}</span></div>)}</div>
       ) : <Empty texto="Nenhuma reunião registrada nesta campanha." />}
     </section>}
     {dados && aba === "performance" && <section className="vx-card vx-detail-section"><h2 className="vx-disp">Resultados ao longo do tempo</h2><p>Compare investimento, tarefas, leads, reuniões e vendas em {dados.periodo.label.toLowerCase()}.</p><PerformanceChart serie={dados.serie} /></section>}

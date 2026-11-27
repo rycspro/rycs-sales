@@ -630,11 +630,15 @@ export default function CampanhaPage({ campanha, empresa, eu, db, setDb, up, avi
               {campanha.confirmacaoContato && JSON.parse(campanha.confirmacaoContato || "{}").habilitada && (<>
                 {(!leadSelecionado.confirmacaoStatus || leadSelecionado.confirmacaoStatus === "nao_enviada") && (
                   <button className="vx-btn vx-btn-sm" style={{ marginBottom: 10, gap: 6 }} onClick={async () => {
-                    const r = await api(`/campaigns/${campanha.id}/confirmacao-token`, { leadId: leadSelecionado.id });
-                    if (r?.token) {
+                    const cfg = JSON.parse(campanha.confirmacaoContato || "{}");
+                    const canal = (cfg.canais || [])[0] || "whatsapp";
+                    const r = await api(`/campaigns/${campanha.id}/enviar-confirmacao`, { leadId: leadSelecionado.id, canal });
+                    if (r?.enviado) {
                       setLeadSelecionado((prev) => ({ ...prev, confirmacaoStatus: "aguardando" }));
                       setLeadsLocal((prev) => prev.map((l) => l.id === leadSelecionado.id ? { ...l, confirmacaoStatus: "aguardando" } : l));
                       aviso("Confirmação enviada!");
+                    } else {
+                      aviso(r?.error || "Não foi possível enviar.");
                     }
                   }}>
                     <MessageCircle size={14} /> Enviar confirmação de contato
@@ -642,8 +646,10 @@ export default function CampanhaPage({ campanha, empresa, eu, db, setDb, up, avi
                 )}
                 {leadSelecionado.confirmacaoStatus === "aguardando" && (
                   <button className="vx-btn vx-btn-sm vx-btn-ghost" style={{ marginBottom: 10, gap: 6 }} onClick={async () => {
-                    const r = await api(`/campaigns/${campanha.id}/confirmacao-reenvio`, { leadId: leadSelecionado.id });
-                    if (r?.ok) aviso("Confirmação reenviada!");
+                    const cfg = JSON.parse(campanha.confirmacaoContato || "{}");
+                    const canal = (cfg.canais || [])[0] || "whatsapp";
+                    const r = await api(`/campaigns/${campanha.id}/enviar-confirmacao`, { leadId: leadSelecionado.id, canal });
+                    if (r?.enviado) aviso("Confirmação reenviada!");
                     else aviso(r?.error || "Não foi possível reenviar.");
                   }}>
                     <MessageCircle size={14} /> Reenviar confirmação
