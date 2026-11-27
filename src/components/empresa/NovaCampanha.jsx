@@ -31,7 +31,7 @@ const OPC_PAISES = PAISES.map((p) => ({ value: p.code, label: p.nome }));
 const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
 const nomePais = (code) => NOME_PAIS[String(code || "").toUpperCase()] || code || "seu país";
 
-const PASSOS = ["O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Ações e pagamentos", "Verba da campanha", "Tudo certo?"];
+const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Ações e pagamentos", "Verba da campanha", "Tudo certo?"];
 
 const ICONES_OBJETIVO_UI = {
   encontrar_clientes: Search, qualificar: Filter, agendar_reunioes: CalendarCheck,
@@ -251,7 +251,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   // Ao continuar a edição de um rascunho existente (vindo do banco), ele é a
   // fonte de verdade — ignora qualquer resquício em localStorage.
   const rascunhoSalvo = useRef(rascunho ? null : lerJson(chaveRascunho, null));
-  const [passo, _setPasso] = useState(rascunho?.passoWizard ?? rascunhoSalvo.current?.passo ?? 0);
+  const rascunhoCampanhaInicial = rascunho || rascunhoSalvo.current?.campanha || null;
+  const [tipoCampanha, setTipoCampanha] = useState(rascunhoCampanhaInicial?.estruturaComercial || "");
+  const [campanhasDisponiveis, setCampanhasDisponiveis] = useState([]);
+  const [carregandoCampanhas, setCarregandoCampanhas] = useState(false);
+  const _rawPasso = rascunho?.passoWizard ?? rascunhoSalvo.current?.passo ?? 0;
+  const [passo, _setPasso] = useState(rascunhoCampanhaInicial ? _rawPasso + 1 : _rawPasso);
   const setPasso = (p) => { _setPasso(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const [campanha, setCampanha] = useState(rascunho || rascunhoSalvo.current?.campanha || null);
   // id do registro persistente no banco (DRAFT). Existe desde a primeira
@@ -373,6 +378,16 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (passo !== 3 || tipoCampanha !== "vinculada") return;
+    setCarregandoCampanhas(true);
+    api("/campaigns").then((data) => {
+      if (Array.isArray(data)) setCampanhasDisponiveis(data.filter((c) => c.status !== "cancelada" && c.id !== rascunhoId));
+      setCarregandoCampanhas(false);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [passo, tipoCampanha]);
+
   const setNested = (k, sub, v) => setCampanha((c) => ({ ...c, [k]: { ...(c[k] || {}), [sub]: v } }));
 
   const vis = useMemo(() => campanha ? camposVisiveis(campanha) : {}, [campanha]);
@@ -400,6 +415,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     setCampanha({
       ...base,
       objetivoUI: chaveUI,
+      estruturaComercial: tipoCampanha || "independente",
       modeloTrabalho: "remoto",
       restricaoGeo: "nenhuma",
       origemLeads: "",
@@ -426,13 +442,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       paisesAceitos: [],
     });
     setExplicacao("");
-    setPasso(1);
+    setPasso(2);
   };
 
   const receberCampanhaDoJarvas = (chaveObjetivo, campanhaMontada) => {
-    setCampanha({ ...campanhaMontada, objetivoUI: "", modeloTrabalho: "remoto", restricaoGeo: "nenhuma", origemLeads: "", mercado: "pais_todo", distribuicaoLeads: "automatica", canais: [], nivelExperiencia: "indiferente", processoAdmissao: "manual", visibilidade: "publica", temComissao: false, remuneracaoCumulativa: true, acoesAtivas: Object.keys(campanhaMontada.tarefas || {}) });
+    setCampanha({ ...campanhaMontada, objetivoUI: "", estruturaComercial: tipoCampanha || campanhaMontada.estruturaComercial || "independente", modeloTrabalho: "remoto", restricaoGeo: "nenhuma", origemLeads: "", mercado: "pais_todo", distribuicaoLeads: "automatica", canais: [], nivelExperiencia: "indiferente", processoAdmissao: "manual", visibilidade: "publica", temComissao: false, remuneracaoCumulativa: true, acoesAtivas: Object.keys(campanhaMontada.tarefas || {}) });
     setExplicacao("");
-    setPasso(1);
+    setPasso(2);
   };
 
   const adicionarTreinamento = () => set("treinamento", [...(campanha.treinamento || []), { id: `mod-${Date.now()}`, titulo: "", conteudo: "" }]);
@@ -715,7 +731,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
       {rascunhoSalvo.current && campanha && (
         <div className="vx-notice" style={{ marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span>Rascunho restaurado automaticamente{campanha.titulo ? `: "${campanha.titulo}"` : ""}.</span>
-          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => { removerArmazenado(chaveRascunho); rascunhoSalvo.current = null; setCampanha(null); setPasso(0); }}>Descartar</button>
+          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => { removerArmazenado(chaveRascunho); rascunhoSalvo.current = null; setCampanha(null); setTipoCampanha(""); setPasso(0); }}>Descartar</button>
         </div>
       )}
       {/* Cabeçalho do rascunho: indicador de salvamento + salvar e sair */}
@@ -740,8 +756,31 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         ))}
       </div>
 
-      {/* ═══════════════════════ PASSO 1: OBJETIVO ═══════════════════════ */}
+      {/* ═══════════════════════ PASSO 0: TIPO DE CAMPANHA ═══════════════════════ */}
       {passo === 0 && (
+        <>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Tipo de campanha</h2>
+          <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Como você deseja organizar sua operação comercial?</p>
+
+          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ marginBottom: 12 }}>
+              <b style={{ color: "var(--brand)" }}>Selecione o tipo de campanha</b><Tag obrigatorio={true} />
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              <CardOption selected={tipoCampanha === "independente"} onClick={() => { setTipoCampanha("independente"); setPasso(1); }} icon={Target} title="Campanha com uma única função" subtitle="Um ou vários profissionais exercendo a mesma função." />
+              <CardOption selected={tipoCampanha === "operacao"} onClick={() => { setTipoCampanha("operacao"); setPasso(1); }} icon={Shuffle} title="Campanha com diferentes profissionais" subtitle="Profissionais com funções diferentes trabalhando juntos na mesma campanha." />
+              <CardOption selected={tipoCampanha === "vinculada"} onClick={() => { setTipoCampanha("vinculada"); setPasso(1); }} icon={Workflow} title="Conectar com outra campanha" subtitle="Conecte esta campanha a uma operação comercial existente." />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
+            <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }} onClick={aoCancelar}>Cancelar</button>
+          </div>
+        </>
+      )}
+
+      {/* ═══════════════════════ PASSO 1: OBJETIVO ═══════════════════════ */}
+      {passo === 1 && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>O que você quer que aconteça?</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
@@ -782,13 +821,14 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           )}
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 14 }}>
+            <button className="vx-btn" onClick={() => setPasso(0)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ minHeight: 44 }} onClick={aoCancelar}>Cancelar</button>
           </div>
         </>
       )}
 
       {/* ═══════════════════════ PASSO 2: ESTRUTURA ═══════════════════════ */}
-      {passo === 1 && campanha && (
+      {passo === 2 && campanha && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Como vai funcionar?</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
@@ -1324,270 +1364,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             )}
           </div>}
 
-          {/* Estrutura comercial */}
-          {secaoVisivel.estrutura && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Como os profissionais vão trabalhar?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Uma campanha sozinha ou em equipe com outras?</div></div>
-            <div style={{ display: "grid", gap: 8 }}>
-              <CardOption selected={campanha.estruturaComercial === "independente" || !campanha.estruturaComercial} onClick={() => set("estruturaComercial", "independente")} icon={Target} title="Campanha sozinha" subtitle="Funciona de forma independente, sem vínculo com outras." />
-              <CardOption selected={campanha.estruturaComercial === "vinculada"} onClick={() => set("estruturaComercial", "vinculada")} icon={Workflow} title="Conectar a outra campanha" subtitle="Os contatos passam de uma campanha para outra automaticamente." />
-              <CardOption selected={campanha.estruturaComercial === "operacao"} onClick={() => set("estruturaComercial", "operacao")} icon={Shuffle} title="Montar uma equipe completa" subtitle="Vários profissionais com funções diferentes trabalham juntos (ex: um busca contatos e outro fecha a venda)." />
-            </div>
-            {campanha.estruturaComercial === "operacao" && (
-              <div style={{ marginTop: 12 }}>
-                <label><div className="vx-label">Dê um nome para esta equipe</div>
-                  <input className="vx-input" placeholder="Ex: Equipe Vendas Restaurantes" value={campanha.nomeOperacao || ""}
-                    onChange={(e) => set("nomeOperacao", e.target.value)} />
-                </label>
-
-                <div style={{ marginTop: 16 }}>
-                  <div className="vx-label" style={{ marginBottom: 8 }}>Quais funções vão participar?</div>
-                  <div className="vx-mut" style={{ fontSize: 11.5, marginBottom: 10 }}>Selecione todas as funções que a equipe precisa. Cada uma vira uma campanha ligada às outras.</div>
-                  <div style={{ display: "grid", gap: 8 }}>
-                    {ORDEM_FUNCOES.filter((f) => f !== "sem-exp").map((k) => {
-                      const f = FUNCOES[k];
-                      const nomeAmigavel = { sdr: "Qualificar contatos e agendar reuniões", bdr: "Encontrar novos clientes", closer: "Negociar e fechar vendas", pap: "Visitar clientes presencialmente" }[k] || f.completo;
-                      const funcoesOp = campanha.funcoesOperacao || [];
-                      const ativa = funcoesOp.includes(k);
-                      return (
-                        <button key={k} onClick={() => {
-                          const novas = ativa ? funcoesOp.filter((x) => x !== k) : [...funcoesOp, k];
-                          set("funcoesOperacao", novas);
-                          if (!ativa && !campanha[`config_${k}`]) {
-                            set(`config_${k}`, { funcao: k, vagas: 0, nivelExperiencia: "", processoAdmissao: "manual", acoesAtivas: [], tarefas: {}, remuneracaoCumulativa: true, prazoHoras: 24, limitePorProfissional: 10, orcamento: 0 });
-                          }
-                        }} style={{
-                          display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", width: "100%", textAlign: "left", cursor: "pointer",
-                          border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`,
-                          background: ativa ? SEL.bg : SEL.bgOff,
-                          borderRadius: 10, transition: "border-color .15s, background .15s",
-                        }}>
-                          <div style={{ width: 20, height: 20, borderRadius: 5, border: `1.5px solid ${ativa ? "var(--brand)" : "var(--border)"}`, background: ativa ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            {ativa && <Check size={12} color="#fff" />}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13.5, fontWeight: ativa ? 600 : 400, color: "var(--ink, #171717)" }}>{nomeAmigavel} ({f.nome})</div>
-                            <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>{f.descricao}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {(campanha.funcoesOperacao || []).length >= 2 && (
-                  <div style={{ marginTop: 16 }}>
-                    <div className="vx-label" style={{ marginBottom: 8 }}>Ordem das funções na operação</div>
-                    <div className="vx-mut" style={{ fontSize: 11.5, marginBottom: 10 }}>Os contatos seguem esta ordem: a primeira função trabalha o contato e passa para a seguinte.</div>
-                    <div style={{ display: "grid", gap: 4 }}>
-                      {(campanha.funcoesOperacao || []).map((k, i) => {
-                        const f = FUNCOES[k];
-                        return (
-                          <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8 }}>
-                            <GripVertical size={14} color="var(--muted)" />
-                            <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{i + 1}. {f?.nome || k}</span>
-                            <div style={{ display: "flex", gap: 4 }}>
-                              <button className="vx-btn vx-btn-ghost vx-btn-sm" disabled={i === 0} style={{ padding: 2 }} onClick={() => {
-                                const arr = [...(campanha.funcoesOperacao || [])];
-                                [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
-                                set("funcoesOperacao", arr);
-                              }}><ChevronUp size={14} /></button>
-                              <button className="vx-btn vx-btn-ghost vx-btn-sm" disabled={i === (campanha.funcoesOperacao || []).length - 1} style={{ padding: 2 }} onClick={() => {
-                                const arr = [...(campanha.funcoesOperacao || [])];
-                                [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
-                                set("funcoesOperacao", arr);
-                              }}><ChevronDown size={14} /></button>
-                            </div>
-                            {i < (campanha.funcoesOperacao || []).length - 1 && <ArrowRight size={12} color="var(--brand)" style={{ flexShrink: 0 }} />}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {(campanha.funcoesOperacao || []).length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    <div className="vx-label" style={{ marginBottom: 8 }}>Configure cada função</div>
-                    <div style={{ display: "flex", gap: 0, borderBottom: "2px solid var(--border)", marginBottom: 14 }}>
-                      {(campanha.funcoesOperacao || []).map((k) => {
-                        const f = FUNCOES[k];
-                        const ativa = (campanha.abaFuncaoAtiva || (campanha.funcoesOperacao || [])[0]) === k;
-                        return (
-                          <button key={k} onClick={() => set("abaFuncaoAtiva", k)} style={{
-                            padding: "10px 16px", fontSize: 13, fontWeight: ativa ? 600 : 400, cursor: "pointer",
-                            color: ativa ? "var(--brand)" : "var(--muted)",
-                            borderBottom: ativa ? "2px solid var(--brand)" : "2px solid transparent",
-                            marginBottom: -2, background: "transparent", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid",
-                            borderBottomColor: ativa ? "var(--brand)" : "transparent",
-                          }}>
-                            {f?.nome || k}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {(() => {
-                      const funcaoAtiva = campanha.abaFuncaoAtiva || (campanha.funcoesOperacao || [])[0];
-                      if (!funcaoAtiva) return null;
-                      const cfg = campanha[`config_${funcaoAtiva}`] || {};
-                      const setConfig = (campo, valor) => set(`config_${funcaoAtiva}`, { ...cfg, [campo]: valor });
-                      const fInfo = FUNCOES[funcaoAtiva];
-                      const sugeridas = SUGESTOES_FUNCAO[funcaoAtiva] || [];
-
-                      return (
-                        <div style={{ display: "grid", gap: 14 }}>
-                          <div className="vx-card" style={{ padding: 14 }}>
-                            <b style={{ fontSize: 13, color: "var(--brand)" }}>De onde vêm os profissionais? — {fInfo?.nome}</b>
-                            <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 10 }}>Escolha se contrata pela RYCS, usa sua equipe ou ambos.</div>
-                            <div style={{ display: "grid", gap: 6 }}>
-                              {Object.values(ORIGENS_PROFISSIONAIS).map((o) => (
-                                <CardOption key={o.id} selected={cfg.origemProfissionais === o.id} onClick={() => setConfig("origemProfissionais", o.id)} title={o.label} />
-                              ))}
-                            </div>
-                            {(cfg.origemProfissionais === "interno" || cfg.origemProfissionais === "ambos") && (
-                              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8, padding: "8px 10px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
-                                Os colaboradores da sua empresa podem ser selecionados em <b>Gestão interna → Meu time</b> após a publicação.
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="vx-card" style={{ padding: 14 }}>
-                            <b style={{ fontSize: 13, color: "var(--brand)" }}>Perfil e requisitos — {fInfo?.nome}</b>
-                            <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
-                              <label><div className="vx-label">Quantas vagas?</div>
-                                <select className="vx-input" value={cfg.vagas === 0 ? "0" : String(cfg.vagas || 0)} onChange={(e) => setConfig("vagas", Number(e.target.value))}>
-                                  <option value="0">Ilimitado</option>
-                                  {[1,2,3,5,10,15,20,30,50,100].map((v) => <option key={v} value={v}>{v}</option>)}
-                                </select></label>
-                              <label><div className="vx-label">Experiência</div>
-                                <select className="vx-input" value={cfg.nivelExperiencia || ""} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
-                                  <option value="">Qualquer nível</option>
-                                  {NIVEIS_EXPERIENCIA.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
-                                </select></label>
-                              <label><div className="vx-label">Como entra?</div>
-                                <select className="vx-input" value={cfg.processoAdmissao || "manual"} onChange={(e) => setConfig("processoAdmissao", e.target.value)}>
-                                  {PROCESSOS_ADMISSAO.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-                                </select></label>
-                            </div>
-                          </div>
-
-                          <div className="vx-card" style={{ padding: 14 }}>
-                            <b style={{ fontSize: 13, color: "var(--brand)" }}>Atividades e pagamentos — {fInfo?.nome}</b>
-                            <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 10 }}>Marque o que este profissional faz e quanto ganha.</div>
-                            {SELECAO_RAPIDA[funcaoAtiva] && (
-                              <div style={{ marginBottom: 12 }}>
-                                <div className="vx-label" style={{ marginBottom: 6 }}>Seleção rápida</div>
-                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                                  {SELECAO_RAPIDA[funcaoAtiva].map((sr) => {
-                                    const ativa = (cfg.acoesAtivas || []).includes(sr.id);
-                                    return (
-                                      <button key={sr.id} onClick={() => {
-                                        const novas = ativa ? (cfg.acoesAtivas || []).filter((x) => x !== sr.id) : [...(cfg.acoesAtivas || []), sr.id];
-                                        setConfig("acoesAtivas", novas);
-                                        if (!ativa) setConfig("tarefas", { ...(cfg.tarefas || {}), [sr.id]: cfg.tarefas?.[sr.id] || 0 });
-                                      }} style={{
-                                        display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 20,
-                                        fontSize: 12, fontWeight: 500, cursor: "pointer",
-                                        border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`,
-                                        background: ativa ? SEL.bg : SEL.bgOff,
-                                        color: ativa ? "var(--ink)" : "var(--text-2)",
-                                      }}>
-                                        {ativa && <Check size={12} />} {sr.nome}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                            <div style={{ display: "grid", gap: 6 }}>
-                              {(() => {
-                                const ordenadas = [...ACOES_DISPONIVEIS].sort((a, b) => {
-                                  const sa = sugeridas.includes(a.id) ? 0 : 1;
-                                  const sb = sugeridas.includes(b.id) ? 0 : 1;
-                                  return sa - sb;
-                                });
-                                return ordenadas.map((a) => {
-                                  const cfgAcoes = cfg.acoesAtivas || [];
-                                  const ativa = cfgAcoes.includes(a.id);
-                                  return (
-                                    <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`, borderRadius: 8, background: ativa ? SEL.bg : SEL.bgOff }}>
-                                      <input type="checkbox" checked={ativa} onChange={() => {
-                                        const novas = ativa ? cfgAcoes.filter((x) => x !== a.id) : [...cfgAcoes, a.id];
-                                        setConfig("acoesAtivas", novas);
-                                        if (!ativa) {
-                                          const t = { ...(cfg.tarefas || {}), [a.id]: cfg.tarefas?.[a.id] || 0 };
-                                          setConfig("tarefas", t);
-                                        }
-                                      }} style={{ accentColor: "var(--brand)" }} />
-                                      <span style={{ flex: 1, fontSize: 13, fontWeight: ativa ? 600 : 400 }}>{a.nome}{sugeridas.includes(a.id) && !ativa ? " ★" : ""}</span>
-                                      {ativa && (
-                                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                          <span style={{ fontSize: 12, color: "var(--muted)" }}>R$</span>
-                                          <input className="vx-input vx-mono" type="number" min="0" step="0.01" style={{ width: 80, padding: "4px 8px", fontSize: 13 }}
-                                            value={cfg.tarefas?.[a.id] || 0}
-                                            onChange={(e) => setConfig("tarefas", { ...(cfg.tarefas || {}), [a.id]: Number(e.target.value) })} />
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                });
-                              })()}
-                            </div>
-                            <div style={{ marginTop: 14, marginBottom: 4 }}>
-                              <b style={{ fontSize: 12.5, color: "var(--brand)" }}>Gestão operacional</b>
-                              <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-                                <CardOption selected={!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", false)} icon={Zap} title="Automático (recomendado)" subtitle="A RYCS define prazos e limites automaticamente." />
-                                <CardOption selected={!!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", true)} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Defina orçamento e prazos manualmente." />
-                              </div>
-                              {!cfg.gestaoManual && (
-                                <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
-                                  <Check size={14} color="var(--green, #16A34A)" style={{ flexShrink: 0 }} />
-                                  <span className="vx-mut" style={{ fontSize: 12 }}>Prazos e limites serão gerenciados automaticamente pela RYCS.</span>
-                                </div>
-                              )}
-                            </div>
-                            {!!cfg.gestaoManual && (
-                              <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
-                                <label><div className="vx-label">Orçamento para esta função</div>
-                                  <CampoOrcamento value={cfg.orcamento || 0} onChange={(v) => setConfig("orcamento", v)} /></label>
-                                <label><div className="vx-label">Prazo por atividade (horas)</div>
-                                  <input className="vx-input vx-mono" type="number" min="1" value={cfg.prazoHoras || 24} onChange={(e) => setConfig("prazoHoras", Number(e.target.value))} /></label>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
-
-                {(campanha.funcoesOperacao || []).length >= 2 && (
-                  <div style={{ marginTop: 14, padding: "12px 14px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <Workflow size={14} color="var(--brand)" />
-                      <b style={{ fontSize: 13, color: "var(--brand)" }}>Como funciona a equipe</b>
-                    </div>
-                    <ul className="vx-mut" style={{ fontSize: 12, margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
-                      <li>Todos compartilham a mesma base de contatos.</li>
-                      <li>Quando o primeiro profissional termina, o contato passa automaticamente para o próximo da fila.</li>
-                      {(campanha.funcoesOperacao || []).includes("sdr") && (campanha.funcoesOperacao || []).includes("closer") && (<>
-                        <li>O SDR qualifica contatos e agenda reuniões. O Closer recebe a reunião e conduz a negociação até o fechamento.</li>
-                        <li>O SDR visualiza automaticamente os horários disponíveis dos Closers — sem necessidade de consultar individualmente cada um.</li>
-                        <li>As reuniões são distribuídas entre os Closers elegíveis de forma equilibrada, priorizando quem tem menor carga.</li>
-                      </>)}
-                      <li>Cada profissional é pago individualmente pelo que fizer.</li>
-                      <li>Ao publicar, serão criadas {(campanha.funcoesOperacao || []).length} campanhas conectadas dentro da operação.</li>
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-            {campanha.estruturaComercial === "vinculada" && (
-              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 10, padding: "10px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)" }}>
-                Depois de criar, você poderá escolher de qual campanha os contatos vão vir e para onde vão seguir.
-              </div>
-            )}
-          </div>}
 
           {/* Perguntas de qualificação */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
@@ -1692,38 +1468,277 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(0)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(2)}>Quem vai trabalhar? <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Quem vai trabalhar? <ArrowRight size={14} /></button>
           </div>
         </>
       )}
 
       {/* ═══════════════════════ PASSO 3: PERFIL PROFISSIONAL ═══════════════════════ */}
-      {passo === 2 && campanha && (
+      {passo === 3 && campanha && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Quem vai trabalhar?</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
             Defina o tipo de profissional, o nível de experiência e como ele entra na campanha.
           </p>
 
-          {campanha.estruturaComercial === "operacao" && (campanha.funcoesOperacao || []).length > 0 ? (
+          {campanha.estruturaComercial === "operacao" ? (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 10 }}><b style={{ color: "var(--brand)" }}>Funções da equipe</b><Tag obrigatorio={true} />
-                <div className="vx-mut" style={{ fontSize: 11.5 }}>O perfil, vagas e experiência de cada função foram configurados no passo anterior.</div>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Quais profissionais vão trabalhar nesta campanha?</b><Tag obrigatorio={true} />
+                <div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione todas as funções que a equipe precisa. Cada uma vira uma campanha ligada às outras.</div>
               </div>
-              <div style={{ display: "grid", gap: 6 }}>
-                {(campanha.funcoesOperacao || []).map((k) => {
+              <label style={{ display: "block", marginBottom: 12 }}><div className="vx-label">Nome da equipe</div>
+                <input className="vx-input" placeholder="Ex: Equipe Vendas Restaurantes" value={campanha.nomeOperacao || ""}
+                  onChange={(e) => set("nomeOperacao", e.target.value)} />
+              </label>
+              <div style={{ display: "grid", gap: 8 }}>
+                {ORDEM_FUNCOES.filter((f) => f !== "sem-exp").map((k) => {
                   const f = FUNCOES[k];
-                  const cfg = campanha[`config_${k}`] || {};
+                  const nomeAmigavel = { sdr: "Qualificar contatos e agendar reuniões", bdr: "Encontrar novos clientes", closer: "Negociar e fechar vendas", pap: "Visitar clientes presencialmente" }[k] || f.completo;
+                  const funcoesOp = campanha.funcoesOperacao || [];
+                  const ativa = funcoesOp.includes(k);
                   return (
-                    <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)" }}>
-                      <Check size={14} color="var(--brand)" />
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>{f?.nome || k}</span>
-                      <span className="vx-mut" style={{ fontSize: 12 }}>{cfg.vagas || 0} vagas · {(cfg.acoesAtivas || []).length} atividades</span>
-                    </div>
+                    <button key={k} onClick={() => {
+                      const novas = ativa ? funcoesOp.filter((x) => x !== k) : [...funcoesOp, k];
+                      set("funcoesOperacao", novas);
+                      if (!ativa && !campanha[`config_${k}`]) {
+                        set(`config_${k}`, { funcao: k, vagas: 0, nivelExperiencia: "", processoAdmissao: "manual", acoesAtivas: [], tarefas: {}, remuneracaoCumulativa: true, prazoHoras: 24, limitePorProfissional: 10, orcamento: 0 });
+                      }
+                    }} style={{
+                      display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", width: "100%", textAlign: "left", cursor: "pointer",
+                      border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`,
+                      background: ativa ? SEL.bg : SEL.bgOff,
+                      borderRadius: 10, transition: "border-color .15s, background .15s",
+                    }}>
+                      <div style={{ width: 20, height: 20, borderRadius: 5, border: `1.5px solid ${ativa ? "var(--brand)" : "var(--border)"}`, background: ativa ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {ativa && <Check size={12} color="#fff" />}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: ativa ? 600 : 400, color: "var(--ink, #171717)" }}>{nomeAmigavel} ({f.nome})</div>
+                        <div className="vx-mut" style={{ fontSize: 12, marginTop: 2 }}>{f.descricao}</div>
+                      </div>
+                    </button>
                   );
                 })}
               </div>
+              {(campanha.funcoesOperacao || []).length >= 2 && (
+                <div style={{ marginTop: 16 }}>
+                  <div className="vx-label" style={{ marginBottom: 8 }}>Ordem das funções na operação</div>
+                  <div className="vx-mut" style={{ fontSize: 11.5, marginBottom: 10 }}>Os contatos seguem esta ordem: a primeira função trabalha o contato e passa para a seguinte.</div>
+                  <div style={{ display: "grid", gap: 4 }}>
+                    {(campanha.funcoesOperacao || []).map((k, i) => {
+                      const f = FUNCOES[k];
+                      return (
+                        <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8 }}>
+                          <GripVertical size={14} color="var(--muted)" />
+                          <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{i + 1}. {f?.nome || k}</span>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <button className="vx-btn vx-btn-ghost vx-btn-sm" disabled={i === 0} style={{ padding: 2 }} onClick={() => {
+                              const arr = [...(campanha.funcoesOperacao || [])];
+                              [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
+                              set("funcoesOperacao", arr);
+                            }}><ChevronUp size={14} /></button>
+                            <button className="vx-btn vx-btn-ghost vx-btn-sm" disabled={i === (campanha.funcoesOperacao || []).length - 1} style={{ padding: 2 }} onClick={() => {
+                              const arr = [...(campanha.funcoesOperacao || [])];
+                              [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+                              set("funcoesOperacao", arr);
+                            }}><ChevronDown size={14} /></button>
+                          </div>
+                          {i < (campanha.funcoesOperacao || []).length - 1 && <ArrowRight size={12} color="var(--brand)" style={{ flexShrink: 0 }} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {(campanha.funcoesOperacao || []).length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <div className="vx-label" style={{ marginBottom: 8 }}>Configure cada função</div>
+                  <div style={{ display: "flex", gap: 0, borderBottom: "2px solid var(--border)", marginBottom: 14 }}>
+                    {(campanha.funcoesOperacao || []).map((k) => {
+                      const f = FUNCOES[k];
+                      const ativaAba = (campanha.abaFuncaoAtiva || (campanha.funcoesOperacao || [])[0]) === k;
+                      return (
+                        <button key={k} onClick={() => set("abaFuncaoAtiva", k)} style={{
+                          padding: "10px 16px", fontSize: 13, fontWeight: ativaAba ? 600 : 400, cursor: "pointer",
+                          color: ativaAba ? "var(--brand)" : "var(--muted)",
+                          marginBottom: -2, background: "transparent", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid",
+                          borderBottomColor: ativaAba ? "var(--brand)" : "transparent",
+                        }}>
+                          {f?.nome || k}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {(() => {
+                    const funcaoAtiva = campanha.abaFuncaoAtiva || (campanha.funcoesOperacao || [])[0];
+                    if (!funcaoAtiva) return null;
+                    const cfg = campanha[`config_${funcaoAtiva}`] || {};
+                    const setConfig = (campo, valor) => set(`config_${funcaoAtiva}`, { ...cfg, [campo]: valor });
+                    const fInfo = FUNCOES[funcaoAtiva];
+                    const sugeridas = SUGESTOES_FUNCAO[funcaoAtiva] || [];
+                    return (
+                      <div style={{ display: "grid", gap: 14 }}>
+                        <div className="vx-card" style={{ padding: 14 }}>
+                          <b style={{ fontSize: 13, color: "var(--brand)" }}>De onde vêm os profissionais? — {fInfo?.nome}</b>
+                          <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 10 }}>Escolha se contrata pela RYCS, usa sua equipe ou ambos.</div>
+                          <div style={{ display: "grid", gap: 6 }}>
+                            {Object.values(ORIGENS_PROFISSIONAIS).map((o) => (
+                              <CardOption key={o.id} selected={cfg.origemProfissionais === o.id} onClick={() => setConfig("origemProfissionais", o.id)} title={o.label} />
+                            ))}
+                          </div>
+                          {(cfg.origemProfissionais === "interno" || cfg.origemProfissionais === "ambos") && (
+                            <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8, padding: "8px 10px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                              Os colaboradores da sua empresa podem ser selecionados em <b>Gestão interna → Meu time</b> após a publicação.
+                            </div>
+                          )}
+                        </div>
+                        <div className="vx-card" style={{ padding: 14 }}>
+                          <b style={{ fontSize: 13, color: "var(--brand)" }}>Perfil e requisitos — {fInfo?.nome}</b>
+                          <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
+                            <label><div className="vx-label">Quantas vagas?</div>
+                              <select className="vx-input" value={cfg.vagas === 0 ? "0" : String(cfg.vagas || 0)} onChange={(e) => setConfig("vagas", Number(e.target.value))}>
+                                <option value="0">Ilimitado</option>
+                                {[1,2,3,5,10,15,20,30,50,100].map((v) => <option key={v} value={v}>{v}</option>)}
+                              </select></label>
+                            <label><div className="vx-label">Experiência</div>
+                              <select className="vx-input" value={cfg.nivelExperiencia || ""} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
+                                <option value="">Qualquer nível</option>
+                                {NIVEIS_EXPERIENCIA.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
+                              </select></label>
+                            <label><div className="vx-label">Como entra?</div>
+                              <select className="vx-input" value={cfg.processoAdmissao || "manual"} onChange={(e) => setConfig("processoAdmissao", e.target.value)}>
+                                {PROCESSOS_ADMISSAO.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+                              </select></label>
+                          </div>
+                        </div>
+                        <div className="vx-card" style={{ padding: 14 }}>
+                          <b style={{ fontSize: 13, color: "var(--brand)" }}>Atividades e pagamentos — {fInfo?.nome}</b>
+                          <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 10 }}>Marque o que este profissional faz e quanto ganha.</div>
+                          {SELECAO_RAPIDA[funcaoAtiva] && (
+                            <div style={{ marginBottom: 12 }}>
+                              <div className="vx-label" style={{ marginBottom: 6 }}>Seleção rápida</div>
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                {SELECAO_RAPIDA[funcaoAtiva].map((sr) => {
+                                  const ativaAcao = (cfg.acoesAtivas || []).includes(sr.id);
+                                  return (
+                                    <button key={sr.id} onClick={() => {
+                                      const novas = ativaAcao ? (cfg.acoesAtivas || []).filter((x) => x !== sr.id) : [...(cfg.acoesAtivas || []), sr.id];
+                                      setConfig("acoesAtivas", novas);
+                                      if (!ativaAcao) setConfig("tarefas", { ...(cfg.tarefas || {}), [sr.id]: cfg.tarefas?.[sr.id] || 0 });
+                                    }} style={{
+                                      display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 20,
+                                      fontSize: 12, fontWeight: 500, cursor: "pointer",
+                                      border: `1px solid ${ativaAcao ? SEL.border : SEL.borderOff}`,
+                                      background: ativaAcao ? SEL.bg : SEL.bgOff,
+                                      color: ativaAcao ? "var(--ink)" : "var(--text-2)",
+                                    }}>
+                                      {ativaAcao && <Check size={12} />} {sr.nome}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          <div style={{ display: "grid", gap: 6 }}>
+                            {(() => {
+                              const ordenadas = [...ACOES_DISPONIVEIS].sort((a, b) => {
+                                const sa = sugeridas.includes(a.id) ? 0 : 1;
+                                const sb = sugeridas.includes(b.id) ? 0 : 1;
+                                return sa - sb;
+                              });
+                              return ordenadas.map((a) => {
+                                const cfgAcoes = cfg.acoesAtivas || [];
+                                const ativaAcao = cfgAcoes.includes(a.id);
+                                return (
+                                  <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", border: `1px solid ${ativaAcao ? SEL.border : SEL.borderOff}`, borderRadius: 8, background: ativaAcao ? SEL.bg : SEL.bgOff }}>
+                                    <input type="checkbox" checked={ativaAcao} onChange={() => {
+                                      const novas = ativaAcao ? cfgAcoes.filter((x) => x !== a.id) : [...cfgAcoes, a.id];
+                                      setConfig("acoesAtivas", novas);
+                                      if (!ativaAcao) {
+                                        const t = { ...(cfg.tarefas || {}), [a.id]: cfg.tarefas?.[a.id] || 0 };
+                                        setConfig("tarefas", t);
+                                      }
+                                    }} style={{ accentColor: "var(--brand)" }} />
+                                    <span style={{ flex: 1, fontSize: 13, fontWeight: ativaAcao ? 600 : 400 }}>{a.nome}{sugeridas.includes(a.id) && !ativaAcao ? " ★" : ""}</span>
+                                    {ativaAcao && (
+                                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                        <span style={{ fontSize: 12, color: "var(--muted)" }}>R$</span>
+                                        <input className="vx-input vx-mono" type="number" min="0" step="0.01" style={{ width: 80, padding: "4px 8px", fontSize: 13 }}
+                                          value={cfg.tarefas?.[a.id] || 0}
+                                          onChange={(e) => setConfig("tarefas", { ...(cfg.tarefas || {}), [a.id]: Number(e.target.value) })} />
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                          <div style={{ marginTop: 14, marginBottom: 4 }}>
+                            <b style={{ fontSize: 12.5, color: "var(--brand)" }}>Gestão operacional</b>
+                            <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+                              <CardOption selected={!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", false)} icon={Zap} title="Automático (recomendado)" subtitle="A RYCS define prazos e limites automaticamente." />
+                              <CardOption selected={!!cfg.gestaoManual} onClick={() => setConfig("gestaoManual", true)} icon={SlidersHorizontal} title="Eu quero controlar" subtitle="Defina orçamento e prazos manualmente." />
+                            </div>
+                            {!cfg.gestaoManual && (
+                              <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
+                                <Check size={14} color="var(--green, #16A34A)" style={{ flexShrink: 0 }} />
+                                <span className="vx-mut" style={{ fontSize: 12 }}>Prazos e limites serão gerenciados automaticamente pela RYCS.</span>
+                              </div>
+                            )}
+                          </div>
+                          {!!cfg.gestaoManual && (
+                            <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
+                              <label><div className="vx-label">Orçamento para esta função</div>
+                                <CampoOrcamento value={cfg.orcamento || 0} onChange={(v) => setConfig("orcamento", v)} /></label>
+                              <label><div className="vx-label">Prazo por atividade (horas)</div>
+                                <input className="vx-input vx-mono" type="number" min="1" value={cfg.prazoHoras || 24} onChange={(e) => setConfig("prazoHoras", Number(e.target.value))} /></label>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+              {(campanha.funcoesOperacao || []).length >= 2 && (
+                <div style={{ marginTop: 14, padding: "12px 14px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <Workflow size={14} color="var(--brand)" />
+                    <b style={{ fontSize: 13, color: "var(--brand)" }}>Como funciona a equipe</b>
+                  </div>
+                  <ul className="vx-mut" style={{ fontSize: 12, margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
+                    <li>Todos compartilham a mesma base de contatos.</li>
+                    <li>Quando o primeiro profissional termina, o contato passa automaticamente para o próximo da fila.</li>
+                    {(campanha.funcoesOperacao || []).includes("sdr") && (campanha.funcoesOperacao || []).includes("closer") && (<>
+                      <li>O SDR qualifica contatos e agenda reuniões. O Closer recebe a reunião e conduz a negociação até o fechamento.</li>
+                      <li>O SDR visualiza automaticamente os horários disponíveis dos Closers — sem necessidade de consultar individualmente cada um.</li>
+                      <li>As reuniões são distribuídas entre os Closers elegíveis de forma equilibrada, priorizando quem tem menor carga.</li>
+                    </>)}
+                    <li>Cada profissional é pago individualmente pelo que fizer.</li>
+                    <li>Ao publicar, serão criadas {(campanha.funcoesOperacao || []).length} campanhas conectadas dentro da operação.</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : campanha.estruturaComercial === "vinculada" ? (
+            <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Campanha de origem</b><Tag obrigatorio={false} />
+                <div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione a campanha da qual esta vai receber contatos.</div>
+              </div>
+              {carregandoCampanhas ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0" }}><Loader size={14} style={{ animation: "spin 1s linear infinite" }} /><span className="vx-mut" style={{ fontSize: 13 }}>Carregando campanhas…</span></div>
+              ) : campanhasDisponiveis.length === 0 ? (
+                <div className="vx-mut" style={{ fontSize: 13, padding: "10px 0" }}>Nenhuma campanha disponível para vincular.</div>
+              ) : (
+                <div style={{ display: "grid", gap: 8 }}>
+                  {campanhasDisponiveis.map((c) => (
+                    <CardOption key={c.id} selected={campanha.campanhaVinculadaId === c.id} onClick={() => set("campanhaVinculadaId", c.id)}
+                      title={c.titulo || "(sem título)"}
+                      subtitle={`${c.funcao || c.objetivo || ""} · ${c.status || ""}`} />
+                  ))}
+                </div>
+              )}
             </div>
           ) : (<>
           {/* Função comercial */}
@@ -1809,18 +1824,18 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Ações e pagamentos <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Ações e pagamentos <ArrowRight size={14} /></button>
           </div>
         </>
       )}
 
       {/* ═══════════════════════ PASSO 4: AÇÕES & REMUNERAÇÃO ═══════════════════════ */}
-      {passo === 3 && campanha && (
+      {passo === 4 && campanha && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Ações e pagamentos</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            {campanha.estruturaComercial === "operacao" ? "As atividades e valores de cada função foram configurados no passo 2." : "Escolha o que o profissional faz e quanto ganha por cada resultado."}
+            {campanha.estruturaComercial === "operacao" ? "As atividades e valores de cada função foram configurados no passo anterior." : "Escolha o que o profissional faz e quanto ganha por cada resultado."}
           </p>
 
           {campanha.estruturaComercial !== "operacao" && (
@@ -2274,14 +2289,14 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           )}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Verba da campanha <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={() => setPasso(3)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(5)}>Verba da campanha <ArrowRight size={14} /></button>
           </div>
         </>
       )}
 
       {/* ═══════════════════════ PASSO 5: VERBA DA CAMPANHA ═══════════════════════ */}
-      {passo === 4 && campanha && (() => {
+      {passo === 5 && campanha && (() => {
         const modo = campanha.modoAcoesRemuneradas || "rapido";
         const acoesAtivas = campanha.acoesAtivas || [];
         const tarefas = campanha.tarefas || {};
@@ -2541,15 +2556,15 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(3)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(5)}>Revisar tudo <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={() => setPasso(4)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(6)}>Revisar tudo <ArrowRight size={14} /></button>
           </div>
         </>
         );
       })()}
 
       {/* ═══════════════════════ PASSO 6: REVISÃO ═══════════════════════ */}
-      {passo === 5 && campanha && (
+      {passo === 6 && campanha && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Tudo certo?</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
@@ -2700,7 +2715,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           )}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(4)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn" onClick={() => setPasso(5)}><ArrowLeft size={14} /> Voltar</button>
             <button className="vx-btn vx-btn-primary" disabled={salvando} onClick={criar}>
               {salvando ? "Salvando…" : <>Salvar rascunho <Check size={14} /></>}
             </button>
