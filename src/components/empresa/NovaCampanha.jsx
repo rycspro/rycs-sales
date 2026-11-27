@@ -1798,8 +1798,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             )}
           </div>
 
-          {/* Confirmação de contato — bloco individual */}
-          {etapaConfirmacao && (() => {
+          {/* Confirmação de contato */}
+          {(() => {
             const canaisAtivos = (campanha.confirmacaoContato || {}).canais || [];
             const habilitada = !!(campanha.confirmacaoContato || {}).habilitada;
             const isRycs = !habilitada;
@@ -1906,17 +1906,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           })()}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            {etapaConfirmacao ? (
-              <>
-                <button className="vx-btn" onClick={() => { setEtapaConfirmacao(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}><ArrowLeft size={14} /> Voltar</button>
-                <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Profissionais <ArrowRight size={14} /></button>
-              </>
-            ) : (
-              <>
-                <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
-                <button className="vx-btn vx-btn-primary" onClick={() => { setEtapaConfirmacao(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Confirmação de contato <ArrowRight size={14} /></button>
-              </>
-            )}
+            <button className="vx-btn" onClick={() => setPasso(2)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(4)}>Profissionais <ArrowRight size={14} /></button>
           </div>
         </>
       )}
