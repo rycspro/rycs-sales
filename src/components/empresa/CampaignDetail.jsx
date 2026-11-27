@@ -772,13 +772,15 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
         const fin = pf.financeiro;
         const eq = pf.equipe;
         const temTicket = projecaoFunil.ticketInformado;
+        if (f.contatos <= 0) return null;
+        const num = (v) => v.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
         const stats = [
-          { Icon: Phone, label: "Contatos trabalhados", valor: f.contatos },
-          { Icon: Filter, label: "Leads qualificados", valor: f.agendamentos },
-          { Icon: CalendarCheck, label: "Reuniões agendadas", valor: f.agendamentosVerificados },
-          { Icon: UsersRound, label: "Reuniões realizadas", valor: f.reunioesRealizadas },
-          { Icon: Target, label: "Vendas estimadas", valor: f.vendas < 1 && f.vendas > 0 ? f.vendas.toFixed(2) : Math.round(f.vendas) },
-          { Icon: DollarSign, label: "Custo por venda", valor: money(fin.cac), mono: true },
+          { Icon: Phone, label: "Contatos trabalhados", valor: num(f.contatos) },
+          { Icon: CalendarCheck, label: "Reuniões agendadas", valor: num(f.agendamentos) },
+          { Icon: UsersRound, label: "Reuniões realizadas", valor: num(f.reunioesRealizadas) },
+          { Icon: Target, label: "Vendas estimadas", valor: num(f.vendas) },
+          { Icon: DollarSign, label: "Custo por venda", valor: f.vendas > 0 ? money(fin.cac) : "—", mono: true },
+          { Icon: TrendingUp, label: "ROI", valor: temTicket ? `${num(fin.roi)}%` : "—", mono: true },
         ];
         return <section className="vx-card" style={{ padding: 20, marginTop: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -807,9 +809,8 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
               <div style={{ fontSize: 32, fontWeight: 900, fontFamily: "var(--font-mono)", margin: "6px 0" }}>{money(fin.faturamento)}</div>
               <div style={{ display: "flex", justifyContent: "center", gap: 20, fontSize: 12, opacity: 0.85, flexWrap: "wrap", marginTop: 8 }}>
                 <span>Lucro: <b>{money(fin.lucro)}</b></span>
-                <span>Margem: <b>{fin.margem.toFixed(1)}%</b></span>
-                <span>ROI: <b>{fin.roi.toFixed(1)}%</b></span>
-                <span>Retorno/R$1: <b>{fin.retornoPorReal.toFixed(2)}×</b></span>
+                <span>Margem: <b>{num(fin.margem)}%</b></span>
+                <span>Cada R$ 1 retorna: <b>{money(fin.retornoPorReal)}</b></span>
               </div>
             </div>
           ) : (
