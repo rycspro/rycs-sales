@@ -31,8 +31,8 @@ const OPC_PAISES = PAISES.map((p) => ({ value: p.code, label: p.nome }));
 const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
 const nomePais = (code) => NOME_PAIS[String(code || "").toUpperCase()] || code || "seu país";
 
-const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Ações e pagamentos", "Planejamento e verba", "Tudo certo?"];
-const PASSOS_CURTOS = ["Tipo", "Objetivo", "Operação", "Profissionais", "Pagamentos", "Planejamento", "Revisão"];
+const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Ações", "Pagamentos", "Tudo certo?"];
+const PASSOS_CURTOS = ["Tipo", "Objetivo", "Operação", "Profissionais", "Ações", "Pagamentos", "Revisão"];
 
 const ICONES_OBJETIVO_UI = {
   encontrar_clientes: Search, qualificar: Filter, agendar_reunioes: CalendarCheck,
@@ -2629,7 +2629,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(3)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(5)}>Planejamento e verba <ArrowRight size={14} /></button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(5)}>Pagamentos <ArrowRight size={14} /></button>
           </div>
         </>
       )}
@@ -2666,7 +2666,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
         return (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Planejamento e verba</h2>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Pagamentos</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
             Defina seu investimento e descubra o potencial da sua campanha.
           </p>
