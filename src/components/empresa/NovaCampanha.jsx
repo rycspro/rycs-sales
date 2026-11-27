@@ -571,7 +571,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [carregandoCampanhas, setCarregandoCampanhas] = useState(false);
   const _rawPasso = rascunho?.passoWizard ?? rascunhoSalvo.current?.passo ?? 0;
   const [passo, _setPasso] = useState(rascunhoCampanhaInicial ? _rawPasso + 1 : _rawPasso);
-  const setPasso = (p) => { _setPasso(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const [etapaConfirmacao, setEtapaConfirmacao] = useState(false);
+  const setPasso = (p) => { _setPasso(p); setEtapaConfirmacao(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const [campanha, setCampanha] = useState(rascunho || rascunhoSalvo.current?.campanha || null);
   // id do registro persistente no banco (DRAFT). Existe desde a primeira
   // interação significativa; é o mesmo id até a publicação (sem duplicar).
@@ -1780,8 +1781,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             )}
           </div>
 
-          {/* Confirmação de contato */}
-          {(() => {
+          {/* Confirmação de contato — bloco individual */}
+          {etapaConfirmacao && (() => {
             const canaisAtivos = (campanha.confirmacaoContato || {}).canais || [];
             const habilitada = !!(campanha.confirmacaoContato || {}).habilitada;
             const isRycs = !habilitada;
@@ -1888,8 +1889,17 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           })()}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Profissionais <ArrowRight size={14} /></button>
+            {etapaConfirmacao ? (
+              <>
+                <button className="vx-btn" onClick={() => { setEtapaConfirmacao(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}><ArrowLeft size={14} /> Voltar</button>
+                <button className="vx-btn vx-btn-primary" onClick={() => setPasso(3)}>Profissionais <ArrowRight size={14} /></button>
+              </>
+            ) : (
+              <>
+                <button className="vx-btn" onClick={() => setPasso(1)}><ArrowLeft size={14} /> Voltar</button>
+                <button className="vx-btn vx-btn-primary" onClick={() => { setEtapaConfirmacao(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Confirmação de contato <ArrowRight size={14} /></button>
+              </>
+            )}
           </div>
         </>
       )}
