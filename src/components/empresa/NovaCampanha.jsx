@@ -32,6 +32,7 @@ const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
 const nomePais = (code) => NOME_PAIS[String(code || "").toUpperCase()] || code || "seu país";
 
 const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Ações e pagamentos", "Verba da campanha", "Tudo certo?"];
+const PASSOS_CURTOS = ["Tipo", "Objetivo", "Operação", "Profissionais", "Pagamentos", "Verba", "Revisão"];
 
 const ICONES_OBJETIVO_UI = {
   encontrar_clientes: Search, qualificar: Filter, agendar_reunioes: CalendarCheck,
@@ -745,16 +746,25 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         </div>
       )}
       {/* trilha dos passos */}
-      <div className="vx-wizard-steps">
-        {PASSOS.map((p, i) => (
-          <div key={p} data-active={i === passo ? "1" : "0"} data-done={i < passo ? "1" : "0"}>
-            <div>
-              <span>{i < passo ? <Check size={12} /> : i + 1}</span>
-              {p}
-            </div>
-            {i < PASSOS.length - 1 && <i />}
+      <div className="vx-wizard-stepper">
+        <div className="vx-ws-label">Etapa {passo + 1} de {PASSOS.length}</div>
+        <div className="vx-ws-bar"><div className="vx-ws-bar-fill" style={{ width: `${((passo) / (PASSOS.length - 1)) * 100}%` }} /></div>
+        <div className="vx-ws-steps">
+          {PASSOS_CURTOS.map((p, i) => (
+            <button key={p} type="button" className="vx-ws-step" data-state={i < passo ? "done" : i === passo ? "active" : "pending"} onClick={() => i < passo && setPasso(i)}>
+              <span className="vx-ws-circle">{i < passo ? <Check size={11} strokeWidth={2.5} /> : i + 1}</span>
+              <span className="vx-ws-title">{p}</span>
+            </button>
+          ))}
+        </div>
+        <div className="vx-ws-mobile">
+          <span className="vx-ws-circle" data-state="active">{passo + 1}</span>
+          <div className="vx-ws-mobile-info">
+            <span className="vx-ws-mobile-title">{PASSOS_CURTOS[passo]}</span>
+            <span className="vx-ws-mobile-sub">Etapa {passo + 1} de {PASSOS.length}</span>
           </div>
-        ))}
+          <div className="vx-ws-mobile-bar"><div className="vx-ws-bar-fill" style={{ width: `${((passo) / (PASSOS.length - 1)) * 100}%` }} /></div>
+        </div>
       </div>
 
       {/* ═══════════════════════ PASSO 0: TIPO DE CAMPANHA ═══════════════════════ */}
