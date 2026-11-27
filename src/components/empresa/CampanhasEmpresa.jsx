@@ -1008,7 +1008,7 @@ export default function CampanhasEmpresa({ emp, db, up, aviso, recarregar, filtr
         // Criar campanha (manual ou com IA) é liberado em todos os planos,
         // inclusive o gratuito: todo mundo tem direito à campanha criada por IA.
         // O plano e o caixa só pesam na hora de PUBLICAR, não de criar.
-        setCriarComIA(ia); setCriando(true);
+        setRascunhoEdicao(null); setCriarComIA(ia); setCriando(true);
       }}
       onArquivar={arquivarCampanha}
       onExcluir={excluirCampanha}

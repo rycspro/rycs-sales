@@ -235,6 +235,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   // Ao continuar a edição de um rascunho existente (vindo do banco), ele é a
   // fonte de verdade — ignora qualquer resquício em localStorage.
   const rascunhoSalvo = useRef(rascunho ? null : lerJson(chaveRascunho, null));
+  if (!rascunho && rascunhoSalvo.current) { removerArmazenado(chaveRascunho); rascunhoSalvo.current = null; }
   const [passo, _setPasso] = useState(rascunho?.passoWizard ?? rascunhoSalvo.current?.passo ?? 0);
   const setPasso = (p) => { _setPasso(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const [campanha, setCampanha] = useState(rascunho || rascunhoSalvo.current?.campanha || null);
