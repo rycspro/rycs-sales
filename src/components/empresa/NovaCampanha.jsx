@@ -2033,7 +2033,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     {(cfg.modoAtividades === "rapido" || cfg.modoAtividades === "personalizado") && (() => {
                       const listaAtividades = cfg.modoAtividades === "rapido"
                         ? (SELECAO_RAPIDA[funcaoAtiva] || ACOES_DISPONIVEIS.filter((a) => sugeridas.includes(a.id)))
-                        : ACOES_DISPONIVEIS;
+                        : [];
                       return (
                         <div style={{ display: "grid", gap: 8 }}>
                           {listaAtividades.map((a) => {
