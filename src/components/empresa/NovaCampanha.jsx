@@ -531,6 +531,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [gerandoDescricao, setGerandoDescricao] = useState(false);
   const uploadInputRef = useRef(null);
   const [catalogoProdutos, setCatalogoProdutos] = useState([]);
+  const [popoverProjecao, setPopoverProjecao] = useState(null);
 
   const disponivel = saldoDisponivel(emp);
   const set = (k, v) => setCampanha((c) => ({ ...c, [k]: v }));
@@ -2631,33 +2632,112 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 {orcamentoAtual > 0 ? "Baseado no investimento e benchmarks comerciais." : "Defina o investimento para ver a projeção."}
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 10 }}>
-              {[
-                { label: "Contatos trabalhados", valor: proj.contatos, Ic: Phone },
-                { label: "Leads qualificados", valor: proj.leads, Ic: Filter },
-                { label: "Reuniões agendadas", valor: proj.reunioesAgendadas, Ic: CalendarCheck },
-                { label: "Reuniões realizadas", valor: proj.reunioesRealizadas, Ic: Users },
-                { label: "Vendas estimadas", valor: proj.vendas, Ic: Target },
-                { label: "Custo por venda", valor: proj.custoPorVenda, Ic: BadgeDollarSign, isMoney: true },
-              ].map(({ label, valor, Ic, isMoney }) => (
-                <div key={label} style={{ padding: "14px 10px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, textAlign: "center" }}>
-                  <Ic size={16} color="var(--brand)" style={{ marginBottom: 4 }} />
-                  <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>
-                    {orcamentoAtual <= 0 ? "—" : isMoney ? money(valor) : valor.toLocaleString("pt-BR")}
-                  </div>
-                  <div style={{ fontSize: 10.5, fontWeight: 500, color: "var(--ink-2)", marginTop: 3, lineHeight: 1.3 }}>{label}</div>
+            {(() => {
+              const custoPorContato = 20;
+              const txLead = 0.25;
+              const txAgend = 0.4;
+              const txReali = 0.75;
+              const txFech = 0.3;
+              const origemDados = ticketMedioEstimado > 0 && produtosSelecionados.some((p) => p.preco > 0)
+                ? "Preço informado nos produtos da campanha"
+                : (emp?.ticket ? "Ticket médio do perfil da empresa" : "Estimativa — informe o preço dos produtos");
+              const kpiTooltips = {
+                "Contatos trabalhados": {
+                  formula: `${money(orcamentoAtual)} ÷ R$ ${custoPorContato},00 = ${proj.contatos}`,
+                  explicacao: `Com ${money(orcamentoAtual)} de investimento e um custo médio de R$ ${custoPorContato},00 por contato trabalhado, estima-se alcançar ${proj.contatos} contatos.`,
+                  taxa: `Custo médio por contato: R$ ${custoPorContato},00`,
+                  origem: "Estimativa baseada em benchmarks comerciais do mercado",
+                },
+                "Leads qualificados": {
+                  formula: `${proj.contatos} contatos × ${(txLead * 100).toFixed(0)}% = ${proj.leads}`,
+                  explicacao: `De ${proj.contatos} contatos trabalhados, espera-se que ${(txLead * 100).toFixed(0)}% respondam e se qualifiquem como leads.`,
+                  taxa: `Taxa de qualificação contato → lead: ${(txLead * 100).toFixed(0)}%`,
+                  origem: "Benchmark comercial — média do mercado B2B",
+                },
+                "Reuniões agendadas": {
+                  formula: `${proj.leads} leads × ${(txAgend * 100).toFixed(0)}% = ${proj.reunioesAgendadas}`,
+                  explicacao: `De ${proj.leads} leads qualificados, ${(txAgend * 100).toFixed(0)}% devem aceitar e agendar uma reunião.`,
+                  taxa: `Taxa de agendamento lead → reunião: ${(txAgend * 100).toFixed(0)}%`,
+                  origem: "Benchmark comercial — média do mercado B2B",
+                },
+                "Reuniões realizadas": {
+                  formula: `${proj.reunioesAgendadas} agendadas × ${(txReali * 100).toFixed(0)}% = ${proj.reunioesRealizadas}`,
+                  explicacao: `De ${proj.reunioesAgendadas} reuniões agendadas, ${(txReali * 100).toFixed(0)}% são efetivamente realizadas (considera no-shows e cancelamentos).`,
+                  taxa: `Taxa de realização reunião agendada → realizada: ${(txReali * 100).toFixed(0)}%`,
+                  origem: "Benchmark comercial — média do mercado B2B",
+                },
+                "Vendas estimadas": {
+                  formula: `${proj.reunioesRealizadas} reuniões × ${(txFech * 100).toFixed(0)}% = ${proj.vendas}`,
+                  explicacao: `De ${proj.reunioesRealizadas} reuniões realizadas, ${(txFech * 100).toFixed(0)}% devem resultar em venda fechada.`,
+                  taxa: `Taxa de fechamento reunião → venda: ${(txFech * 100).toFixed(0)}%`,
+                  origem: "Benchmark comercial — média do mercado B2B",
+                },
+                "Custo por venda": {
+                  formula: `${money(orcamentoAtual)} ÷ ${proj.vendas} vendas = ${money(proj.custoPorVenda)}`,
+                  explicacao: `O investimento total de ${money(orcamentoAtual)} dividido pelas ${proj.vendas} vendas estimadas resulta em um custo de aquisição de ${money(proj.custoPorVenda)} por venda.`,
+                  taxa: "Calculado a partir do total investido e das vendas projetadas",
+                  origem: "Calculado — sem benchmark externo",
+                },
+              };
+              const faturamentoTooltip = {
+                formula: `${proj.vendas} vendas × ${money(ticketMedioEstimado)} (ticket médio) = ${money(proj.faturamento)}`,
+                explicacao: `Com ${proj.vendas} vendas estimadas e ticket médio de ${money(ticketMedioEstimado)}, o faturamento bruto projetado é ${money(proj.faturamento)}.`,
+                taxa: `Ticket médio utilizado: ${money(ticketMedioEstimado)}`,
+                origem: origemDados,
+              };
+              const PopoverConteudo = ({ tip }) => (
+                <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 200, width: 240, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 4px 20px rgba(0,0,0,0.13)", fontSize: 12, lineHeight: 1.5 }}>
+                  <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 8, color: "var(--ink)" }}>Como foi calculado</div>
+                  <div style={{ marginBottom: 6 }}>{tip.explicacao}</div>
+                  <div style={{ padding: "6px 8px", background: "var(--brand-50)", borderRadius: 7, fontFamily: "monospace", fontSize: 11.5, color: "var(--brand)", fontWeight: 600, marginBottom: 8 }}>{tip.formula}</div>
+                  <div className="vx-mut" style={{ fontSize: 11, marginBottom: 4 }}><b>Taxa aplicada:</b> {tip.taxa}</div>
+                  <div className="vx-mut" style={{ fontSize: 11 }}><b>Origem:</b> {tip.origem}</div>
                 </div>
-              ))}
-            </div>
-            <div style={{ padding: "16px 20px", background: "var(--brand)", borderRadius: 10, textAlign: "center" }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.8)", marginBottom: 4 }}>FATURAMENTO BRUTO ESTIMADO</div>
-              <div className="vx-mono" style={{ fontSize: 26, fontWeight: 900, color: "#fff" }}>
-                {orcamentoAtual <= 0 || ticketMedioEstimado <= 0 ? "—" : money(proj.faturamento)}
-              </div>
-              {ticketMedioEstimado <= 0 && orcamentoAtual > 0 && (
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,.7)", marginTop: 4 }}>Informe o preço dos produtos para calcular</div>
-              )}
-            </div>
+              );
+              return (<>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 10 }}>
+                  {[
+                    { label: "Contatos trabalhados", valor: proj.contatos, Ic: Phone },
+                    { label: "Leads qualificados", valor: proj.leads, Ic: Filter },
+                    { label: "Reuniões agendadas", valor: proj.reunioesAgendadas, Ic: CalendarCheck },
+                    { label: "Reuniões realizadas", valor: proj.reunioesRealizadas, Ic: Users },
+                    { label: "Vendas estimadas", valor: proj.vendas, Ic: Target },
+                    { label: "Custo por venda", valor: proj.custoPorVenda, Ic: BadgeDollarSign, isMoney: true },
+                  ].map(({ label, valor, Ic, isMoney }) => (
+                    <div key={label} style={{ position: "relative", padding: "14px 10px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, textAlign: "center" }}>
+                      <button onClick={() => setPopoverProjecao(popoverProjecao === label ? null : label)}
+                        style={{ position: "absolute", top: 6, right: 6, background: "none", border: "1px solid var(--border)", borderRadius: "50%", width: 18, height: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "var(--muted)", fontSize: 10, fontWeight: 700, lineHeight: 1 }}>?</button>
+                      {popoverProjecao === label && orcamentoAtual > 0 && <PopoverConteudo tip={kpiTooltips[label]} />}
+                      <Ic size={16} color="var(--brand)" style={{ marginBottom: 4 }} />
+                      <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>
+                        {orcamentoAtual <= 0 ? "—" : isMoney ? money(valor) : valor.toLocaleString("pt-BR")}
+                      </div>
+                      <div style={{ fontSize: 10.5, fontWeight: 500, color: "var(--ink-2)", marginTop: 3, lineHeight: 1.3 }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ position: "relative", padding: "16px 20px", background: "var(--brand)", borderRadius: 10, textAlign: "center" }}>
+                  <button onClick={() => setPopoverProjecao(popoverProjecao === "faturamento" ? null : "faturamento")}
+                    style={{ position: "absolute", top: 8, right: 8, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", borderRadius: "50%", width: 20, height: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "#fff", fontSize: 11, fontWeight: 700, lineHeight: 1 }}>?</button>
+                  {popoverProjecao === "faturamento" && orcamentoAtual > 0 && ticketMedioEstimado > 0 && (
+                    <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 200, width: 260, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 4px 20px rgba(0,0,0,0.13)", fontSize: 12, lineHeight: 1.5, textAlign: "left" }}>
+                      <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 8, color: "var(--ink)" }}>Como foi calculado</div>
+                      <div style={{ marginBottom: 6 }}>{faturamentoTooltip.explicacao}</div>
+                      <div style={{ padding: "6px 8px", background: "var(--brand-50)", borderRadius: 7, fontFamily: "monospace", fontSize: 11.5, color: "var(--brand)", fontWeight: 600, marginBottom: 8 }}>{faturamentoTooltip.formula}</div>
+                      <div className="vx-mut" style={{ fontSize: 11, marginBottom: 4 }}><b>Ticket médio:</b> {faturamentoTooltip.taxa}</div>
+                      <div className="vx-mut" style={{ fontSize: 11 }}><b>Origem:</b> {faturamentoTooltip.origem}</div>
+                    </div>
+                  )}
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,.8)", marginBottom: 4 }}>FATURAMENTO BRUTO ESTIMADO</div>
+                  <div className="vx-mono" style={{ fontSize: 26, fontWeight: 900, color: "#fff" }}>
+                    {orcamentoAtual <= 0 || ticketMedioEstimado <= 0 ? "—" : money(proj.faturamento)}
+                  </div>
+                  {ticketMedioEstimado <= 0 && orcamentoAtual > 0 && (
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,.7)", marginTop: 4 }}>Informe o preço dos produtos para calcular</div>
+                  )}
+                </div>
+              </>);
+            })()}
           </div>
 
           {/* 5. Equipe recomendada */}
