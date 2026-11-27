@@ -1,0 +1,24 @@
+name: Voice - autorizar chave SSH
+
+on:
+  push:
+    branches: [ voice-ssh-setup ]
+
+jobs:
+  autorizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 3.132.225.173
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          timeout: 30s
+          script: |
+            set -e
+            K='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDOHirXvxCOfIp+Us9h7lSsHPNCkPd8+HfppPG04x59kH+Fy6jbs0d4wcYo1nWdWR+A4A1gukJTJ2mGJTPRBaFTfa4RFYR4JcO31IjjnKqdj3j3DyAzPDzvYlk6kIgeV0/2Xz54iFcnDqDi9Fwcl0Ic7+rUjQ7PUYPLi8URRzMZQM1T7dczdp9zzyqjFBIHcuMRV/+zRg9YkwdtAX0d53sh+EQBIrngPhnLU+b7n4d8fWIJw29djnDEpWhBdfNPbZcmTbBSmdC0TOelhaRy5vOcX0VG6EC4Ne7k2HtOVbgkxgL0S/qGcXPar3bBptoVPDEqIZgcT+XOtL221tHrs4Jp rycs-voice-key'
+            mkdir -p ~/.ssh && chmod 700 ~/.ssh
+            grep -qF "$K" ~/.ssh/authorized_keys 2>/dev/null || echo "$K" >> ~/.ssh/authorized_keys
+            chmod 600 ~/.ssh/authorized_keys
+            echo "chave de voz autorizada"
+            nproc; free -h; df -h /; uptime
