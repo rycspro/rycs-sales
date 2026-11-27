@@ -588,7 +588,12 @@ export default function ProfissionaisEmpresa({ emp, db, up, aviso, recarregar, b
                       <span style={{ fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>{calcularIdade(p.dataNascimento)} anos</span>
                     )}
                   </div>
-                  <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Função:</b> {PERFIL[p.perfil] || p.perfil || "Não informada"}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 12, color: "var(--muted)" }}><b style={{ color: "var(--ink-2)", fontWeight: 600 }}>Função:</b> {PERFIL[p.perfil] || p.perfil || "Não informada"}</span>
+                    {p.perfilComercial?.nivelExperiencia && { junior: "Júnior", pleno: "Pleno", senior: "Sênior" }[p.perfilComercial.nivelExperiencia] && (
+                      <span className="vx-chip" style={{ fontSize: 10.5, padding: "1px 7px" }}>{({ junior: "Júnior", pleno: "Pleno", senior: "Sênior" })[p.perfilComercial.nivelExperiencia]}</span>
+                    )}
+                  </div>
                   {(p.bio || p.experiencia) && (
                     <span style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", marginTop: 1 }}>
                       {(p.bio || p.experiencia).slice(0, 120)}

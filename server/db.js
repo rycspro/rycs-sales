@@ -3723,6 +3723,8 @@ adicionarColuna("lead_events", "dados", "TEXT DEFAULT '{}'");
 adicionarColuna("campaign_sellers", "status", "TEXT DEFAULT 'ativo'");
 // sellers: coluna funcao (usada em leads.js atribuição/handoff)
 adicionarColuna("sellers", "funcao", "TEXT DEFAULT ''")
+// sellers: nível de experiência do profissional (junior/pleno/senior)
+adicionarColuna("sellers", "nivelExperiencia", "TEXT DEFAULT ''")
 
 // Disponibilidade de horários dos profissionais por campanha
 db.exec(`

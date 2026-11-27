@@ -1602,8 +1602,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                 {[1,2,3,5,10,15,20,30,50,100].map((v) => <option key={v} value={v}>{v}</option>)}
                               </select></label>
                             <label><div className="vx-label">Experiência</div>
-                              <select className="vx-input" value={cfg.nivelExperiencia || ""} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
-                                <option value="">Qualquer nível</option>
+                              <select className="vx-input" value={cfg.nivelExperiencia || "indiferente"} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
                                 {NIVEIS_EXPERIENCIA.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
                               </select></label>
                             <label><div className="vx-label">Como entra?</div>
@@ -1770,10 +1769,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Nível de experiência */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Quanta experiência ele precisa ter?</b><Tag obrigatorio={false} /></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Qual nível de experiência você procura?</b><Tag obrigatorio={false} /></div>
             <div style={{ display: "grid", gap: 8 }}>
               {NIVEIS_EXPERIENCIA.map((n) => (
-                <CardOption key={n.id} selected={campanha.nivelExperiencia === n.id} onClick={() => set("nivelExperiencia", n.id)} title={n.label} />
+                <CardOption key={n.id} selected={campanha.nivelExperiencia === n.id} onClick={() => set("nivelExperiencia", n.id)} title={n.label} subtitle={n.descricao} />
               ))}
             </div>
           </div>

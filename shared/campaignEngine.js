@@ -67,10 +67,16 @@ export const CANAIS = [
 
 // ── Experiência ─────────────────────────────────────────────────────────
 export const NIVEIS_EXPERIENCIA = [
-  { id: "iniciante", label: "Aceito iniciantes" },
-  { id: "preferencia", label: "Prefiro profissionais com experiência" },
-  { id: "exigido", label: "Exijo experiência comprovada" },
-  { id: "indiferente", label: "Não tenho preferência" },
+  { id: "junior", label: "Júnior", descricao: "Profissionais em início de carreira." },
+  { id: "pleno", label: "Pleno", descricao: "Profissionais com experiência e autonomia." },
+  { id: "senior", label: "Sênior", descricao: "Profissionais com experiência avançada." },
+  { id: "indiferente", label: "Indiferente", descricao: "Aceito profissionais de qualquer nível." },
+];
+// Apenas os níveis reais do profissional (sem "Indiferente")
+export const NIVEIS_EXPERIENCIA_PROFISSIONAL = [
+  { id: "junior", label: "Júnior" },
+  { id: "pleno", label: "Pleno" },
+  { id: "senior", label: "Sênior" },
 ];
 
 // ── Processo de admissão ────────────────────────────────────────────────

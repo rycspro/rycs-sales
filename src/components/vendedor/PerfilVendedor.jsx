@@ -16,6 +16,7 @@ import {
   AREAS_ATUACAO, HABILIDADES, ANOS_EXPERIENCIA, DISPONIBILIDADE as DISPONIBILIDADE_CAD,
   SEGMENTOS as SEGMENTOS_CAD, FERRAMENTAS, CONHECIMENTOS, EQUIPAMENTOS, TIPOS_FORMACAO,
 } from "../auth/CadastroProfissional.jsx";
+import { NIVEIS_EXPERIENCIA_PROFISSIONAL } from "../../../shared/campaignEngine.js";
 
 const PERFIS = { sdr: "SDR", closer: "Closer", bdr: "BDR", pap: "PAP", "sem-exp": "Iniciante" };
 
@@ -152,6 +153,7 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
         segmentos: p.segmentos || [], ferramentas: p.ferramentas || [],
         conhecimentos: p.conhecimentos || [], equipamentos: p.equipamentos || [],
         anosExperiencia: p.anosExperiencia || "", disponibilidade: p.disponibilidade || "",
+        nivelExperiencia: p.nivelExperiencia || "",
         cargosExp: p.cargosExp || [], formacoes: p.formacoes || [], idiomas: p.idiomas || [],
       },
     };
@@ -637,6 +639,13 @@ export default function PerfilVendedor({ eu, db, up, aviso, refazerAvaliacao }) 
               <div className="vx-label">Disponibilidade</div>
               <ComboSelect opcoes={DISPONIBILIDADE_CAD} valor={form.perfilComercial.disponibilidade} onChange={(v) => setPC("disponibilidade", v)} placeholder="Selecione" />
             </div>
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <div className="vx-label">Nível de experiência</div>
+            <select className="vx-input" value={form.perfilComercial.nivelExperiencia || ""} onChange={(e) => setPC("nivelExperiencia", e.target.value)} style={{ maxWidth: 220 }}>
+              <option value="">Não informado</option>
+              {NIVEIS_EXPERIENCIA_PROFISSIONAL.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
+            </select>
           </div>
 
           <div style={{ marginTop: 10 }}>
