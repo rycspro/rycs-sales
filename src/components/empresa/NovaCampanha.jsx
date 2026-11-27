@@ -1571,10 +1571,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                       const ativaAba = (campanha.abaFuncaoAtiva || (campanha.funcoesOperacao || [])[0]) === k;
                       return (
                         <button key={k} onClick={() => set("abaFuncaoAtiva", k)} style={{
-                          padding: "10px 16px", fontSize: 13, fontWeight: ativaAba ? 600 : 400, cursor: "pointer",
-                          color: ativaAba ? "var(--brand)" : "var(--muted)",
-                          marginBottom: -2, background: "transparent", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid",
+                          padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                          color: ativaAba ? "#fff" : "var(--muted)",
+                          background: ativaAba ? "var(--brand)" : "transparent",
+                          borderRadius: "8px 8px 0 0", border: "none",
+                          marginBottom: -2, borderBottomWidth: 2, borderBottomStyle: "solid",
                           borderBottomColor: ativaAba ? "var(--brand)" : "transparent",
+                          transition: "background .15s, color .15s",
                         }}>
                           {f?.nome || k}
                         </button>
