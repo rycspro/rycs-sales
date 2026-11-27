@@ -445,8 +445,8 @@ html.dark .vx-stat:hover{box-shadow:0 4px 20px rgba(0,0,0,.24);border-color:var(
 /* Criação de campanha em três etapas */
 .vx-campaign-wizard{max-width:900px;margin:0 auto}
 .vx-wizard-stepper{margin-bottom:28px}
-.vx-ws-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;letter-spacing:.03em}
-.vx-ws-bar{height:4px;background:var(--border);border-radius:999px;overflow:hidden;margin-bottom:18px}
+.vx-ws-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.03em}
+.vx-ws-bar{height:6px;background:var(--border);border-radius:999px;overflow:hidden;margin-bottom:10px}
 .vx-ws-bar-fill{height:100%;background:var(--brand);border-radius:999px;transition:width .45s cubic-bezier(.4,0,.2,1)}
 .vx-ws-steps{display:flex;justify-content:space-between;position:relative}
 .vx-ws-steps::before{content:'';position:absolute;top:15px;left:20px;right:20px;height:2px;background:var(--border);z-index:0}
