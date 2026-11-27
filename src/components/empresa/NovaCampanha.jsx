@@ -33,8 +33,8 @@ const OPC_PAISES = PAISES.map((p) => ({ value: p.code, label: p.nome }));
 const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
 const nomePais = (code) => NOME_PAIS[String(code || "").toUpperCase()] || code || "seu país";
 
-const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Configurações", "Confirmação", "Quem vai trabalhar?", "Ações", "Pagamentos", "Tudo certo?"];
-const PASSOS_CURTOS = ["Tipo", "Objetivo", "Campanha", "Operação", "Confirmação", "Profissionais", "Ações", "Pagamentos", "Revisão"];
+const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Configurações", "Confirmação", "Quem vai trabalhar?", "Ações", "Gestão e validação", "Pagamentos", "Tudo certo?"];
+const PASSOS_CURTOS = ["Tipo", "Objetivo", "Campanha", "Operação", "Confirmação", "Profissionais", "Ações", "Gestão", "Pagamentos", "Revisão"];
 
 const ICONES_OBJETIVO_UI = {
   encontrar_clientes: Search, qualificar: Filter, agendar_reunioes: CalendarCheck,
@@ -2401,29 +2401,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             );
           })()}
 
-          {/* Aprovação das entregas */}
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Aprovação das entregas para o pagamento do profissional</h2>
-          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina como você aprova um lead qualificado, uma reunião agendada ou outro resultado desta atividade.</p>
-          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
-            <div style={{ display: "grid", gap: 8 }}>
-              {METODOS_APROVACAO.map((m) => {
-                const MIcon = m.icon;
-                return (
-                  <CardOption key={m.id} selected={(campanha.aprovacaoPagamentos || "manual") === m.id}
-                    onClick={() => set("aprovacaoPagamentos", m.id)} icon={MIcon} title={m.nome}
-                    subtitle={m.id === "automatica" ? "O resultado é validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e valida dentro dos critérios definidos." : "Você revisa e aprova manualmente cada resultado entregue."} />
-                );
-              })}
-            </div>
-            <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)", display: "flex", alignItems: "flex-start", gap: 8 }}>
-              <ShieldCheck size={14} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
-              <span className="vx-mut" style={{ fontSize: 11.5 }}>Independente da modalidade, as comprovações obrigatórias definidas pela RYCS nunca podem ser ignoradas.</span>
-            </div>
-          </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(4)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(6)}>Ações e pagamentos <ArrowRight size={14} /></button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(6)}>Ações <ArrowRight size={14} /></button>
           </div>
         </>
       )}
@@ -2468,23 +2449,176 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(5)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(7)}>Pagamentos <ArrowRight size={14} /></button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(7)}>Gestão e validação <ArrowRight size={14} /></button>
           </div>
         </>
       )}
 
-      {/* ═══════════════════════ PASSO 7: PAGAMENTOS ═══════════════════════ */}
+
+      {/* ═══════════════════════ PASSO 7: GESTÃO E VALIDAÇÃO ═══════════════════════ */}
       {passo === 7 && campanha && (() => {
+        const gestaoModo = campanha.gestaoOperacionalModo || "automatico";
+        const produtosSelecionados = campanha.produtosCampanha || [];
+        return (
+          <>
+            <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Gestão e validação</h2>
+            <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Configure como a campanha será gerenciada e como os resultados serão aprovados.</p>
+
+            {/* Gestão operacional */}
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Gestão operacional</h2>
+            <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Como a campanha será acompanhada e distribuída.</p>
+            <div className="vx-card" style={{ padding: 22, marginTop: 0 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: gestaoModo === "manual" ? 14 : 0 }}>
+                <div onClick={() => set("gestaoOperacionalModo", "automatico")} style={{ padding: "16px 14px", borderRadius: 12, border: `1.5px solid ${gestaoModo !== "manual" ? "var(--brand)" : "var(--border)"}`, background: gestaoModo !== "manual" ? "var(--brand-50)" : "var(--surface)", cursor: "pointer" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <Zap size={16} color={gestaoModo !== "manual" ? "var(--brand)" : "var(--muted)"} />
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo !== "manual" ? "var(--brand)" : "var(--text)" }}>Automático <span style={{ fontSize: 11, fontWeight: 600 }}>(recomendado)</span></div>
+                    {gestaoModo !== "manual" && <Check size={14} color="var(--brand)" style={{ marginLeft: "auto" }} />}
+                  </div>
+                  <div className="vx-mut" style={{ fontSize: 12 }}>A RYCS gerencia prazos, limites e distribuição dos contatos.</div>
+                </div>
+                <div onClick={() => set("gestaoOperacionalModo", "manual")} style={{ padding: "16px 14px", borderRadius: 12, border: `1.5px solid ${gestaoModo === "manual" ? "var(--brand)" : "var(--border)"}`, background: gestaoModo === "manual" ? "var(--brand-50)" : "var(--surface)", cursor: "pointer" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <SlidersHorizontal size={16} color={gestaoModo === "manual" ? "var(--brand)" : "var(--muted)"} />
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo === "manual" ? "var(--brand)" : "var(--text)" }}>Eu quero controlar</div>
+                    {gestaoModo === "manual" && <Check size={14} color="var(--brand)" style={{ marginLeft: "auto" }} />}
+                  </div>
+                  <div className="vx-mut" style={{ fontSize: 12 }}>Defina prazo, metas e crie seus próprios controles.</div>
+                </div>
+              </div>
+              {gestaoModo === "manual" && (
+                <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr", marginTop: 2 }}>
+                  <label>
+                    <div className="vx-label">Data de início</div>
+                    <input className="vx-input" type="date" value={campanha.dataInicioGestao || ""} onChange={(e) => set("dataInicioGestao", e.target.value)} />
+                  </label>
+                  <label>
+                    <div className="vx-label">Data de encerramento</div>
+                    <input className="vx-input" type="date" value={campanha.dataEncerramentoGestao || ""} onChange={(e) => set("dataEncerramentoGestao", e.target.value)} />
+                  </label>
+                  <label>
+                    <div className="vx-label">Meta diária de contatos</div>
+                    <input className="vx-input" type="number" min="0" placeholder="Ex.: 50" value={campanha.metaDiariaContatos || ""} onChange={(e) => set("metaDiariaContatos", Number(e.target.value) || 0)} />
+                  </label>
+                  <label>
+                    <div className="vx-label">Meta de vendas</div>
+                    <input className="vx-input" type="number" min="0" placeholder="Ex.: 10" value={campanha.metaVendasManual || ""} onChange={(e) => set("metaVendasManual", Number(e.target.value) || 0)} />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Quais produtos ou serviços */}
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Quais produtos ou serviços serão comercializados?</h2>
+            <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Selecione os produtos do seu catálogo para calcular o faturamento estimado.</p>
+            <div className="vx-card" style={{ padding: 22, marginTop: 0 }}>
+              {catalogoProdutos.length === 0 ? (
+                <div style={{ padding: "16px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--brand)", marginBottom: 2 }}>Nenhum produto cadastrado</div>
+                    <div className="vx-mut" style={{ fontSize: 12 }}>Cadastre seus produtos e serviços em Materiais para selecioná-los aqui.</div>
+                  </div>
+                  <a href="/empresa/materiais" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "var(--brand)", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    <Plus size={14} /> Ir a Materiais
+                  </a>
+                </div>
+              ) : (
+                <>
+                  {(() => {
+                    const [dropOpen, setDropOpen] = React.useState(false);
+                    const dropRef = React.useRef(null);
+                    React.useEffect(() => {
+                      const h = (e) => { if (dropRef.current && !dropRef.current.contains(e.target)) setDropOpen(false); };
+                      document.addEventListener("mousedown", h);
+                      return () => document.removeEventListener("mousedown", h);
+                    }, []);
+                    const naoSelecionados = catalogoProdutos.filter((p) => !produtosSelecionados.some((s) => s.nome === p.nome));
+                    return (
+                      <div ref={dropRef} style={{ position: "relative", marginBottom: produtosSelecionados.length > 0 ? 12 : 0 }}>
+                        <button type="button" onClick={() => setDropOpen((v) => !v)} style={{
+                          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "10px 14px", background: "var(--surface)", border: `1px solid ${dropOpen ? "var(--brand)" : "var(--border)"}`,
+                          borderRadius: 8, cursor: "pointer", fontSize: 13.5, color: naoSelecionados.length === 0 ? "var(--muted)" : "var(--text)",
+                          boxShadow: dropOpen ? "0 0 0 3px var(--brand-100)" : "none",
+                        }}>
+                          <span>{naoSelecionados.length === 0 ? "Todos os produtos já selecionados" : "Selecionar produto ou serviço…"}</span>
+                          <ChevronDown size={15} color="var(--muted)" style={{ transform: dropOpen ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }} />
+                        </button>
+                        {dropOpen && naoSelecionados.length > 0 && (
+                          <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,.12)", overflow: "hidden", maxHeight: 220, overflowY: "auto" }}>
+                            {naoSelecionados.map((p, i) => (
+                              <button key={i} type="button" onClick={() => { set("produtosCampanha", [...produtosSelecionados, { nome: p.nome, preco: p.preco || 0 }]); setDropOpen(false); }}
+                                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 14px", background: "transparent", border: "none", borderBottom: i < naoSelecionados.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer", textAlign: "left" }}>
+                                <span style={{ fontSize: 13.5 }}>{p.nome}</span>
+                                {p.preco > 0 && <span className="vx-mono" style={{ fontSize: 12, color: "var(--brand)" }}>{money(p.preco)}</span>}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {produtosSelecionados.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {produtosSelecionados.map((p, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 20, background: "var(--brand-50)", border: "1px solid var(--brand-100)", fontSize: 12.5, fontWeight: 500 }}>
+                          <span>{p.nome}</span>
+                          {p.preco > 0 && <span className="vx-mono" style={{ color: "var(--brand)", fontSize: 11 }}>{money(p.preco)}</span>}
+                          <button onClick={() => set("produtosCampanha", produtosSelecionados.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1, color: "var(--muted)" }}>
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {produtosSelecionados.filter((p) => !p.preco).map((p, idx) => (
+                    <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, marginTop: 8 }}>
+                      <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{p.nome}</div>
+                      <div style={{ fontSize: 11.5, color: "var(--muted)", marginRight: 6, whiteSpace: "nowrap" }}>Informe o preço:</div>
+                      <div style={{ width: 130 }}>
+                        <CampoOrcamento value={0} onChange={(v) => set("produtosCampanha", produtosSelecionados.map((x) => x.nome === p.nome ? { ...x, preco: v } : x))} />
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+
+            {/* Validação de resultados */}
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Validação de resultados</h2>
+            <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina como você aprova um lead qualificado, uma reunião agendada ou outro resultado desta atividade.</p>
+            <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
+              <div style={{ display: "grid", gap: 8 }}>
+                {METODOS_APROVACAO.map((m) => {
+                  const MIcon = m.icon;
+                  return (
+                    <CardOption key={m.id} selected={(campanha.aprovacaoPagamentos || "manual") === m.id}
+                      onClick={() => set("aprovacaoPagamentos", m.id)} icon={MIcon} title={m.nome}
+                      subtitle={m.id === "automatica" ? "O resultado é validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e valida dentro dos critérios definidos." : "Você revisa e aprova manualmente cada resultado entregue."} />
+                  );
+                })}
+              </div>
+              <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <ShieldCheck size={14} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <span className="vx-mut" style={{ fontSize: 11.5 }}>Independente da modalidade, as comprovações obrigatórias definidas pela RYCS nunca podem ser ignoradas.</span>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
+              <button className="vx-btn" onClick={() => setPasso(6)}><ArrowLeft size={14} /> Voltar</button>
+              <button className="vx-btn vx-btn-primary" onClick={() => setPasso(8)}>Pagamentos <ArrowRight size={14} /></button>
+            </div>
+          </>
+        );
+      })()}
+
+      {/* ═══════════════════════ PASSO 8: PAGAMENTOS ═══════════════════════ */}
+      {passo === 8 && campanha && (() => {
         const orcamentoAtual = Number(campanha.orcamento) || 0;
         const precisaAdicionar = orcamentoAtual > disponivel ? orcamentoAtual - disponivel : 0;
-        const produtosSelecionados = campanha.produtosCampanha || [];
         const entradasProj = entradaDaCampanha(campanha, emp);
         const projecao = calcularFunilProjecao(entradasProj);
         const ticketMedioEstimado = entradasProj.ticketMensal;
-        const buscaCatalogo = campanha._buscaCatalogo || "";
-        const catalogoFiltrado = catalogoProdutos.filter((p) =>
-          !buscaCatalogo || (p.nome || "").toLowerCase().includes(buscaCatalogo.toLowerCase())
-        );
         const funcoesList = campanha.estruturaComercial === "operacao"
           ? (campanha.funcoesOperacao || [])
           : campanha.funcao ? [campanha.funcao] : [];
@@ -2685,84 +2819,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             )}
           </div>
 
-          {/* 3. Produtos e serviços */}
-          <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Quais produtos ou serviços serão comercializados?</div>
-              <div className="vx-mut" style={{ fontSize: 12.5 }}>Selecione os produtos do seu catálogo para calcular o faturamento estimado.</div>
-            </div>
-            {catalogoProdutos.length === 0 ? (
-              <div style={{ padding: "16px", background: "var(--brand-50)", borderRadius: 10, border: "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--brand)", marginBottom: 2 }}>Nenhum produto cadastrado</div>
-                  <div className="vx-mut" style={{ fontSize: 12 }}>Cadastre seus produtos e serviços em Materiais para selecioná-los aqui.</div>
-                </div>
-                <a href="/empresa/materiais" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "var(--brand)", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
-                  <Plus size={14} /> Ir a Materiais
-                </a>
-              </div>
-            ) : (
-              <>
-                {(() => {
-                  const [dropOpen, setDropOpen] = React.useState(false);
-                  const dropRef = React.useRef(null);
-                  React.useEffect(() => {
-                    const h = (e) => { if (dropRef.current && !dropRef.current.contains(e.target)) setDropOpen(false); };
-                    document.addEventListener("mousedown", h);
-                    return () => document.removeEventListener("mousedown", h);
-                  }, []);
-                  const naoSelecionados = catalogoProdutos.filter((p) => !produtosSelecionados.some((s) => s.nome === p.nome));
-                  return (
-                    <div ref={dropRef} style={{ position: "relative", marginBottom: produtosSelecionados.length > 0 ? 12 : 0 }}>
-                      <button type="button" onClick={() => setDropOpen((v) => !v)} style={{
-                        width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "10px 14px", background: "var(--surface)", border: `1px solid ${dropOpen ? "var(--brand)" : "var(--border)"}`,
-                        borderRadius: 8, cursor: "pointer", fontSize: 13.5, color: naoSelecionados.length === 0 ? "var(--muted)" : "var(--text)",
-                        boxShadow: dropOpen ? "0 0 0 3px var(--brand-100)" : "none",
-                      }}>
-                        <span>{naoSelecionados.length === 0 ? "Todos os produtos já selecionados" : "Selecionar produto ou serviço…"}</span>
-                        <ChevronDown size={15} color="var(--muted)" style={{ transform: dropOpen ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }} />
-                      </button>
-                      {dropOpen && naoSelecionados.length > 0 && (
-                        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,.12)", overflow: "hidden", maxHeight: 220, overflowY: "auto" }}>
-                          {naoSelecionados.map((p, i) => (
-                            <button key={i} type="button" onClick={() => { set("produtosCampanha", [...produtosSelecionados, { nome: p.nome, preco: p.preco || 0 }]); setDropOpen(false); }}
-                              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 14px", background: "transparent", border: "none", borderBottom: i < naoSelecionados.length - 1 ? "1px solid var(--border)" : "none", cursor: "pointer", textAlign: "left" }}>
-                              <span style={{ fontSize: 13.5 }}>{p.nome}</span>
-                              {p.preco > 0 && <span className="vx-mono" style={{ fontSize: 12, color: "var(--brand)" }}>{money(p.preco)}</span>}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-                {produtosSelecionados.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {produtosSelecionados.map((p, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 20, background: "var(--brand-50)", border: "1px solid var(--brand-100)", fontSize: 12.5, fontWeight: 500 }}>
-                        <span>{p.nome}</span>
-                        {p.preco > 0 && <span className="vx-mono" style={{ color: "var(--brand)", fontSize: 11 }}>{money(p.preco)}</span>}
-                        <button onClick={() => set("produtosCampanha", produtosSelecionados.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1, color: "var(--muted)" }}>
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {produtosSelecionados.filter((p) => !p.preco).map((p, idx) => (
-                  <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, marginTop: 8 }}>
-                    <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{p.nome}</div>
-                    <div style={{ fontSize: 11.5, color: "var(--muted)", marginRight: 6, whiteSpace: "nowrap" }}>Informe o preço:</div>
-                    <div style={{ width: 130 }}>
-                      <CampoOrcamento value={0} onChange={(v) => set("produtosCampanha", produtosSelecionados.map((x) => x.nome === p.nome ? { ...x, preco: v } : x))} />
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-
           {/* 4. Projeção de resultados com IA */}
           <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
             <div style={{ marginBottom: 16 }}>
@@ -2953,52 +3009,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           )}
 
-          {/* 6. Gestão operacional */}
-          <div className="vx-card" style={{ padding: 22, marginTop: 14 }}>
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Gestão operacional</div>
-              <div className="vx-mut" style={{ fontSize: 12.5 }}>Como a campanha será acompanhada e distribuída.</div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: gestaoModo === "manual" ? 14 : 0 }}>
-              <div onClick={() => set("gestaoOperacionalModo", "automatico")} style={{ padding: "16px 14px", borderRadius: 12, border: `1.5px solid ${gestaoModo !== "manual" ? "var(--brand)" : "var(--border)"}`, background: gestaoModo !== "manual" ? "var(--brand-50)" : "var(--surface)", cursor: "pointer" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <Zap size={16} color={gestaoModo !== "manual" ? "var(--brand)" : "var(--muted)"} />
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo !== "manual" ? "var(--brand)" : "var(--text)" }}>Automático <span style={{ fontSize: 11, fontWeight: 600 }}>(recomendado)</span></div>
-                  {gestaoModo !== "manual" && <Check size={14} color="var(--brand)" style={{ marginLeft: "auto" }} />}
-                </div>
-                <div className="vx-mut" style={{ fontSize: 12 }}>A RYCS gerencia prazos, limites e distribuição dos contatos.</div>
-              </div>
-              <div onClick={() => set("gestaoOperacionalModo", "manual")} style={{ padding: "16px 14px", borderRadius: 12, border: `1.5px solid ${gestaoModo === "manual" ? "var(--brand)" : "var(--border)"}`, background: gestaoModo === "manual" ? "var(--brand-50)" : "var(--surface)", cursor: "pointer" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <SlidersHorizontal size={16} color={gestaoModo === "manual" ? "var(--brand)" : "var(--muted)"} />
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: gestaoModo === "manual" ? "var(--brand)" : "var(--text)" }}>Eu quero controlar</div>
-                  {gestaoModo === "manual" && <Check size={14} color="var(--brand)" style={{ marginLeft: "auto" }} />}
-                </div>
-                <div className="vx-mut" style={{ fontSize: 12 }}>Defina prazo, metas e crie seus próprios controles.</div>
-              </div>
-            </div>
-            {gestaoModo === "manual" && (
-              <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr", marginTop: 2 }}>
-                <label>
-                  <div className="vx-label">Data de início</div>
-                  <input className="vx-input" type="date" value={campanha.dataInicioGestao || ""} onChange={(e) => set("dataInicioGestao", e.target.value)} />
-                </label>
-                <label>
-                  <div className="vx-label">Data de encerramento</div>
-                  <input className="vx-input" type="date" value={campanha.dataEncerramentoGestao || ""} onChange={(e) => set("dataEncerramentoGestao", e.target.value)} />
-                </label>
-                <label>
-                  <div className="vx-label">Meta diária de contatos</div>
-                  <input className="vx-input" type="number" min="0" placeholder="Ex.: 50" value={campanha.metaDiariaContatos || ""} onChange={(e) => set("metaDiariaContatos", Number(e.target.value) || 0)} />
-                </label>
-                <label>
-                  <div className="vx-label">Meta de vendas</div>
-                  <input className="vx-input" type="number" min="0" placeholder="Ex.: 10" value={campanha.metaVendasManual || ""} onChange={(e) => set("metaVendasManual", Number(e.target.value) || 0)} />
-                </label>
-              </div>
-            )}
-          </div>
-
           {/* Info: separação verba x saldo */}
           <div className="vx-card" style={{ padding: 14, marginTop: 14, background: "var(--surface)" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
@@ -3012,15 +3022,15 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-            <button className="vx-btn" onClick={() => setPasso(6)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(8)}>Revisar tudo <ArrowRight size={14} /></button>
+            <button className="vx-btn" onClick={() => setPasso(8)}><ArrowLeft size={14} /> Voltar</button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(9)}>Revisar tudo <ArrowRight size={14} /></button>
           </div>
         </>
         );
       })()}
 
-      {/* ═══════════════════════ PASSO 8: REVISÃO ═══════════════════════ */}
-      {passo === 8 && campanha && (
+      {/* ═══════════════════════ PASSO 9: REVISÃO ═══════════════════════ */}
+      {passo === 9 && campanha && (
         <>
           <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Tudo certo?</h2>
           <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
