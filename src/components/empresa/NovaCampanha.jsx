@@ -623,6 +623,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [bibliotecaFiltro, setBibliotecaFiltro] = useState("");
   const [bibliotecaSel, setBibliotecaSel] = useState([]);
   const [carregandoBiblioteca, setCarregandoBiblioteca] = useState(false);
+  const [modalMeuTime, setModalMeuTime] = useState(false);
+  const [timeColaboradores, setTimeColaboradores] = useState([]);
+  const [carregandoTime, setCarregandoTime] = useState(false);
+  const [timeFuncoes, setTimeFuncoes] = useState({});
   const [kitCatAberta, setKitCatAberta] = useState(null);
   const [kitBibliotecaCat, setKitBibliotecaCat] = useState(null);
   const [kitUploadCat, setKitUploadCat] = useState(null);
@@ -2137,6 +2141,64 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   );
                 })}
               </div>
+              {/* Card Meu time — fonte interna */}
+              {(() => {
+                const ati = campanha.usaTimeInterno || false;
+                const colabs = campanha.colaboradoresVinculados || [];
+                return (
+                  <div style={{ marginTop: 10 }}>
+                    <button type="button" onClick={() => set("usaTimeInterno", !ati)} style={{
+                      display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", width: "100%", textAlign: "left", cursor: "pointer",
+                      border: `1px solid ${ati ? SEL.border : SEL.borderOff}`,
+                      background: ati ? SEL.bg : SEL.bgOff,
+                      borderRadius: 10, transition: "border-color .15s, background .15s", position: "relative",
+                    }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: ati ? "var(--brand)" : "var(--brand-50)", border: ati ? "none" : "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Users size={18} color={ati ? "#fff" : "var(--brand)"} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: ati ? "var(--brand)" : "var(--text)" }}>Meu time</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: ati ? "var(--brand)" : "var(--text)" }}>Utilize os profissionais que já fazem parte da sua empresa.</div>
+                        {ati && colabs.length > 0 && (
+                          <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 2 }}>{colabs.length} colaborador(es) selecionado(s)</div>
+                        )}
+                      </div>
+                      {ati && <div style={{ position: "absolute", top: 10, right: 10, width: 18, height: 18, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={11} color="#fff" /></div>}
+                    </button>
+                    {ati && (
+                      <div style={{ marginTop: 8 }}>
+                        <button type="button" className="vx-btn vx-btn-sm" style={{ gap: 6 }}
+                          onClick={async () => {
+                            setModalMeuTime(true);
+                            setCarregandoTime(true);
+                            setTimeFuncoes(Object.fromEntries((campanha.colaboradoresVinculados || []).map((c) => [c.id, c.funcaoCampanha || ""])));
+                            const r = await api("/gestao/team");
+                            if (r?.members) setTimeColaboradores(r.members.filter((m) => m.status === "active"));
+                            setCarregandoTime(false);
+                          }}>
+                          <Users size={13} /> Selecionar profissionais do meu time
+                        </button>
+                        {colabs.length > 0 && (
+                          <div style={{ display: "grid", gap: 4, marginTop: 8 }}>
+                            {colabs.map((c) => (
+                              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8 }}>
+                                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 11, color: "var(--brand)", flexShrink: 0, overflow: "hidden" }}>
+                                  {c.foto ? <img src={c.foto} alt={c.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (c.nome || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.nome}</div>
+                                  <div className="vx-mut" style={{ fontSize: 11.5 }}>{c.funcaoCampanha || c.jobTitle || "—"}</div>
+                                </div>
+                                <button className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: 2 }} onClick={() => set("colaboradoresVinculados", (campanha.colaboradoresVinculados || []).filter((x) => x.id !== c.id))}><X size={13} /></button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               {(campanha.funcoesOperacao || []).length >= 2 && (
                 <div style={{ marginTop: 16 }}>
                   <div className="vx-label" style={{ marginBottom: 8 }}>Ordem das funções na operação <Tag obrigatorio={false} /></div>
@@ -2408,7 +2470,13 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 <CardOption selected={campanha.visibilidade === "publica"} onClick={() => set("visibilidade", "publica")} icon={Eye} title="Qualquer profissional" subtitle="Qualquer profissional que se encaixe no perfil pode se candidatar." />
                 <CardOption selected={campanha.visibilidade === "privada"} onClick={() => set("visibilidade", "privada")} icon={EyeOff} title="Só convidados" subtitle="Apenas profissionais que você convidar poderão se candidatar." />
                 <CardOption selected={campanha.visibilidade === "oculta"} onClick={() => set("visibilidade", "oculta")} icon={Lock} title="Oculta" subtitle="Não aparece em buscas. Só entra quem tiver o link." />
+                <CardOption selected={campanha.visibilidade === "time_interno"} onClick={() => set("visibilidade", "time_interno")} icon={Users} title="Exclusiva para meu time" subtitle="Campanha privada, disponível somente para os colaboradores internos selecionados." />
             </div>
+            {campanha.visibilidade === "time_interno" && !(campanha.usaTimeInterno && (campanha.colaboradoresVinculados || []).length > 0) && (
+              <div className="vx-notice" style={{ marginTop: 10, fontSize: 12.5, color: "var(--amber-700, #92400E)", background: "var(--amber-50, #FFFBEB)", border: "1px solid var(--amber-200, #FDE68A)" }}>
+                Selecione colaboradores do seu time no bloco "Profissionais que vão trabalhar" para esta opção ter efeito.
+              </div>
+            )}
           </div>
 
           {/* ── Monte a rotina comercial ── */}
@@ -2554,6 +2622,83 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             );
           })()}
 
+          {/* Modal Meu time */}
+          {modalMeuTime && (
+            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+              onClick={(e) => { if (e.target === e.currentTarget) setModalMeuTime(false); }}>
+              <div style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 540, maxHeight: "85vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                <div style={{ padding: "20px 24px 0", flexShrink: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Selecionar do meu time</h3>
+                    <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setModalMeuTime(false)} style={{ padding: 3 }}><X size={18} /></button>
+                  </div>
+                  <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 16px", lineHeight: 1.5 }}>Escolha os colaboradores que trabalharão nesta campanha e defina a função de cada um.</p>
+                </div>
+                <div style={{ flex: 1, overflowY: "auto", padding: "0 24px" }}>
+                  {carregandoTime ? (
+                    <div style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}><Loader size={20} style={{ animation: "spin 1s linear infinite" }} /><div style={{ marginTop: 8, fontSize: 13 }}>Carregando colaboradores…</div></div>
+                  ) : timeColaboradores.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: 40, color: "var(--muted)", fontSize: 13 }}>Nenhum colaborador ativo em Gestão interna → Meu time.</div>
+                  ) : (
+                    <div style={{ display: "grid", gap: 8 }}>
+                      {timeColaboradores.map((m) => {
+                        const selecionado = (campanha.colaboradoresVinculados || []).some((c) => c.id === m.id);
+                        const initials = (m.name || "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+                        const funcao = timeFuncoes[m.id] || "";
+                        return (
+                          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", border: `1px solid ${selecionado ? "var(--brand)" : "var(--border)"}`, borderRadius: 10, background: selecionado ? "var(--brand-50)" : "var(--surface)", cursor: "pointer", transition: "border-color .15s, background .15s" }}
+                            onClick={() => {
+                              const atuais = campanha.colaboradoresVinculados || [];
+                              if (selecionado) {
+                                set("colaboradoresVinculados", atuais.filter((c) => c.id !== m.id));
+                              } else {
+                                set("colaboradoresVinculados", [...atuais, { id: m.id, nome: m.name, foto: m.photo || "", jobTitle: m.jobTitle || "", funcaoCampanha: timeFuncoes[m.id] || "" }]);
+                              }
+                            }}>
+                            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--brand-50)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: "var(--brand)", flexShrink: 0, overflow: "hidden" }}>
+                              {m.photo ? <img src={m.photo} alt={m.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
+                              <div className="vx-mut" style={{ fontSize: 12 }}>{m.jobTitle || "—"}</div>
+                            </div>
+                            {selecionado && (
+                              <select className="vx-input" style={{ width: 140, fontSize: 11.5, height: 30, padding: "0 8px", flexShrink: 0 }}
+                                value={funcao}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  const f = e.target.value;
+                                  setTimeFuncoes((prev) => ({ ...prev, [m.id]: f }));
+                                  set("colaboradoresVinculados", (campanha.colaboradoresVinculados || []).map((c) => c.id === m.id ? { ...c, funcaoCampanha: f } : c));
+                                }}>
+                                <option value="">Função na campanha</option>
+                                <option value="SDR">SDR</option>
+                                <option value="BDR">BDR</option>
+                                <option value="Closer">Closer</option>
+                                <option value="PAP">PAP</option>
+                                <option value="Gestor">Gestor</option>
+                                <option value="Suporte">Suporte</option>
+                              </select>
+                            )}
+                            <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${selecionado ? "var(--brand)" : "var(--border)"}`, background: selecionado ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              {selecionado && <Check size={12} color="#fff" />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: "14px 24px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+                  <span className="vx-mut" style={{ fontSize: 13 }}>{(campanha.colaboradoresVinculados || []).length} selecionado(s)</span>
+                  <button className="vx-btn vx-btn-sm vx-btn-primary" style={{ background: "var(--brand)", borderColor: "var(--brand)" }} onClick={() => setModalMeuTime(false)}>
+                    <Check size={13} /> Confirmar seleção
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Suporte aos profissionais */}
           {(() => {
             const sup = campanha.suporte || {};
@@ -3331,7 +3476,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Meios de contato</span><div style={{ fontWeight: 600 }}>{(campanha.canais || []).map((c) => CANAIS.find((x) => x.id === c)?.nome || c).join(", ") || "—"}</div></div>
               {campanha.estruturaComercial !== "operacao" && (<>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Como entra</span><div style={{ fontWeight: 600 }}>{PROCESSOS_ADMISSAO.find((p) => p.id === campanha.processoAdmissao)?.label || "Manual"}</div></div>
-              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Candidaturas</span><div style={{ fontWeight: 600 }}>{campanha.visibilidade === "publica" ? "Qualquer profissional" : campanha.visibilidade === "privada" ? "Só convidados" : "Oculta"}</div></div>
+              <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Candidaturas</span><div style={{ fontWeight: 600 }}>{campanha.visibilidade === "publica" ? "Qualquer profissional" : campanha.visibilidade === "privada" ? "Só convidados" : campanha.visibilidade === "time_interno" ? "Exclusiva para meu time" : "Oculta"}</div></div>
               </>)}
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Treinamento obrigatório</span><div style={{ fontWeight: 600 }}>{campanha.exigeCertificacao ? "Sim" : "Não"}</div></div>
               <div><span className="vx-mut" style={{ fontSize: 11.5 }}>Treinamento</span><div style={{ fontWeight: 600 }}>{(campanha.treinamento || []).length} módulo(s)</div></div>
