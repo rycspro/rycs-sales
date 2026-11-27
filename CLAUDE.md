@@ -49,12 +49,12 @@ Nunca armazenar token, senha ou secret (AWS, GitHub ou qualquer outro) no CLAUDE
 
 Git é usado para versionamento e histórico de commits.
 
-- A branch `main` é produção: **push na `main` dispara o deploy automático na AWS** (ver "Deploy e publicação"). Para trabalho em andamento, use uma branch.
+- A branch `main` é produção (ver "Deploy e publicação"). Para trabalho em andamento, use uma branch.
 - Não faça commits desnecessários.
 - Faça um commit por lote concluído.
 - Não faça push repetido sem necessidade.
 - Nunca exponha tokens, secrets ou chaves.
-- Só commite/pushe quando o usuário pedir; antes de push na `main`, garanta que o build do que mudou está ok.
+- Só commite/pushe quando o usuário pedir; antes de push na `main`, garanta build/lint ok.
 
 ## Banco e produção
 - Considere que existem usuários e dados reais.
@@ -100,9 +100,9 @@ Objetivo: resolver sozinho problemas operacionais simples antes de solicitar int
    - fazer push novamente;
    - usar credenciais já configuradas.
 
-6. Deploy **não** é feito à mão. É automático: push na `main` dispara o GitHub Actions que publica na AWS (ver "Deploy e publicação"). O assistente não mexe no servidor/EC2 — entrega o código no GitHub e o Actions cuida do resto.
+6. Deploy não é feito à mão (ver "Deploy e publicação").
 
-9. Só solicitar intervenção humana quando houver uma ação que realmente não possa ser concluída autonomamente:
+7. Só solicitar intervenção humana quando houver uma ação que realmente não possa ser concluída autonomamente:
    - autorização de login no navegador;
    - autenticação que exija confirmação física do usuário;
    - falta real de permissão na conta;
@@ -111,19 +111,19 @@ Objetivo: resolver sozinho problemas operacionais simples antes de solicitar int
    - risco de perda de dados;
    - ação que exija um secret/token que não esteja disponível.
 
-10. Nunca solicitar ao usuário que envie tokens, senhas ou secrets pelo chat se houver uma forma segura de autenticação.
+8. Nunca solicitar ao usuário que envie tokens, senhas ou secrets pelo chat se houver uma forma segura de autenticação.
 
-11. Não reduzir a autonomia apenas porque o modelo está usando esforço baixo.
+9. Não reduzir a autonomia apenas porque o modelo está usando esforço baixo.
 
-12. Sempre que uma tarefa puder ser concluída com segurança usando as ferramentas já disponíveis, conclua sem interromper o usuário.
+10. Sempre que uma tarefa puder ser concluída com segurança usando as ferramentas já disponíveis, conclua sem interromper o usuário.
 
-13. Ao finalizar, informe de forma curta: tarefa concluída · build · commit · push (push na `main` dispara o deploy automático na AWS).
+11. Ao finalizar, informe de forma curta: tarefa concluída · build · commit · push (ver "Deploy e publicação").
 
 ## Entrega de um lote (versionamento)
 
 Repositório: https://github.com/rycspro/rycs-sales.git · Branch de produção: `main`.
 
-Lembrete: **push na `main` publica em produção** (deploy automático na AWS — ver "Deploy e publicação"). Para trabalho em andamento use uma branch. Só commite/pushe quando o usuário pedir.
+Para trabalho em andamento use uma branch. Só commite/pushe quando o usuário pedir.
 
 Quando o usuário pedir para versionar um lote concluído:
 
@@ -134,8 +134,8 @@ Quando o usuário pedir para versionar um lote concluído:
 5. `git add` apenas dos arquivos do lote.
 6. Um único commit descrevendo o lote.
 7. Confirme o remote: `git remote -v` deve ser `https://github.com/rycspro/rycs-sales.git` (corrija com `git remote set-url origin …` se preciso).
-8. Dê push — numa branch para trabalho em andamento; na `main` apenas quando o usuário quiser publicar (push na `main` = deploy automático na AWS).
-9. Encerre informando o que foi feito. Se foi push na `main`, lembre que o deploy automático foi disparado; não mexa no servidor à mão.
+8. Dê push — branch para WIP; `main` só quando o usuário quiser publicar.
+9. Encerre informando o que foi feito. Push na `main` = deploy disparado (ver "Deploy e publicação").
 
 ### Se o push pedir autenticação do GitHub
 
@@ -148,14 +148,12 @@ Quando o usuário pedir para versionar um lote concluído:
 - a alteração for destrutiva ou houver risco de perda de dados (confirme antes);
 - testes ou build estiverem falhando.
 
-Nunca armazenar tokens, senhas, chaves de API ou secrets no CLAUDE.md.
-
 ## Comunicação
 Ao finalizar uma tarefa, responda de forma curta com:
 - o que foi concluído;
 - se testes passaram;
 - se build passou;
-- se commit/push foram feitos (push na `main` dispara o deploy automático na AWS);
+- se commit/push foram feitos;
 - qualquer problema real que ainda precise de decisão humana.
 
 ## Onboarding da empresa (RYCS)
@@ -169,4 +167,4 @@ Ao finalizar uma tarefa, responda de forma curta com:
 - Nada gerado pela IA (script, funil, follow-ups) fica ativo antes da aprovação do dono da empresa.
 - Planos, preços e recursos vêm de `shared/planos.js`. Nunca fixar valores no código.
 - Acessibilidade: todo campo com `label`, foco visível, alvos de toque de 44px ou mais, contraste mínimo de 4.5:1.
-- Cada passo do onboarding segue o deploy automático normal ao terminar.
+- Deploy do onboarding segue o fluxo normal (ver "Deploy e publicação").

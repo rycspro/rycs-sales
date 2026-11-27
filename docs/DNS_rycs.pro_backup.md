@@ -1,5 +1,10 @@
 # Zona DNS de rycs.pro — migração em 15/09/2026
 
+> **Atualização (2026-11-26):** `app.rycs.pro` deixou de apontar para a Railway.
+> A produção agora roda na **AWS (EC2)** e o registro é um **A** para
+> `3.132.225.173`. A Railway foi aposentada; o TXT `_railway-verify` ficou
+> obsoleto e pode ser removido. A tabela abaixo já reflete o estado atual.
+
 ## Autoridade DNS atual
 
 Em 15/09/2026, a delegação foi alterada na Hostinger para os nameservers da
@@ -29,8 +34,8 @@ existir no destino antes de trocar os nameservers no registrador.
 | rycs.pro                  | ALIAS | f4f6b98acb32dbe5.vercel-dns-017.com                                  | Site na Vercel |
 | *.rycs.pro                | ALIAS | cname.vercel-dns-017.com                                              | Fallback de subdomínios na Vercel |
 | www.rycs.pro              | CNAME | rycs.pro                                                              | Site na Vercel |
-| app.rycs.pro              | CNAME | ok7cf5qa.up.railway.app                                               | Aplicação na Railway |
-| _railway-verify.app.rycs.pro | TXT | railway-verify=f1c5d93bbec5856f34dc43d5cd6cb56644e1ac6645592a8e2f669b54e95f2df4 | Verificação Railway |
+| app.rycs.pro              | A     | 3.132.225.173                                                         | Aplicação na AWS (EC2) |
+| _railway-verify.app.rycs.pro | TXT | railway-verify=f1c5d93bbec5856f34dc43d5cd6cb56644e1ac6645592a8e2f669b54e95f2df4 | Obsoleto — Railway aposentada (pode remover) |
 | rycs.pro                  | MX 10 | inbound-smtp.sa-east-1.amazonaws.com                                  | RECEBER e-mail (Amazon SES) |
 | send.rycs.pro             | CNAME | send.forge.rmta.net                                                   | Envio transacional (Resend) |
 | rsend.rycs.pro            | CNAME | rsend-sae1.forge.rmta.net                                             | Rastreamento/retorno (Resend) |

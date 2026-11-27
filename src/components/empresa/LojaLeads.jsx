@@ -7,6 +7,8 @@ import {
   Wallet, Users,
   Utensils, HeartPulse, Dumbbell,
   Building, Scissors, ShoppingBag, Cpu,
+  Database, Sparkles, Shield, CheckCircle2, XCircle, Briefcase, TrendingUp,
+  UserCheck, Linkedin, Mail, PhoneCall, ChevronUp,
 } from "lucide-react";
 import { api, apiPatch, apiDelete } from "../../lib/api.js";
 
@@ -42,25 +44,56 @@ const CATEGORIAS = [
   { key: "tecnologia", label: "Tecnologia", Icon: Cpu },
 ];
 
-/* ── 5 grupos de informações (27 campos) ──────────────────────────────── */
-const CAMPOS_INDISPONIVEIS = new Set([
-  "Razão social", "Nome fantasia", "CNPJ", "Segmento / CNAE", "Porte da empresa",
-  "Celular", "WhatsApp", "E-mail comercial", "Nome do responsável", "Cargo do responsável",
-  "CEP",
-  "Instagram", "Facebook", "LinkedIn",
-  "Data de abertura", "Situação cadastral", "Capital social",
+/* ── Faixas e filtros de enriquecimento ────────────────────────────────── */
+const FAIXAS_FATURAMENTO = [
+  "Até R$ 81 mil",
+  "R$ 81 mil – R$ 360 mil",
+  "R$ 360 mil – R$ 4,8 M",
+  "R$ 4,8 M – R$ 30 M",
+  "R$ 30 M – R$ 300 M",
+  "Acima de R$ 300 M",
+];
+const FAIXAS_FUNCIONARIOS = [
+  "Sem funcionários (MEI/autônomo)",
+  "1 – 5", "6 – 19", "20 – 49", "50 – 99",
+  "100 – 249", "250 – 499", "500 – 999", "1.000+",
+];
+const PORTES = ["MEI", "ME", "EPP", "DEMAIS"];
+const NATUREZAS = ["Sociedade Limitada", "Empresário Individual", "Sociedade Anônima", "EIRELI", "Cooperativa"];
+const SITUACOES = ["Ativa", "Baixada", "Inapta", "Suspensa", "Nula"];
+
+const CAMPOS_INDISPONIVEIS = new Set(["WhatsApp"]);
+const CAMPOS_ENRIQ = new Set([
+  "Razão social", "Nome fantasia", "CNPJ", "CNAE primário", "CNAEs secundários",
+  "Porte da empresa", "Natureza jurídica", "Situação cadastral",
+  "Data de abertura", "Idade da empresa", "Capital social",
+  "Simples Nacional / MEI", "Inscrição estadual", "Quantidade de filiais",
+  "Sócios / QSA", "Nome do responsável", "Cargo do responsável",
+  "Departamento do decisor", "Nível hierárquico",
+  "E-mail profissional (Hunter.io)", "LinkedIn do decisor",
+  "Telefones da Receita Federal", "E-mail da Receita Federal",
+  "Validação de e-mails (SMTP)", "Validação de telefones (HLR)",
+  "CEP", "Endereço da Receita Federal",
+  "Instagram", "Facebook", "LinkedIn da empresa", "Twitter / X",
+  "Tecnologias do site", "PIB do município", "População do município",
 ]);
 const GRUPOS = [
   { key: "empresariais", label: "Dados empresariais", Icon: Building2,
-    campos: ["Nome da empresa", "Razão social", "Nome fantasia", "CNPJ", "Segmento / CNAE", "Porte da empresa"] },
-  { key: "contatos", label: "Contatos", Icon: Users,
-    campos: ["Telefone fixo", "Celular", "WhatsApp", "E-mail comercial", "Nome do responsável", "Cargo do responsável"] },
+    campos: ["Nome da empresa", "Razão social", "Nome fantasia", "CNPJ", "CNAE primário", "Porte da empresa"] },
+  { key: "receita", label: "Receita Federal (CNPJ.ws)", Icon: FileText, enriq: true,
+    campos: ["CNAEs secundários", "Natureza jurídica", "Situação cadastral", "Data de abertura", "Idade da empresa", "Capital social", "Simples Nacional / MEI", "Inscrição estadual", "Quantidade de filiais"] },
+  { key: "decisores", label: "Decisores e sócios", Icon: UserCheck, enriq: true,
+    campos: ["Sócios / QSA", "Nome do responsável", "Cargo do responsável", "Departamento do decisor", "Nível hierárquico", "E-mail profissional (Hunter.io)", "LinkedIn do decisor"] },
+  { key: "contatos", label: "Contatos", Icon: Phone,
+    campos: ["Telefone fixo", "Celular", "WhatsApp", "E-mail comercial", "Telefones da Receita Federal", "E-mail da Receita Federal"] },
+  { key: "validacao", label: "Validação de contatos", Icon: Shield, enriq: true,
+    campos: ["Validação de e-mails (SMTP)", "Validação de telefones (HLR)"] },
   { key: "localizacao", label: "Localização", Icon: MapPin,
-    campos: ["Endereço completo", "Cidade e estado", "CEP", "Geolocalização"] },
+    campos: ["Endereço completo", "Cidade e estado", "CEP", "Geolocalização", "Endereço da Receita Federal"] },
   { key: "digital", label: "Presença digital", Icon: Globe,
-    campos: ["Website", "Instagram", "Facebook", "LinkedIn", "Google Maps"] },
-  { key: "complementares", label: "Informações complementares", Icon: FileText,
-    campos: ["Avaliação no Google", "Quantidade de avaliações", "Horário de funcionamento", "Data de abertura", "Situação cadastral", "Capital social"] },
+    campos: ["Website", "Instagram", "Facebook", "LinkedIn da empresa", "Twitter / X", "Google Maps"] },
+  { key: "complementares", label: "Informações complementares", Icon: Database,
+    campos: ["Avaliação no Google", "Quantidade de avaliações", "Horário de funcionamento", "Tecnologias do site", "PIB do município", "População do município"] },
 ];
 const ALL_CAMPOS = GRUPOS.flatMap((g) => g.campos).filter((f) => !CAMPOS_INDISPONIVEIS.has(f));
 const QTDS = [10, 20, 30, 60, 100, 200, 300];
@@ -419,7 +452,15 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
   const [listaExistente, setListaExistente] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [enriqProg, setEnriqProg] = useState(null);
+  const [filtFaturamento, setFiltFaturamento] = useState([]);
+  const [filtFuncionarios, setFiltFuncionarios] = useState([]);
+  const [filtPorte, setFiltPorte] = useState([]);
+  const [filtSituacao, setFiltSituacao] = useState([]);
+  const [filtSimples, setFiltSimples] = useState("");
   useEffect(() => { if (pastas.length && !pastaSel) setPastaSel(pastas[0].id); }, [pastas]);
+  const temEnriq = useMemo(() => [...campos].some((c) => CAMPOS_ENRIQ.has(c)) || filtFaturamento.length > 0 || filtFuncionarios.length > 0 || filtPorte.length > 0 || filtSituacao.length > 0 || filtSimples, [campos, filtFaturamento, filtFuncionarios, filtPorte, filtSituacao, filtSimples]);
+  const totalFiltros = filtFaturamento.length + filtFuncionarios.length + filtPorte.length + filtSituacao.length + (filtSimples ? 1 : 0);
 
   const cidadesDisponiveis = useMemo(() => {
     const todas = [];
@@ -485,9 +526,66 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
     setFeedback(msg);
     aviso?.(msg);
 
-    setOcupado(false);
     recarregarCiclo?.();
     recarregarListas?.();
+
+    if (temEnriq && contatos.length > 0) {
+      const ids = contatos.map((c) => c.id).filter(Boolean);
+      if (ids.length > 0) {
+        setEnriqProg({ total: ids.length, done: 0, errors: 0, fase: "enriquecendo" });
+        setFeedback((prev) => prev + " Enriquecendo dados...");
+        let done = 0, errors = 0;
+        const lotes = [];
+        for (let i = 0; i < ids.length; i += 10) lotes.push(ids.slice(i, i + 10));
+        for (const lote of lotes) {
+          const r2 = await api("/enriquecimento/lote", { contatoIds: lote });
+          const res = r2?.resultados || [];
+          done += res.filter((x) => x.status === "ok").length;
+          errors += res.filter((x) => x.status === "erro").length;
+          setEnriqProg({ total: ids.length, done: done + errors, errors, fase: "enriquecendo" });
+        }
+
+        setEnriqProg({ total: ids.length, done: ids.length, errors, fase: "filtrando" });
+        let filtrados = 0, removidos = 0;
+        const temFiltros = filtFaturamento.length || filtFuncionarios.length || filtPorte.length || filtSituacao.length || filtSimples;
+        const camposObrig = [...campos].filter((c) => CAMPOS_ENRIQ.has(c));
+        if (temFiltros || camposObrig.length > 0) {
+          for (const id of ids) {
+            const e = await api(`/enriquecimento/${id}`);
+            if (!e || e.error) continue;
+            let passa = true;
+            if (filtFaturamento.length && !filtFaturamento.includes(e.faixaFaturamento)) passa = false;
+            if (filtFuncionarios.length && !filtFuncionarios.includes(e.faixaFuncionarios)) passa = false;
+            if (filtPorte.length && !filtPorte.some((p) => (e.porte || "").toUpperCase().includes(p))) passa = false;
+            if (filtSituacao.length && !filtSituacao.includes(e.situacaoCadastral)) passa = false;
+            if (filtSimples === "sim" && !e.simplesNacional) passa = false;
+            if (filtSimples === "nao" && e.simplesNacional) passa = false;
+            if (camposObrig.includes("Nome do responsável") && !(e.decisores || []).length) passa = false;
+            if (camposObrig.includes("Cargo do responsável") && !(e.decisores || []).some((d) => d.cargo)) passa = false;
+            if (camposObrig.includes("E-mail profissional (Hunter.io)") && !(e.decisores || []).some((d) => d.emailProfissional)) passa = false;
+            if (camposObrig.includes("CNPJ") && !e.cnpj) passa = false;
+            if (camposObrig.includes("Sócios / QSA") && !(e.socios || []).length) passa = false;
+            if (camposObrig.includes("Telefones da Receita Federal")) { try { if (!JSON.parse(e.telefonesRF || "[]").length) passa = false; } catch { passa = false; } }
+            if (camposObrig.includes("E-mail da Receita Federal") && !e.emailRF) passa = false;
+            if (passa) filtrados++; else removidos++;
+          }
+          const filtMsg = removidos > 0
+            ? `Filtragem: ${filtrados} lead(s) atendem aos filtros, ${removidos} não atendem.`
+            : `Todos os ${filtrados} leads atendem aos filtros.`;
+          setFeedback((prev) => prev.replace(" Enriquecendo dados...", "") + " " + filtMsg);
+          aviso?.(filtMsg);
+        } else {
+          const enriqMsg = errors > 0
+            ? `Enriquecimento: ${done} completo(s), ${errors} erro(s).`
+            : `Enriquecimento concluído: ${done} contato(s) enriquecido(s).`;
+          setFeedback((prev) => prev.replace(" Enriquecendo dados...", "") + " " + enriqMsg);
+          aviso?.(enriqMsg);
+        }
+        setEnriqProg(null);
+      }
+    }
+
+    setOcupado(false);
   };
 
   return (
@@ -546,12 +644,105 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
             </div>
           </div>
 
-          {/* Informações desejadas */}
+          {/* Filtros avançados (enriquecimento) */}
+          <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid var(--border)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <Sparkles size={18} style={{ color: "var(--indigo)" }} />
+              <div>
+                <div className="vx-disp" style={{ fontSize: 17 }}>Filtros de enriquecimento</div>
+                <span className="vx-mut" style={{ fontSize: 12 }}>Selecione as faixas para filtrar os resultados. Só serão gerados leads que atendam aos filtros.</span>
+              </div>
+              {totalFiltros > 0 && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: "var(--indigo-50)", color: "var(--indigo)", fontWeight: 600, marginLeft: "auto" }}>{totalFiltros} filtro(s)</span>}
+            </div>
+            <div className="vx-grid vx-g2" style={{ gap: 12 }}>
+              {/* Faixa de faturamento */}
+              <div className="vx-card" style={{ padding: 14, border: "1px solid var(--brand-100)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <TrendingUp size={16} style={{ color: "var(--green)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Faixa de faturamento</span>
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  {FAIXAS_FATURAMENTO.map((f) => (
+                    <label key={f} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={filtFaturamento.includes(f)}
+                        onChange={() => setFiltFaturamento((prev) => prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f])}
+                        style={{ accentColor: "var(--green)", width: 16, height: 16, flexShrink: 0 }} />
+                      {f}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* Faixa de funcionários */}
+              <div className="vx-card" style={{ padding: 14, border: "1px solid var(--brand-100)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <Users size={16} style={{ color: "var(--brand)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Faixa de funcionários</span>
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  {FAIXAS_FUNCIONARIOS.map((f) => (
+                    <label key={f} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={filtFuncionarios.includes(f)}
+                        onChange={() => setFiltFuncionarios((prev) => prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f])}
+                        style={{ accentColor: "var(--brand)", width: 16, height: 16, flexShrink: 0 }} />
+                      {f}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* Porte */}
+              <div className="vx-card" style={{ padding: 14, border: "1px solid var(--brand-100)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <Building2 size={16} style={{ color: "var(--indigo)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Porte da empresa</span>
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  {PORTES.map((p) => (
+                    <label key={p} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={filtPorte.includes(p)}
+                        onChange={() => setFiltPorte((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p])}
+                        style={{ accentColor: "var(--indigo)", width: 16, height: 16, flexShrink: 0 }} />
+                      {p}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* Situação + Simples */}
+              <div className="vx-card" style={{ padding: 14, border: "1px solid var(--brand-100)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <Shield size={16} style={{ color: "var(--amber)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Situação e regime</span>
+                </div>
+                <span className="vx-label" style={{ fontSize: 11, marginBottom: 4 }}>Situação cadastral</span>
+                <div style={{ display: "grid", gap: 6, marginBottom: 10 }}>
+                  {SITUACOES.map((s) => (
+                    <label key={s} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={filtSituacao.includes(s)}
+                        onChange={() => setFiltSituacao((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])}
+                        style={{ accentColor: "var(--amber)", width: 16, height: 16, flexShrink: 0 }} />
+                      {s}
+                    </label>
+                  ))}
+                </div>
+                <span className="vx-label" style={{ fontSize: 11, marginBottom: 4 }}>Simples Nacional</span>
+                <div style={{ display: "flex", gap: 12 }}>
+                  {[["", "Qualquer"], ["sim", "Optante"], ["nao", "Não optante"]].map(([v, l]) => (
+                    <label key={v} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, cursor: "pointer" }}>
+                      <input type="radio" name="simples" value={v} checked={filtSimples === v} onChange={() => setFiltSimples(v)}
+                        style={{ accentColor: "var(--amber)", width: 16, height: 16 }} />
+                      {l}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Dados obrigatórios na lista */}
           <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid var(--border)" }}>
             <div className="vx-row" style={{ marginBottom: 12 }}>
               <div>
-                <div className="vx-disp" style={{ fontSize: 17 }}>Informações desejadas</div>
-                <span className="vx-mut" style={{ fontSize: 12 }}>{campos.size} de {ALL_CAMPOS.length} informações selecionadas</span>
+                <div className="vx-disp" style={{ fontSize: 17 }}>Dados obrigatórios na lista</div>
+                <span className="vx-mut" style={{ fontSize: 12 }}>Marque os dados que cada lead <strong>precisa ter</strong>. {campos.size} de {ALL_CAMPOS.length} selecionados.</span>
               </div>
               <button className="vx-btn vx-btn-sm" onClick={toggleAll}>
                 {campos.size === ALL_CAMPOS.length ? "Desmarcar tudo" : "Selecionar tudo"}
@@ -563,11 +754,14 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                 const selCount = disponiveis.filter((f) => campos.has(f)).length;
                 const allSel = disponiveis.length > 0 && selCount === disponiveis.length;
                 return (
-                  <div key={g.key} className="vx-card" style={{ padding: 14 }}>
+                  <div key={g.key} className="vx-card" style={{ padding: 14, border: g.enriq ? "1px solid var(--brand-100)" : undefined }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
-                      <g.Icon size={18} style={{ color: "var(--brand)", flexShrink: 0 }} />
+                      <g.Icon size={18} style={{ color: g.enriq ? "var(--indigo)" : "var(--brand)", flexShrink: 0 }} />
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 600 }}>{g.label}</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                          {g.label}
+                          {g.enriq && <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 8, background: "var(--indigo-50)", color: "var(--indigo)", fontWeight: 600, letterSpacing: ".02em" }}>ENRIQUECIMENTO</span>}
+                        </div>
                         <span className="vx-mut" style={{ fontSize: 11 }}>{selCount} de {disponiveis.length} selecionadas</span>
                       </div>
                       {disponiveis.length > 0 && (
@@ -583,13 +777,15 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                     <div style={{ display: "grid", gap: 8 }}>
                       {g.campos.map((f) => {
                         const indisponivel = CAMPOS_INDISPONIVEIS.has(f);
+                        const isEnriq = CAMPOS_ENRIQ.has(f);
                         return (
                           <label key={f} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, cursor: indisponivel ? "default" : "pointer", opacity: indisponivel ? 0.45 : 1 }}>
                             <input type="checkbox" checked={!indisponivel && campos.has(f)} disabled={indisponivel}
                               onChange={() => !indisponivel && toggleCampo(f)}
-                              style={{ accentColor: "var(--brand)", width: 16, height: 16, flexShrink: 0 }} />
+                              style={{ accentColor: isEnriq ? "var(--indigo)" : "var(--brand)", width: 16, height: 16, flexShrink: 0 }} />
                             <span style={indisponivel ? { textDecoration: "line-through" } : undefined}>{f}</span>
                             {indisponivel && <span style={{ fontSize: 10, color: "var(--muted-2)", marginLeft: "auto", whiteSpace: "nowrap" }}>Em breve</span>}
+                            {!indisponivel && isEnriq && <Sparkles size={11} style={{ color: "var(--indigo)", marginLeft: "auto", flexShrink: 0 }} />}
                           </label>
                         );
                       })}
@@ -598,7 +794,7 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                 );
               })}
             </div>
-            <div className="vx-chart-source">O preenchimento depende da disponibilidade das fontes de dados.</div>
+            <div className="vx-chart-source">Campos com <Sparkles size={10} style={{ display: "inline", verticalAlign: "middle", color: "var(--indigo)" }} /> são enriquecidos automaticamente após a busca (Receita Federal, Hunter.io, SMTP, HLR).</div>
           </div>
 
           {/* Organize seus leads */}
@@ -649,6 +845,8 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
               ["Localização", regiao ? `${regiao}, ${pais}` : pais],
               ["Quantidade", `${quantidade} leads`],
               ["Informações", `${campos.size} campos`],
+              ["Filtros", totalFiltros > 0 ? `${totalFiltros} ativo(s)` : "Nenhum"],
+              ["Dados obrigatórios", campos.size > 0 ? `${campos.size} campo(s)` : "Nenhum"],
               ["Destino", destinoLabel || "A definir"],
               ["Valor estimado", money(valorEstimado)],
             ].map(([k, v]) => (
@@ -668,10 +866,23 @@ function AbaBuscar({ aviso, listas, pastas, precoUnitario, recarregarCiclo, reca
                 : "Primeira cobrança em 30 dias após o primeiro uso."}
             </span>
           </div>
+          {temEnriq && (
+            <div style={{ padding: "8px 10px", borderRadius: 8, background: "var(--indigo-50)", fontSize: 11.5, color: "var(--indigo)", display: "flex", alignItems: "center", gap: 6 }}>
+              <Sparkles size={13} />
+              <span>Enriquecimento automático após a busca</span>
+            </div>
+          )}
           <button onClick={buscar} disabled={!podeEnviar || ocupado} className="vx-btn vx-btn-primary vx-btn-block" style={{ minHeight: 44 }}>
-            {ocupado ? <Loader2 size={16} className="vx-spin" /> : null}
-            {ocupado ? "Buscando..." : `Encontrar ${quantidade} leads`}
+            {ocupado ? <Loader2 size={16} className="vx-spin" /> : <Search size={16} />}
+            {ocupado
+              ? (enriqProg ? `Enriquecendo ${enriqProg.done}/${enriqProg.total}...` : "Buscando...")
+              : `Encontrar ${quantidade} leads${temEnriq ? " + enriquecer" : ""}`}
           </button>
+          {enriqProg && (
+            <div style={{ width: "100%", height: 6, borderRadius: 3, background: "var(--surface-2)", overflow: "hidden" }}>
+              <div style={{ height: "100%", borderRadius: 3, background: "var(--grad-brand)", transition: "width .3s", width: `${Math.round((enriqProg.done / enriqProg.total) * 100)}%` }} />
+            </div>
+          )}
           {precoUnitario > 0 && <span className="vx-mut" style={{ fontSize: 11.5 }}>Preço por lead: {money(precoUnitario)}</span>}
           {feedback && <p className="vx-mut" style={{ margin: 0, fontSize: 13, color: "var(--brand)" }} role="status">{feedback}</p>}
         </aside>
@@ -699,6 +910,7 @@ function AbaContatos({ aviso, listas, isEmpresa }) {
   const [filtroSegmento, setFiltroSegmento] = useState("");
   const [filtroLista, setFiltroLista] = useState("");
   const [filtroResponsavel, setFiltroResponsavel] = useState("");
+  const [enriqLote, setEnriqLote] = useState(false);
 
   const recarregar = useCallback(() => { api("/loja-leads/revelados").then((r) => { setContatos(r?.contatos || []); setLoading(false); }); }, []);
   useEffect(recarregar, []);
@@ -749,9 +961,28 @@ function AbaContatos({ aviso, listas, isEmpresa }) {
           <div className="vx-disp" style={{ fontSize: 17 }}>Meus contatos</div>
           <p className="vx-mut" style={{ margin: 0, fontSize: 13 }}>Minha carteira de contatos comerciais.</p>
         </div>
-        {selecionados.size > 0 && (
-          <span className="vx-mut" style={{ fontSize: 12 }}>{selecionados.size} selecionado(s)</span>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {selecionados.size > 0 && (
+            <>
+              <span className="vx-mut" style={{ fontSize: 12 }}>{selecionados.size} selecionado(s)</span>
+              <button className="vx-btn vx-btn-sm" disabled={enriqLote}
+                onClick={async () => {
+                  if (selecionados.size > 50) return aviso?.("Máximo 50 contatos por lote.");
+                  setEnriqLote(true);
+                  const r = await api("/enriquecimento/lote", { contatoIds: [...selecionados] });
+                  setEnriqLote(false);
+                  if (r?.error) return aviso?.(r.error);
+                  const ok = (r.resultados || []).filter((x) => x.status === "ok").length;
+                  const erros = (r.resultados || []).filter((x) => x.status === "erro").length;
+                  aviso?.(`Enriquecimento: ${ok} OK, ${erros} erro(s).`);
+                }}
+                style={{ background: "var(--grad-brand)", color: "#fff", border: "none", display: "flex", alignItems: "center", gap: 5 }}>
+                {enriqLote ? <Loader2 size={13} className="vx-spin" /> : <Sparkles size={13} />}
+                {enriqLote ? "Enriquecendo..." : "Enriquecer selecionados"}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Filtros */}
@@ -834,10 +1065,25 @@ function DrawerContato({ contato: c, onClose, listas, aviso, isEmpresa }) {
   const [novoTexto, setNovoTexto] = useState("");
   const [tipoNota, setTipoNota] = useState("nota");
   const [loadingHist, setLoadingHist] = useState(true);
+  const [enriq, setEnriq] = useState(null);
+  const [enriqLoading, setEnriqLoading] = useState(false);
+  const [enriqAberto, setEnriqAberto] = useState(false);
+  const [enriqChecked, setEnriqChecked] = useState(false);
 
   useEffect(() => {
     api(`/loja-leads/contato/${c.id}/historico`).then((r) => { setHistorico(r?.historico || []); setLoadingHist(false); });
+    api(`/enriquecimento/${c.id}`).then((r) => { if (r && !r.error) { setEnriq(r); setEnriqAberto(true); } setEnriqChecked(true); });
   }, [c.id]);
+
+  const enriquecer = async () => {
+    setEnriqLoading(true);
+    const r = await api("/enriquecimento/enriquecer", { contatoId: c.id });
+    if (r?.error) { aviso?.(r.error); setEnriqLoading(false); return; }
+    const dados = await api(`/enriquecimento/${c.id}`);
+    if (dados && !dados.error) { setEnriq(dados); setEnriqAberto(true); }
+    aviso?.("Enriquecimento concluído.");
+    setEnriqLoading(false);
+  };
 
   const addToList = async (listaId) => {
     const r = await api("/loja-leads/listas/adicionar", { listaId, contatoId: c.id });
@@ -922,6 +1168,36 @@ function DrawerContato({ contato: c, onClose, listas, aviso, isEmpresa }) {
           </div>
         )}
 
+        {/* Enriquecimento */}
+        <div style={{ marginTop: 18, borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span className="vx-label" style={{ margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+              <Database size={14} style={{ color: "var(--brand)" }} /> Enriquecimento de dados
+            </span>
+            {enriqChecked && !enriq && (
+              <button className="vx-btn vx-btn-sm" onClick={enriquecer} disabled={enriqLoading}
+                style={{ background: "var(--grad-brand)", color: "#fff", border: "none", display: "flex", alignItems: "center", gap: 5 }}>
+                {enriqLoading ? <Loader2 size={13} className="vx-spin" /> : <Sparkles size={13} />}
+                {enriqLoading ? "Enriquecendo..." : "Enriquecer"}
+              </button>
+            )}
+            {enriq && (
+              <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => setEnriqAberto(!enriqAberto)}>
+                {enriqAberto ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            )}
+          </div>
+
+          {enriqLoading && !enriq && (
+            <div style={{ padding: 16, textAlign: "center", fontSize: 12.5 }} className="vx-mut">
+              <Loader2 size={18} className="vx-spin" style={{ display: "block", margin: "0 auto 8px" }} />
+              Consultando Receita Federal, estimando faturamento, buscando decisores...
+            </div>
+          )}
+
+          {enriq && enriqAberto && <PainelEnriquecimento dados={enriq} aviso={aviso} onRefresh={enriquecer} loading={enriqLoading} />}
+        </div>
+
         {/* Histórico */}
         <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
           <span className="vx-label">Histórico de interações</span>
@@ -965,6 +1241,247 @@ function DrawerContato({ contato: c, onClose, listas, aviso, isEmpresa }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Painel de enriquecimento ─────────────────────────────────────────── */
+function PainelEnriquecimento({ dados, aviso, onRefresh, loading }) {
+  const d = dados;
+  const parseJ = (v) => { try { return typeof v === "string" ? JSON.parse(v) : v || []; } catch { return []; } };
+  const socios = d.socios || [];
+  const decisores = d.decisores || [];
+  const techs = parseJ(d.tecnologias);
+  const telsVal = parseJ(d.telefonesValidados);
+  const telsInv = parseJ(d.telefonesInvalidos);
+  const emailsVal = parseJ(d.emailsValidados);
+  const emailsInv = parseJ(d.emailsInvalidos);
+  const telsRF = parseJ(d.telefonesRF);
+  const cnaeSec = parseJ(d.cnaesSecundarios);
+
+  const statusBadge = (st) => {
+    const map = { enriquecido: { bg: "var(--green-50)", color: "var(--green)", label: "Completo" }, parcial: { bg: "var(--amber-50)", color: "var(--amber)", label: "Parcial" }, pendente: { bg: "var(--surface-2)", color: "var(--muted)", label: "Pendente" }, erro: { bg: "var(--red-50)", color: "var(--red)", label: "Erro" } };
+    const m = map[st] || map.pendente;
+    return <span style={{ fontSize: 10.5, padding: "2px 8px", borderRadius: 10, background: m.bg, color: m.color, fontWeight: 600 }}>{m.label}</span>;
+  };
+
+  const SEC = { padding: "10px 0", borderBottom: "1px solid var(--border)" };
+  const SLABEL = { fontSize: 11.5, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 };
+
+  return (
+    <div style={{ fontSize: 12.5 }}>
+      {/* Status + refresh */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        {statusBadge(d.status)}
+        {d.enriquecidoEm && <span className="vx-mut" style={{ fontSize: 11 }}>Atualizado em {new Date(d.enriquecidoEm).toLocaleDateString("pt-BR")}</span>}
+        <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={onRefresh} disabled={loading} title="Atualizar enriquecimento" style={{ marginLeft: "auto", padding: 2 }}>
+          <RefreshCw size={13} className={loading ? "vx-spin" : ""} />
+        </button>
+      </div>
+
+      {/* Dados empresariais */}
+      {d.cnpj && (
+        <div style={SEC}>
+          <div style={SLABEL}><Building2 size={13} /> Dados da Receita Federal</div>
+          <div style={{ display: "grid", gap: 4 }}>
+            <EnriqRow label="CNPJ" value={d.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")} />
+            {d.razaoSocial && <EnriqRow label="Razão social" value={d.razaoSocial} />}
+            {d.nomeFantasia && <EnriqRow label="Nome fantasia" value={d.nomeFantasia} />}
+            {d.situacaoCadastral && <EnriqRow label="Situação" value={d.situacaoCadastral} badge={d.situacaoCadastral === "Ativa" ? "green" : "red"} />}
+            {d.porte && <EnriqRow label="Porte" value={d.porte} />}
+            {d.naturezaJuridicaDesc && <EnriqRow label="Natureza jurídica" value={d.naturezaJuridicaDesc} />}
+            {d.capitalSocial > 0 && <EnriqRow label="Capital social" value={`R$ ${Number(d.capitalSocial).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />}
+            {d.simplesNacional != null && <EnriqRow label="Simples Nacional" value={d.simplesNacional ? "Sim" : "Não"} />}
+            {d.mei != null && <EnriqRow label="MEI" value={d.mei ? "Sim" : "Não"} />}
+            {d.dataAbertura && <EnriqRow label="Abertura" value={d.dataAbertura} />}
+            {d.idadeEmpresa && <EnriqRow label="Idade" value={d.idadeEmpresa} />}
+            {d.qtdFiliais > 0 && <EnriqRow label="Filiais" value={d.qtdFiliais} />}
+            {d.cnaePrimario && <EnriqRow label="CNAE" value={`${d.cnaePrimario} — ${d.cnaePrimarioDesc || ""}`} />}
+            {cnaeSec.length > 0 && <EnriqRow label="CNAEs sec." value={cnaeSec.map((c) => typeof c === "object" ? `${c.codigo} — ${c.descricao}` : c).join("; ")} />}
+            {d.inscricaoEstadual && <EnriqRow label="Insc. estadual" value={d.inscricaoEstadual} />}
+          </div>
+          {(d.uf || d.cidade) && (
+            <div style={{ marginTop: 6 }}>
+              <EnriqRow label="Endereço" value={[d.logradouro, d.numero, d.complemento, d.bairro, d.cidade, d.uf, d.cep].filter(Boolean).join(", ")} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Estimativas */}
+      {(d.faixaFaturamento || d.faixaFuncionarios) && (
+        <div style={SEC}>
+          <div style={SLABEL}><TrendingUp size={13} /> Estimativas</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {d.faixaFaturamento && (
+              <div style={{ padding: 10, borderRadius: 10, background: "var(--green-50)", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 2 }}>Faturamento</div>
+                <div style={{ fontWeight: 700, color: "var(--green)", fontSize: 13 }}>{d.faixaFaturamento}</div>
+                {d.faturamentoEstimado > 0 && <div className="vx-mut" style={{ fontSize: 10.5 }}>~R$ {Number(d.faturamentoEstimado).toLocaleString("pt-BR")}/ano</div>}
+              </div>
+            )}
+            {d.faixaFuncionarios && (
+              <div style={{ padding: 10, borderRadius: 10, background: "var(--brand-50)", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 2 }}>Funcionários</div>
+                <div style={{ fontWeight: 700, color: "var(--brand)", fontSize: 13 }}>{d.faixaFuncionarios}</div>
+                {d.funcionariosEstimado > 0 && <div className="vx-mut" style={{ fontSize: 10.5 }}>~{d.funcionariosEstimado} pessoas</div>}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Sócios / QSA */}
+      {socios.length > 0 && (
+        <div style={SEC}>
+          <div style={SLABEL}><Users size={13} /> Sócios / QSA ({socios.length})</div>
+          <div style={{ display: "grid", gap: 6 }}>
+            {socios.map((s) => (
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 8, background: "var(--surface-2)" }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "var(--brand)", flexShrink: 0 }}>
+                  {(s.nome || "?")[0].toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 12.5 }}>{s.nome}</div>
+                  <div className="vx-mut" style={{ fontSize: 11 }}>{s.qualificacao}{s.dataEntrada ? ` · desde ${s.dataEntrada}` : ""}{s.faixaEtaria ? ` · ${s.faixaEtaria}` : ""}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Decisores */}
+      {decisores.length > 0 && (
+        <div style={SEC}>
+          <div style={SLABEL}><UserCheck size={13} /> Decisores ({decisores.length})</div>
+          <div style={{ display: "grid", gap: 6 }}>
+            {decisores.map((dec) => (
+              <div key={dec.id} style={{ padding: "8px 10px", borderRadius: 8, background: "var(--surface-2)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {dec.foto
+                    ? <img src={dec.foto} alt="" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover" }} />
+                    : <div style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--indigo-100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600, color: "var(--indigo)" }}>{(dec.nome || "?")[0].toUpperCase()}</div>
+                  }
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 12.5 }}>{dec.nome}</div>
+                    {dec.cargo && <div className="vx-mut" style={{ fontSize: 11 }}>{dec.cargo}</div>}
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                  {dec.departamento && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 8, background: "var(--brand-50)", color: "var(--brand)", fontWeight: 500 }}>{dec.departamento}</span>}
+                  {dec.nivel && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 8, background: dec.nivel === "Alto" ? "var(--green-50)" : dec.nivel === "Médio" ? "var(--amber-50)" : "var(--surface-2)", color: dec.nivel === "Alto" ? "var(--green)" : dec.nivel === "Médio" ? "var(--amber)" : "var(--muted)", fontWeight: 500 }}>{dec.nivel}</span>}
+                </div>
+                {(dec.emailProfissional || dec.linkedinUrl) && (
+                  <div style={{ display: "flex", gap: 10, marginTop: 6, fontSize: 11.5 }}>
+                    {dec.emailProfissional && (
+                      <a href={`mailto:${dec.emailProfissional}`} style={{ color: "var(--brand)", textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>
+                        <Mail size={11} /> {dec.emailProfissional}
+                      </a>
+                    )}
+                    {dec.linkedinUrl && (
+                      <a href={dec.linkedinUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--brand)", textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>
+                        <Linkedin size={11} /> LinkedIn
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Validação contatos */}
+      {(telsVal.length > 0 || telsInv.length > 0 || emailsVal.length > 0 || emailsInv.length > 0 || telsRF.length > 0) && (
+        <div style={SEC}>
+          <div style={SLABEL}><Shield size={13} /> Validação de contatos</div>
+          <div style={{ display: "grid", gap: 4 }}>
+            {telsRF.length > 0 && <EnriqRow label="Telefones RF" value={telsRF.join(", ")} />}
+            {telsVal.length > 0 && telsVal.map((t, i) => <ValRow key={`tv${i}`} icon={<PhoneCall size={12} />} value={t} valid />)}
+            {telsInv.length > 0 && telsInv.map((t, i) => <ValRow key={`ti${i}`} icon={<PhoneCall size={12} />} value={t} />)}
+            {emailsVal.length > 0 && emailsVal.map((e, i) => <ValRow key={`ev${i}`} icon={<Mail size={12} />} value={e} valid />)}
+            {emailsInv.length > 0 && emailsInv.map((e, i) => <ValRow key={`ei${i}`} icon={<Mail size={12} />} value={e} />)}
+            {d.emailRF && <EnriqRow label="E-mail RF" value={d.emailRF} />}
+          </div>
+        </div>
+      )}
+
+      {/* Redes sociais */}
+      {(d.linkedinEmpresa || d.facebookEmpresa || d.instagramEmpresa || d.twitterEmpresa) && (
+        <div style={SEC}>
+          <div style={SLABEL}><Globe size={13} /> Redes sociais</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {d.linkedinEmpresa && <SocialChip href={d.linkedinEmpresa} label="LinkedIn" />}
+            {d.facebookEmpresa && <SocialChip href={d.facebookEmpresa} label="Facebook" />}
+            {d.instagramEmpresa && <SocialChip href={d.instagramEmpresa} label="Instagram" />}
+            {d.twitterEmpresa && <SocialChip href={d.twitterEmpresa} label="Twitter/X" />}
+          </div>
+        </div>
+      )}
+
+      {/* Tecnologias */}
+      {techs.length > 0 && (
+        <div style={SEC}>
+          <div style={SLABEL}><Cpu size={13} /> Tecnologias detectadas</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {techs.map((t, i) => <span key={i} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: "var(--indigo-50)", color: "var(--indigo)", fontWeight: 500 }}>{t}</span>)}
+          </div>
+        </div>
+      )}
+
+      {/* Contexto regional */}
+      {(d.pibMunicipio > 0 || d.populacaoMunicipio > 0) && (
+        <div style={{ ...SEC, borderBottom: "none" }}>
+          <div style={SLABEL}><MapPin size={13} /> Contexto regional</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {d.pibMunicipio > 0 && (
+              <div style={{ padding: 8, borderRadius: 8, background: "var(--surface-2)", textAlign: "center" }}>
+                <div className="vx-mut" style={{ fontSize: 10.5 }}>PIB municipal</div>
+                <div style={{ fontWeight: 600, fontSize: 12.5 }}>R$ {(d.pibMunicipio / 1e6).toFixed(0)}M</div>
+              </div>
+            )}
+            {d.populacaoMunicipio > 0 && (
+              <div style={{ padding: 8, borderRadius: 8, background: "var(--surface-2)", textAlign: "center" }}>
+                <div className="vx-mut" style={{ fontSize: 10.5 }}>População</div>
+                <div style={{ fontWeight: 600, fontSize: 12.5 }}>{Number(d.populacaoMunicipio).toLocaleString("pt-BR")}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EnriqRow({ label, value, badge }) {
+  return (
+    <div style={{ display: "flex", gap: 8, fontSize: 12.5, padding: "3px 0", alignItems: "baseline" }}>
+      <span className="vx-mut" style={{ minWidth: 90, fontSize: 11, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontWeight: 500, wordBreak: "break-word" }}>
+        {value}
+        {badge && <span style={{ marginLeft: 6, fontSize: 10, padding: "1px 6px", borderRadius: 8, background: badge === "green" ? "var(--green-50)" : "var(--red-50)", color: badge === "green" ? "var(--green)" : "var(--red)", fontWeight: 600 }}>{badge === "green" ? "Ativa" : "Inativa"}</span>}
+      </span>
+    </div>
+  );
+}
+
+function ValRow({ icon, value, valid }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "2px 0" }}>
+      {valid ? <CheckCircle2 size={13} style={{ color: "var(--green)", flexShrink: 0 }} /> : <XCircle size={13} style={{ color: "var(--red)", flexShrink: 0 }} />}
+      {icon}
+      <span style={{ fontWeight: 500 }}>{value}</span>
+      <span className="vx-mut" style={{ fontSize: 10.5, marginLeft: "auto" }}>{valid ? "Válido" : "Inválido"}</span>
+    </div>
+  );
+}
+
+function SocialChip({ href, label }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer"
+      style={{ fontSize: 11, padding: "3px 10px", borderRadius: 12, background: "var(--brand-50)", color: "var(--brand)", fontWeight: 500, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+      <Globe size={11} /> {label}
+    </a>
   );
 }
 

@@ -43,12 +43,14 @@ export const MOTIVO_COR = {
 export const NAV = {
   vendedor: [
     { key: "painel", label: "Visão geral", Icon: BarChart3 },
+    { key: "oportunidades", label: "Oportunidades", Icon: CircleDollarSign },
     { key: "trabalho", label: "Trabalho", Icon: Briefcase, children: [
-      { key: "oportunidades", label: "Oportunidades" },
+      { key: "minhas-campanhas", label: "Minhas Campanhas" },
+      { key: "whatsapp-direto", label: "WhatsApp" },
     ] },
     { key: "ferramentas", label: "Ferramentas", Icon: Wrench, children: [
-      { key: "conversas-evolution", label: "Atendimento" },
       { key: "discadora", label: "Discadora" },
+      { key: "calendario", label: "Calendário" },
     ] },
     { key: "desenvolvimento", label: "Desenvolvimento", Icon: GraduationCap, children: [
       { key: "academy", label: "Academy" },

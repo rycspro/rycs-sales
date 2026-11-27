@@ -27,6 +27,8 @@ const Central = lazy(() => import("./conversas/Central.jsx"));
 const AreaColaborador = lazy(() => import("../colaborador/AreaColaborador.jsx"));
 const LojaLeads = lazy(() => import("../empresa/LojaLeads.jsx"));
 const DiscadoraProfissional = lazy(() => import("../voice/DiscadoraProfissional.jsx"));
+const MinhasCampanhas = lazy(() => import("./MinhasCampanhas.jsx"));
+const CalendarioComercial = lazy(() => import("../calendario/CalendarioComercial.jsx"));
 
 const ESPERA = <div className="vx-fade" style={{ padding: 40, textAlign: "center" }}><div className="vx-spinner" /></div>;
 
@@ -116,6 +118,9 @@ export default function Vendedor({ user, onLogout, db, setDb, up, aviso, aba, se
       {aba === "whatsapp" && <WhatsappVendedor aviso={aviso} />}
       {aba === "whatsapp-pessoal" && <WhatsappPessoal aviso={aviso} />}
       {aba === "conversas-evolution" && <Central aviso={aviso} />}
+      {aba === "whatsapp-direto" && <Conversas aviso={aviso} />}
+      {aba === "minhas-campanhas" && <MinhasCampanhas eu={eu} db={db} aviso={aviso} abrirCampanha={(c) => { setAbertaId(c.companyId); setCampanhaAbertaId(c.id); }} />}
+      {aba === "calendario" && <CalendarioComercial />}
       {aba === "discadora" && <DiscadoraProfissional aviso={aviso} />}
       {aba === "carteira" && <Carteira eu={eu} db={db} setDb={setDb} up={up} aviso={aviso} recarregar={recarregar} setAba={setAba} />}
       {aba === "indicar" && <Indicacoes aviso={aviso} />}

@@ -903,6 +903,7 @@ html.dark .vx-app::before{background:
   background:var(--glass)!important;backdrop-filter:var(--glass-blur-strong);-webkit-backdrop-filter:var(--glass-blur-strong)}
 .vx-stat{border-radius:18px}
 .vx-card.vx-card--active{background:linear-gradient(120deg,#2563EB 0%,#4338CA 52%,#0EA5E9 100%)!important;color:#fff!important;border:0!important;box-shadow:0 10px 26px rgba(37,99,235,.28)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.vx-card.vx-card--sel{background:var(--brand-50,#E4F0FF)!important;border:1px solid var(--brand,#318CE7)!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .vx-card:hover,.vx-stat:hover{box-shadow:var(--glass-edge),var(--glass-lift-hover)!important;transform:translateY(-2px)}
 .vx-content>*{animation:vxin .32s cubic-bezier(.22,.9,.32,1) both}
 
@@ -975,6 +976,7 @@ html[data-versao="sol"] .vx-account-trigger{
   background:#FFFFFF!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
   border:1px solid #EAEAEA!important;border-radius:10px!important;box-shadow:none!important}
 html[data-versao="sol"] .vx-card.vx-card--active{background:linear-gradient(120deg,#2563EB 0%,#4338CA 52%,#0EA5E9 100%)!important;color:#fff!important;border:0!important;box-shadow:0 10px 26px rgba(37,99,235,.28)!important}
+html[data-versao="sol"] .vx-card.vx-card--sel{background:#E4F0FF!important;border:1px solid #318CE7!important;box-shadow:none!important}
 html[data-versao="sol"] .vx-card:hover,
 html[data-versao="sol"] .vx-stat:hover{transform:none!important;border-color:#318CE7!important;box-shadow:none!important}
 html[data-versao="sol"] .vx-tile{padding:18px 20px}

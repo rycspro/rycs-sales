@@ -379,7 +379,7 @@ router.patch("/sellers/:id", (req, res) => {
       if (Array.isArray(fields.perfilComercial[c]))
         limpo[c] = fields.perfilComercial[c].slice(0, 40).map((x) => String(x).slice(0, 80));
     }
-    for (const c of ["anosExperiencia", "disponibilidade"]) {
+    for (const c of ["anosExperiencia", "disponibilidade", "nivelExperiencia"]) {
       if (typeof fields.perfilComercial[c] === "string")
         limpo[c] = fields.perfilComercial[c].slice(0, 80);
     }

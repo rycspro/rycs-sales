@@ -8,6 +8,7 @@ import { money } from "../../lib/utils.js";
 // opcionais `topo` (ex.: mensagem da candidatura) e `acoes` (ações da página).
 
 const PERFIL = { sdr: "SDR", bdr: "BDR", closer: "Closer", pap: "Porta a porta", "sem-exp": "Em formação" };
+const NIVEL_LABEL = { junior: "Júnior", pleno: "Pleno", senior: "Sênior" };
 const arr = (v) => (Array.isArray(v) ? v : []);
 const text = (v, empty = "Não informado") => v || empty;
 
@@ -192,6 +193,12 @@ export default function FichaProfissional({ p, fit = { percentual: 0, pontos: []
               <div>
                 <div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Disponibilidade</div>
                 <b>{p.disponibilidade}</b>
+              </div>
+            )}
+            {p.perfilComercial?.nivelExperiencia && NIVEL_LABEL[p.perfilComercial.nivelExperiencia] && (
+              <div>
+                <div className="vx-mut" style={{ fontSize: 11, marginBottom: 2 }}>Nível de experiência</div>
+                <span className="vx-chip" style={{ fontSize: 12, fontWeight: 600 }}>{NIVEL_LABEL[p.perfilComercial.nivelExperiencia]}</span>
               </div>
             )}
             {arr(p.segmentos).length > 0 && (
