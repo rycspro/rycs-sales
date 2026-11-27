@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Building2, Package, MessagesSquare, ClipboardCheck, Plus, Trash2, ChevronRight,
   ArrowUpRight, Check, Paperclip, X, ChevronUp, ChevronDown, FileText, Loader2,
-  AlertCircle, Mic, MicOff,
+  AlertCircle, Mic, MicOff, Globe, Sparkles,
 } from "lucide-react";
-import { api, apiPatch, apiDelete } from "../../lib/api.js";
+import { api, apiPatch, apiDelete, apiPut } from "../../lib/api.js";
 
 const AZUL = "#318CE7";
 const AZUL_SUAVE = "#EAF4FF";
@@ -328,37 +328,412 @@ export function SecaoInformacoes({ secao, materiaisLib, onVoltar, aviso }) {
 }
 
 /* ============================================================
-   EDITOR "SOBRE A EMPRESA" — blocos de texto
+   OPÇÕES PARA MULTI-SELECTS DA IDENTIDADE
+   ============================================================ */
+const OPC = {
+  segmentos: ["Tecnologia","Saúde","Educação","Varejo","Alimentação","Beleza e estética","Moda","Construção","Imobiliário","Advocacia","Contabilidade","Consultoria","Marketing","Eventos","Turismo","Logística","Indústria","Financeiro","Bem-estar"],
+  modelosNegocio: ["B2B (vende para empresas)","B2C (vende para pessoas)","B2B2C","Marketplace","Assinatura / recorrência","Franquia","Licenciamento","Freemium"],
+  porte: ["Microempreendedor (MEI)","Pequeno","Médio","Grande"],
+  tempoMercado: ["Menos de 1 ano","1–3 anos","3–5 anos","5–10 anos","Mais de 10 anos"],
+  abrangencias: ["Local","Regional","Nacional","Internacional"],
+  modelosAtendimento: ["Presencial","Online","Híbrido","Domiciliar / in loco"],
+  modelosReceita: ["Venda avulsa","Recorrência / assinatura","Comissão","Projeto (escopo fechado)","Hora/serviço","Produto físico","Software/SaaS"],
+  tiposCliente: ["Empresas (PJ)","Pessoas físicas (PF)","Ambos","Governo / órgãos públicos","ONGs / terceiro setor"],
+  necessidades: ["Aumentar vendas","Reduzir custos","Melhorar atendimento","Automatizar processos","Expandir mercado","Fidelizar clientes","Captar leads","Treinar equipe","Melhorar marca"],
+  processoVenda: ["Prospecção ativa","Indicações / referências","Inbound / marketing","Redes sociais","Eventos","Licitações"],
+  cicloVenda: ["Imediato (mesmo dia)","Curto (até 1 semana)","Médio (1–4 semanas)","Longo (1–3 meses)","Muito longo (mais de 3 meses)"],
+  diferenciais: ["Preço competitivo","Atendimento personalizado","Rapidez na entrega","Especialização técnica","Suporte dedicado","Flexibilidade","Inovação","Experiência no mercado","Resultados comprovados"],
+  reconhecimento: ["Autoridade / referência","Empresa confiável","Inovadora","Parceira estratégica","A mais acessível","A que melhor atende"],
+  tomComunicacao: ["Formal","Semi-formal","Descontraído / informal","Técnico","Inspiracional","Consultivo"],
+  valores: ["Transparência","Ética","Respeito","Inovação","Qualidade","Comprometimento","Foco no cliente","Sustentabilidade","Simplicidade"],
+  objetivos: ["Aumentar vendas","Expandir mercado","Fidelizar clientes","Lançar novos produtos","Automatizar processos","Melhorar conversão","Reduzir CAC","Escalar operação"],
+};
+
+/* Multi-select com chips */
+function MultiSelect({ opcoes, valor = [], onChange, placeholder, permitirCustom = false }) {
+  const [aberto, setAberto] = useState(false);
+  const [digitar, setDigitar] = useState("");
+  const ref = useRef(null);
+  useEffect(() => {
+    const fn = (e) => { if (ref.current && !ref.current.contains(e.target)) setAberto(false); };
+    document.addEventListener("mousedown", fn);
+    return () => document.removeEventListener("mousedown", fn);
+  }, []);
+  const toggle = (op) => {
+    if (valor.includes(op)) onChange(valor.filter((v) => v !== op));
+    else onChange([...valor, op]);
+  };
+  const addCustom = () => {
+    const v = digitar.trim();
+    if (v && !valor.includes(v)) { onChange([...valor, v]); }
+    setDigitar("");
+  };
+  const filtradas = opcoes.filter((o) => o.toLowerCase().includes(digitar.toLowerCase()));
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <div onClick={() => setAberto((a) => !a)}
+        style={{ minHeight: 40, padding: "6px 10px", border: `1px solid ${BORDA}`, borderRadius: 8, cursor: "pointer", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", background: "#fff" }}>
+        {valor.length === 0 && <span style={{ fontSize: 13.5, color: "#9aa0a6" }}>{placeholder || "Selecionar..."}</span>}
+        {valor.map((v) => (
+          <span key={v} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: AZUL_SUAVE, color: AZUL, fontSize: 12.5, fontWeight: 500, padding: "2px 8px 2px 10px", borderRadius: 20 }}>
+            {v}
+            <button type="button" onClick={(e) => { e.stopPropagation(); toggle(v); }}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1, color: AZUL, display: "flex" }}>
+              <X size={12} />
+            </button>
+          </span>
+        ))}
+        <ChevronDown size={15} style={{ marginLeft: "auto", color: "#9aa0a6", flexShrink: 0 }} />
+      </div>
+      {aberto && (
+        <div style={{ position: "absolute", zIndex: 100, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 10, boxShadow: "0 4px 20px rgba(0,0,0,.1)", maxHeight: 220, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "8px 10px", borderBottom: `1px solid ${BORDA}` }}>
+            <input autoFocus value={digitar} onChange={(e) => setDigitar(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && permitirCustom) { addCustom(); e.preventDefault(); } }}
+              placeholder="Buscar ou digitar..." className="vx-input" style={{ fontSize: 13, padding: "5px 8px" }} />
+          </div>
+          <div style={{ overflowY: "auto", flex: 1 }}>
+            {filtradas.map((op) => (
+              <button key={op} type="button" onClick={() => toggle(op)}
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", border: "none", background: valor.includes(op) ? AZUL_SUAVE : "transparent", cursor: "pointer", fontSize: 13.5, textAlign: "left", color: valor.includes(op) ? AZUL : "#171717" }}>
+                <span style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${valor.includes(op) ? AZUL : "#d1d5db"}`, background: valor.includes(op) ? AZUL : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {valor.includes(op) && <Check size={10} style={{ color: "#fff" }} />}
+                </span>
+                {op}
+              </button>
+            ))}
+            {permitirCustom && digitar.trim() && !opcoes.includes(digitar.trim()) && (
+              <button type="button" onClick={addCustom}
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", border: "none", background: "transparent", cursor: "pointer", fontSize: 13.5, color: AZUL }}>
+                <Plus size={14} /> Adicionar "{digitar.trim()}"
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* Select simples (valor único) */
+function SelectUnico({ opcoes, valor, onChange, placeholder }) {
+  return (
+    <select value={valor || ""} onChange={(e) => onChange(e.target.value)} className="vx-input"
+      style={{ fontSize: 13.5, padding: "8px 10px", cursor: "pointer" }}>
+      <option value="">{placeholder || "Selecionar..."}</option>
+      {opcoes.map((op) => <option key={op} value={op}>{op}</option>)}
+    </select>
+  );
+}
+
+/* Accordion section */
+function SecaoAccordion({ titulo, subtitulo, aberta, onToggle, children, pct }) {
+  return (
+    <div style={{ border: `1px solid ${BORDA}`, borderRadius: 12, overflow: "hidden", marginBottom: 10 }}>
+      <button type="button" onClick={onToggle}
+        style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "14px 16px", background: aberta ? AZUL_SUAVE : "#fff", border: "none", cursor: "pointer", textAlign: "left" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 600, color: "#171717" }}>{titulo}</div>
+          {subtitulo && <div style={{ fontSize: 12.5, color: "#737373", marginTop: 1 }}>{subtitulo}</div>}
+        </div>
+        {pct > 0 && (
+          <span style={{ fontSize: 11.5, fontWeight: 600, color: pct === 100 ? "#1E7F4F" : "#B4690E", background: pct === 100 ? "#E7F6EE" : "#FDF3E7", padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap" }}>
+            {pct}%
+          </span>
+        )}
+        {aberta ? <ChevronUp size={16} style={{ color: AZUL, flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: "#9aa0a6", flexShrink: 0 }} />}
+      </button>
+      {aberta && <div style={{ padding: "16px 16px 20px", borderTop: `1px solid ${BORDA}` }}>{children}</div>}
+    </div>
+  );
+}
+
+/* Campo de formulário com label */
+function Campo({ label, children, dica }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#374151", marginBottom: 5 }}>
+        {label} {dica && <span style={{ fontSize: 12, fontWeight: 400, color: "#9aa0a6" }}>— {dica}</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+/* ============================================================
+   EDITOR "SOBRE A EMPRESA" — revitalizado
    ============================================================ */
 function EditorSobre({ entradas, onEditar, onCriar, onRemover }) {
+  const [identity, setIdentity] = useState(null);
+  const [salvIdentity, setSalvIdentity] = useState("ocioso");
+  const [gerandoIA, setGerandoIA] = useState(false);
+  const [analisandoSite, setAnalisandoSite] = useState(false);
+  const [urlSite, setUrlSite] = useState("");
+  const [erroIA, setErroIA] = useState(null);
+  const [erroSite, setErroSite] = useState(null);
+  const [secao, setSecao] = useState("identidade");
+  const [conteudoGerado, setConteudoGerado] = useState(null);
+  const timerIdentity = useRef(null);
+
+  useEffect(() => {
+    api("/company-identity").then((r) => { if (r?.identity) setIdentity(r.identity); else setIdentity({}); });
+  }, []);
+
+  const salvarIdentity = useCallback((patch) => {
+    setSalvIdentity("salvando");
+    clearTimeout(timerIdentity.current);
+    timerIdentity.current = setTimeout(async () => {
+      const r = await apiPut("/company-identity", patch);
+      if (r?.identity) { setIdentity(r.identity); setSalvIdentity("salvo"); }
+      else setSalvIdentity("erro");
+    }, 700);
+  }, []);
+
+  const upd = (campo, valor) => {
+    const novo = { ...(identity || {}), [campo]: valor };
+    setIdentity(novo);
+    salvarIdentity({ [campo]: valor });
+  };
+
+  const pct = useMemo(() => {
+    if (!identity) return 0;
+    const checks = [
+      (identity.segmentos||[]).length > 0,
+      (identity.modelosNegocio||[]).length > 0,
+      !!identity.porte,
+      !!identity.tempoMercado,
+      (identity.abrangencias||[]).length > 0,
+      (identity.modelosAtendimento||[]).length > 0,
+      (identity.modelosReceita||[]).length > 0,
+      (identity.tiposCliente||[]).length > 0,
+      (identity.necessidades||[]).length > 0,
+      (identity.processoVenda||[]).length > 0,
+      !!identity.cicloVenda,
+      (identity.diferenciais||[]).length > 0,
+      (identity.tomComunicacao||[]).length > 0,
+      (identity.valores||[]).length > 0,
+      (identity.objetivos||[]).length > 0,
+    ];
+    return Math.round(checks.filter(Boolean).length / checks.length * 100);
+  }, [identity]);
+
+  const pctSecao = useMemo(() => {
+    if (!identity) return {};
+    const mk = (checks) => Math.round(checks.filter(Boolean).length / checks.length * 100);
+    return {
+      identidade: mk([(identity.segmentos||[]).length>0,(identity.modelosNegocio||[]).length>0,!!identity.porte,!!identity.tempoMercado,(identity.abrangencias||[]).length>0,(identity.modelosAtendimento||[]).length>0]),
+      receita: mk([(identity.modelosReceita||[]).length>0]),
+      publico: mk([(identity.tiposCliente||[]).length>0,(identity.necessidades||[]).length>0,(identity.processoVenda||[]).length>0,!!identity.cicloVenda]),
+      posicionamento: mk([(identity.diferenciais||[]).length>0,(identity.tomComunicacao||[]).length>0,(identity.valores||[]).length>0,(identity.objetivos||[]).length>0]),
+      complementar: mk([!!(identity.infoComplementar||"").trim()]),
+    };
+  }, [identity]);
+
+  const gerarIA = async () => {
+    setGerandoIA(true); setErroIA(null);
+    const r = await api("/company-identity/gerar-conteudo", {});
+    setGerandoIA(false);
+    if (r?.blocos) {
+      setConteudoGerado(r.blocos);
+      // Atualiza entradas na tela: substitui blocos existentes pelo conteúdo gerado
+      const titulosGerados = Object.keys(TITULOS_IA);
+      for (const [chave, titulo] of Object.entries(TITULOS_IA)) {
+        if (!r.blocos[chave]) continue;
+        const existente = entradas.find((e) => e.titulo?.toLowerCase() === titulo.toLowerCase());
+        if (existente) onEditar(existente.id, { conteudo: r.blocos[chave] });
+        else await onCriar({ titulo, conteudo: r.blocos[chave] });
+      }
+    } else setErroIA(r?.error || "Não foi possível gerar o conteúdo.");
+  };
+
+  const analisarSite = async () => {
+    if (!urlSite.trim()) return;
+    setAnalisandoSite(true); setErroSite(null);
+    const r = await api("/company-identity/analisar-site", { url: urlSite.trim() });
+    setAnalisandoSite(false);
+    if (r?.sugestoes) {
+      const s = r.sugestoes;
+      const patch = {};
+      if (s.segmentos?.length) patch.segmentos = [...new Set([...(identity?.segmentos||[]), ...s.segmentos])];
+      if (s.modelosNegocio?.length) patch.modelosNegocio = [...new Set([...(identity?.modelosNegocio||[]), ...s.modelosNegocio])];
+      if (s.tiposCliente?.length) patch.tiposCliente = [...new Set([...(identity?.tiposCliente||[]), ...s.tiposCliente])];
+      if (s.necessidades?.length) patch.necessidades = [...new Set([...(identity?.necessidades||[]), ...s.necessidades])];
+      if (s.diferenciais?.length) patch.diferenciais = [...new Set([...(identity?.diferenciais||[]), ...s.diferenciais])];
+      if (s.tomComunicacao?.length) patch.tomComunicacao = [...new Set([...(identity?.tomComunicacao||[]), ...s.tomComunicacao])];
+      if (Object.keys(patch).length) {
+        const novo = { ...(identity||{}), ...patch };
+        setIdentity(novo);
+        salvarIdentity(patch);
+      }
+    } else setErroSite(r?.error || "Não foi possível analisar o site.");
+  };
+
   const titulosUsados = entradas.map((e) => (e.titulo || "").trim().toLowerCase());
   const sugestoesPend = SUGESTOES_SOBRE.filter((s) => !titulosUsados.includes(s.titulo.toLowerCase()));
 
+  if (!identity) return (
+    <div style={{ padding: 40, textAlign: "center" }}>
+      <div className="vx-spinner" style={{ margin: "0 auto" }} />
+    </div>
+  );
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {entradas.length === 0 && (
-        <p style={{ fontSize: 14, color: "#737373", margin: "0 0 2px" }}>
-          Adicione blocos com as informações institucionais da sua empresa. Comece por uma sugestão ou crie um bloco do zero.
-        </p>
-      )}
-
-      {entradas.map((e) => (
-        <BlocoSobre key={e.id} entrada={e} onEditar={onEditar} onRemover={onRemover} />
-      ))}
-
-      {sugestoesPend.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 2 }}>
-          {sugestoesPend.map((s) => (
-            <button key={s.titulo} onClick={() => onCriar({ titulo: s.titulo })} title={s.dica}
-              className="vx-btn vx-btn-sm" style={{ gap: 6, borderStyle: "dashed" }}>
-              <Plus size={14} /> {s.titulo}
-            </button>
-          ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* Barra de progresso */}
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "#737373", marginBottom: 5 }}>
+          <span>Perfil da empresa</span>
+          <span style={{ fontWeight: 600, color: pct >= 100 ? "#1E7F4F" : AZUL }}>{pct}%</span>
         </div>
-      )}
+        <div style={{ height: 7, borderRadius: 999, background: "#EEF0F3", overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${pct}%`, borderRadius: 999, transition: "width .4s", background: pct >= 100 ? "linear-gradient(90deg,#1E7F4F,#2FB36B)" : `linear-gradient(90deg,${AZUL},#5EA9EE)` }} />
+        </div>
+      </div>
 
-      <div>
-        <button onClick={() => onCriar({ titulo: "", tipo: "custom" })} className="vx-btn vx-btn-sm" style={{ gap: 6 }}>
+      {/* Banner de preenchimento por site */}
+      <div style={{ background: "#F8FAFE", border: `1px solid #DBEAFE`, borderRadius: 12, padding: "14px 16px", marginBottom: 18 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 600, color: "#1E40AF", marginBottom: 8, display: "flex", alignItems: "center", gap: 7 }}>
+          <Globe size={15} /> Preencher automaticamente pelo site
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={urlSite} onChange={(e) => setUrlSite(e.target.value)} placeholder="https://seusite.com.br"
+            className="vx-input" style={{ flex: 1, fontSize: 13.5 }}
+            onKeyDown={(e) => { if (e.key === "Enter") analisarSite(); }} />
+          <button onClick={analisarSite} disabled={analisandoSite || !urlSite.trim()} className="vx-btn vx-btn-sm"
+            style={{ gap: 6, whiteSpace: "nowrap", background: AZUL, color: "#fff", border: "none", opacity: analisandoSite ? .6 : 1 }}>
+            {analisandoSite ? <Loader2 size={14} style={{ animation: "spin .7s linear infinite" }} /> : <Globe size={14} />}
+            Analisar
+          </button>
+        </div>
+        {erroSite && <p style={{ fontSize: 12.5, color: "var(--red)", margin: "6px 0 0" }}>{erroSite}</p>}
+        <p style={{ fontSize: 12, color: "#6B7280", margin: "6px 0 0" }}>Informe o site da empresa para sugerir informações automaticamente. Revise antes de salvar.</p>
+      </div>
+
+      {/* Accordions de identidade */}
+      <SecaoAccordion titulo="Identidade do negócio" subtitulo="Segmento, modelo, porte e abrangência" aberta={secao==="identidade"} onToggle={() => setSecao(s => s==="identidade" ? "" : "identidade")} pct={pctSecao.identidade}>
+        <Campo label="Segmento de atuação" dica="pode selecionar mais de um">
+          <MultiSelect opcoes={OPC.segmentos} valor={identity.segmentos||[]} onChange={(v) => upd("segmentos", v)} placeholder="Selecionar segmento..." permitirCustom />
+        </Campo>
+        {(identity.segmentos||[]).includes("Outros") && (
+          <Campo label="Qual segmento?">
+            <input value={identity.segmentoCustom||""} onChange={(e) => upd("segmentoCustom", e.target.value)} className="vx-input" placeholder="Descreva o segmento" />
+          </Campo>
+        )}
+        <Campo label="Modelo de negócio">
+          <MultiSelect opcoes={OPC.modelosNegocio} valor={identity.modelosNegocio||[]} onChange={(v) => upd("modelosNegocio", v)} placeholder="Como a empresa opera?" />
+        </Campo>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Campo label="Porte da empresa">
+            <SelectUnico opcoes={OPC.porte} valor={identity.porte||""} onChange={(v) => upd("porte", v)} placeholder="Selecionar..." />
+          </Campo>
+          <Campo label="Tempo de mercado">
+            <SelectUnico opcoes={OPC.tempoMercado} valor={identity.tempoMercado||""} onChange={(v) => upd("tempoMercado", v)} placeholder="Selecionar..." />
+          </Campo>
+        </div>
+        <Campo label="Abrangência geográfica">
+          <MultiSelect opcoes={OPC.abrangencias} valor={identity.abrangencias||[]} onChange={(v) => upd("abrangencias", v)} placeholder="Onde a empresa atua?" />
+        </Campo>
+        <Campo label="Modelos de atendimento">
+          <MultiSelect opcoes={OPC.modelosAtendimento} valor={identity.modelosAtendimento||[]} onChange={(v) => upd("modelosAtendimento", v)} placeholder="Como atende os clientes?" />
+        </Campo>
+      </SecaoAccordion>
+
+      <SecaoAccordion titulo="Produtos e serviços" subtitulo="Modelos de receita e oferta" aberta={secao==="receita"} onToggle={() => setSecao(s => s==="receita"?"":"receita")} pct={pctSecao.receita}>
+        <Campo label="Modelos de receita">
+          <MultiSelect opcoes={OPC.modelosReceita} valor={identity.modelosReceita||[]} onChange={(v) => upd("modelosReceita", v)} placeholder="Como a empresa ganha dinheiro?" />
+        </Campo>
+      </SecaoAccordion>
+
+      <SecaoAccordion titulo="Público-alvo e perfil comercial" subtitulo="Quem são os clientes e como a venda acontece" aberta={secao==="publico"} onToggle={() => setSecao(s => s==="publico"?"":"publico")} pct={pctSecao.publico}>
+        <Campo label="Tipos de cliente">
+          <MultiSelect opcoes={OPC.tiposCliente} valor={identity.tiposCliente||[]} onChange={(v) => upd("tiposCliente", v)} placeholder="Quem compra?" />
+        </Campo>
+        <Campo label="Necessidades atendidas" dica="pode adicionar novas">
+          <MultiSelect opcoes={OPC.necessidades} valor={identity.necessidades||[]} onChange={(v) => upd("necessidades", v)} placeholder="O que o cliente resolve?" permitirCustom />
+        </Campo>
+        <Campo label="Como as vendas chegam">
+          <MultiSelect opcoes={OPC.processoVenda} valor={identity.processoVenda||[]} onChange={(v) => upd("processoVenda", v)} placeholder="Canais e fontes de venda" />
+        </Campo>
+        <Campo label="Ciclo de venda">
+          <SelectUnico opcoes={OPC.cicloVenda} valor={identity.cicloVenda||""} onChange={(v) => upd("cicloVenda", v)} placeholder="Quanto tempo leva fechar?" />
+        </Campo>
+      </SecaoAccordion>
+
+      <SecaoAccordion titulo="Posicionamento e diferenciais" subtitulo="Como a empresa quer ser percebida" aberta={secao==="posicionamento"} onToggle={() => setSecao(s => s==="posicionamento"?"":"posicionamento")} pct={pctSecao.posicionamento}>
+        <Campo label="Diferenciais competitivos">
+          <MultiSelect opcoes={OPC.diferenciais} valor={identity.diferenciais||[]} onChange={(v) => upd("diferenciais", v)} placeholder="O que te diferencia?" permitirCustom />
+        </Campo>
+        <Campo label="Como quer ser reconhecida">
+          <MultiSelect opcoes={OPC.reconhecimento} valor={identity.reconhecimento||[]} onChange={(v) => upd("reconhecimento", v)} placeholder="Percepção desejada" />
+        </Campo>
+        <Campo label="Tom de comunicação">
+          <MultiSelect opcoes={OPC.tomComunicacao} valor={identity.tomComunicacao||[]} onChange={(v) => upd("tomComunicacao", v)} placeholder="Como fala com o cliente?" />
+        </Campo>
+        <Campo label="Valores da empresa">
+          <MultiSelect opcoes={OPC.valores} valor={identity.valores||[]} onChange={(v) => upd("valores", v)} placeholder="Princípios orientadores" permitirCustom />
+        </Campo>
+        <Campo label="Objetivos atuais">
+          <MultiSelect opcoes={OPC.objetivos} valor={identity.objetivos||[]} onChange={(v) => upd("objetivos", v)} placeholder="O que quer alcançar?" permitirCustom />
+        </Campo>
+      </SecaoAccordion>
+
+      <SecaoAccordion titulo="Informações complementares" subtitulo="Contexto adicional para a IA" aberta={secao==="complementar"} onToggle={() => setSecao(s => s==="complementar"?"":"complementar")} pct={pctSecao.complementar}>
+        <Campo label="Informações livres" dica="premiações, contexto histórico, parceiros, etc.">
+          <CampoVoz multiline rows={5} value={identity.infoComplementar||""} onChange={(v) => upd("infoComplementar", v)} placeholder="Adicione qualquer contexto que ajude a IA a entender melhor a empresa..." />
+        </Campo>
+      </SecaoAccordion>
+
+      {/* Indicador de salvamento da identity */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6 }}>
+        <IndicadorSalvamento estado={salvIdentity} />
+      </div>
+
+      {/* Divisor */}
+      <div style={{ borderTop: `1px solid ${BORDA}`, margin: "10px 0 20px" }} />
+
+      {/* Gerar conteúdo com IA */}
+      <div style={{ background: "linear-gradient(135deg,#F0F7FF,#EBF3FF)", border: `1px solid #C7DFF9`, borderRadius: 12, padding: "16px 18px", marginBottom: 20 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#1E40AF", marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
+          <Sparkles size={16} /> Gerar conteúdo institucional com IA
+        </div>
+        <p style={{ fontSize: 13, color: "#374151", margin: "0 0 12px", lineHeight: 1.6 }}>
+          Com base no perfil preenchido acima, a IA cria blocos prontos: Apresentação, O que fazemos, Público-alvo, Diferenciais, Posicionamento, Proposta de valor, Missão e visão, Identidade de comunicação.
+        </p>
+        {erroIA && <p style={{ fontSize: 12.5, color: "var(--red)", margin: "0 0 10px" }}>{erroIA}</p>}
+        <button onClick={gerarIA} disabled={gerandoIA} className="vx-btn vx-btn-sm"
+          style={{ gap: 7, background: "#1D4ED8", color: "#fff", border: "none", opacity: gerandoIA ? .7 : 1 }}>
+          {gerandoIA ? <Loader2 size={14} style={{ animation: "spin .7s linear infinite" }} /> : <Sparkles size={14} />}
+          {gerandoIA ? "Gerando..." : "Gerar conteúdo"}
+        </button>
+        <p style={{ fontSize: 11.5, color: "#6B7280", margin: "8px 0 0" }}>O conteúdo gerado fica como rascunho para revisão antes de usar nas campanhas.</p>
+      </div>
+
+      {/* Blocos institucionais */}
+      <div style={{ marginBottom: 6 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 600, margin: "0 0 12px", color: "#171717" }}>Blocos institucionais</h3>
+
+        {entradas.length === 0 && (
+          <p style={{ fontSize: 14, color: "#737373", margin: "0 0 12px" }}>
+            Adicione blocos com os textos institucionais da empresa ou gere com IA acima.
+          </p>
+        )}
+
+        {entradas.map((e) => (
+          <BlocoSobre key={e.id} entrada={e} onEditar={onEditar} onRemover={onRemover} />
+        ))}
+
+        {sugestoesPend.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "10px 0" }}>
+            {sugestoesPend.map((s) => (
+              <button key={s.titulo} onClick={() => onCriar({ titulo: s.titulo })} title={s.dica}
+                className="vx-btn vx-btn-sm" style={{ gap: 6, borderStyle: "dashed" }}>
+                <Plus size={14} /> {s.titulo}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button onClick={() => onCriar({ titulo: "", tipo: "custom" })} className="vx-btn vx-btn-sm" style={{ gap: 6, marginTop: 4 }}>
           <Plus size={15} /> Adicionar bloco personalizado
         </button>
       </div>
@@ -366,9 +741,20 @@ function EditorSobre({ entradas, onEditar, onCriar, onRemover }) {
   );
 }
 
+const TITULOS_IA = {
+  apresentacao: "Apresentação da empresa",
+  oQueFaz: "O que a empresa faz",
+  publicoAlvo: "Perfil do público-alvo",
+  diferenciais: "Diferenciais competitivos",
+  posicionamento: "Posicionamento de mercado",
+  propostaDeValor: "Proposta de valor",
+  missaoVisao: "Missão, visão e valores",
+  identidadeComunicacao: "Identidade e comunicação",
+};
+
 function BlocoSobre({ entrada, onEditar, onRemover }) {
   return (
-    <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: 16 }}>
+    <div style={{ background: "#fff", border: `1px solid ${BORDA}`, borderRadius: 12, padding: 16, marginBottom: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <input value={entrada.titulo || ""} onChange={(e) => onEditar(entrada.id, { titulo: e.target.value })}
           placeholder="Título do bloco" className="vx-input"

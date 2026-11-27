@@ -3761,5 +3761,45 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_notif_user ON notificacoes(userId, lida);
 `);
 
+// =====================================================================
+// IDENTIDADE ESTRUTURADA DA EMPRESA — base de conhecimento por seleção
+//
+// Tabela separada das company_info_entries (blocos de texto livre). Aqui
+// ficam os campos estruturados: segmentos, modelo de negócio, porte, etc.
+// A IA usa esses dados para gerar os blocos institucionais e alimentar
+// campanhas, playbooks e treinamentos.
+// =====================================================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS company_identity (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL UNIQUE,
+    segmentos TEXT DEFAULT '[]',
+    segmentoCustom TEXT DEFAULT '',
+    modelosNegocio TEXT DEFAULT '[]',
+    porte TEXT DEFAULT '',
+    tempoMercado TEXT DEFAULT '',
+    abrangencias TEXT DEFAULT '[]',
+    abrangenciaDetalhes TEXT DEFAULT '{}',
+    modelosAtendimento TEXT DEFAULT '[]',
+    produtosVinculados TEXT DEFAULT '[]',
+    modelosReceita TEXT DEFAULT '[]',
+    tiposCliente TEXT DEFAULT '[]',
+    necessidades TEXT DEFAULT '[]',
+    processoVenda TEXT DEFAULT '[]',
+    cicloVenda TEXT DEFAULT '',
+    diferenciais TEXT DEFAULT '[]',
+    reconhecimento TEXT DEFAULT '[]',
+    tomComunicacao TEXT DEFAULT '[]',
+    valores TEXT DEFAULT '[]',
+    objetivos TEXT DEFAULT '[]',
+    infoComplementar TEXT DEFAULT '',
+    conteudoGerado TEXT DEFAULT '{}',
+    criadoEm INTEGER NOT NULL,
+    atualizadoEm INTEGER NOT NULL,
+    FOREIGN KEY (companyId) REFERENCES companies(id)
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_company_identity_co ON company_identity (companyId);
+`);
+
 export default db;
 export { uid, agora };
