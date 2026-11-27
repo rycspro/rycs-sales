@@ -253,8 +253,8 @@ function FontesContatosSelector({ campanha, set }) {
                 borderRadius: 8, cursor: "pointer", textAlign: "left",
               }}
             >
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: ativo ? "var(--brand)" : "var(--border-muted, var(--border))", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Icon size={15} color={ativo ? "#fff" : "var(--text-2)"} />
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: ativo ? "var(--brand)" : "var(--brand-50)", border: ativo ? "none" : "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Icon size={15} color={ativo ? "#fff" : "var(--brand)"} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 600, color: ativo ? "var(--brand)" : "var(--text)" }}>{label}</div>
