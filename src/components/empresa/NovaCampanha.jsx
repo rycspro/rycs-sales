@@ -1730,46 +1730,111 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           </>)}
 
           {/* Confirmação de contato */}
-          {blocoAtual === "confirmacao" && (<>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Confirmação de contato</h2>
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}>
-              <b style={{ color: "var(--brand)" }}><ShieldCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Confirmação de contato</b><Tag obrigatorio={false} />
-              <div className="vx-mut" style={{ fontSize: 11.5 }}>O cliente recebe um link para confirmar que o contato realmente aconteceu.</div>
-            </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {CANAIS_CONFIRMACAO.map((c) => {
-                const canaisAtivos = (campanha.confirmacaoContato || {}).canais || [];
-                const ativo = canaisAtivos.includes(c.id);
-                return (
-                  <button key={c.id} type="button" style={{
-                    padding: "8px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                    border: `1px solid ${ativo ? SEL.border : SEL.borderOff}`,
-                    background: ativo ? SEL.bg : SEL.bgOff,
-                    color: ativo ? "var(--brand)" : "var(--text-2)",
-                  }} onClick={() => {
-                    const novos = ativo ? canaisAtivos.filter((x) => x !== c.id) : [...canaisAtivos, c.id];
-                    set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), habilitada: novos.length > 0, canais: novos });
-                  }}>{c.nome}</button>
-                );
-              })}
-              {/* Sem confirmação */}
-              {(() => {
-                const semConfirmacao = !(campanha.confirmacaoContato || {}).habilitada;
-                return (
-                  <button type="button" style={{
-                    padding: "8px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                    border: `1px solid ${semConfirmacao ? SEL.border : SEL.borderOff}`,
-                    background: semConfirmacao ? SEL.bg : SEL.bgOff,
-                    color: semConfirmacao ? "var(--brand)" : "var(--text-2)",
-                  }} onClick={() => set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), habilitada: false, canais: [] })}>
-                    Sem confirmação
-                  </button>
-                );
-              })()}
-            </div>
-          </div>
-          </>)}
+          {blocoAtual === "confirmacao" && (() => {
+            const canaisAtivos = (campanha.confirmacaoContato || {}).canais || [];
+            const habilitada = !!(campanha.confirmacaoContato || {}).habilitada;
+            const isRycs = !habilitada;
+            const toggleCanal = (id) => {
+              if (id === "rycs") {
+                set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), habilitada: false, canais: [] });
+                return;
+              }
+              const novos = canaisAtivos.includes(id) ? canaisAtivos.filter((x) => x !== id) : [...canaisAtivos.filter((x) => x !== "rycs"), id];
+              set("confirmacaoContato", { ...(campanha.confirmacaoContato || configConfirmacaoPadrao()), habilitada: novos.length > 0, canais: novos });
+            };
+            const CARDS_CONFIRMACAO = [
+              {
+                id: "whatsapp",
+                Icon: MessageCircle,
+                iconColor: "#25D366",
+                titulo: "Confirmação por WhatsApp",
+                descricao: "Após o atendimento, o cliente recebe uma mensagem identificando sua empresa e o profissional responsável, com um link exclusivo para confirmar a conversa.",
+                criterios: ["Número vinculado ao contato.", "Confirmação expressa do cliente.", "Validade e uso único do link."],
+                rodape: "A atividade permanece pendente até receber uma confirmação válida e cumprir as demais regras de comprovação.",
+                disabled: false,
+              },
+              {
+                id: "email",
+                Icon: Mail,
+                iconColor: "var(--brand)",
+                titulo: "Confirmação por e-mail",
+                descricao: "O cliente recebe um e-mail identificando a empresa, o profissional e o assunto comercial abordado, podendo reconhecer ou negar o atendimento.",
+                criterios: ["E-mail vinculado ao contato.", "Resposta registrada pelo cliente.", "Validade e uso único do link."],
+                rodape: "Se o cliente não reconhecer o atendimento, a atividade não será aprovada automaticamente.",
+                disabled: false,
+              },
+              {
+                id: "sms",
+                Icon: Phone,
+                iconColor: "var(--muted)",
+                titulo: "Confirmação por SMS",
+                descricao: "O cliente recebe uma mensagem de texto com um link seguro para confirmar o atendimento, sem precisar instalar aplicativos.",
+                criterios: ["Telefone vinculado ao contato.", "Confirmação expressa do cliente.", "Validade e uso único do link."],
+                rodape: "A confirmação será registrada no histórico da atividade.",
+                disabled: true,
+                badge: "Indisponível no momento",
+              },
+              {
+                id: "rycs",
+                Icon: ShieldCheck,
+                iconColor: "var(--brand)",
+                titulo: "Verificação pela RYCS",
+                descricao: "Não exige uma ação adicional do cliente. A comprovação acontece por meio dos registros e evidências da atividade realizada pelo profissional.",
+                criterios: ["Histórico de conversas ou ligações.", "Evidências obrigatórias da atividade.", "Inconsistências e duplicidades."],
+                rodape: "Atividades com evidências insuficientes ou suspeitas serão encaminhadas para revisão.",
+                disabled: false,
+              },
+            ];
+            const isSelected = (id) => id === "rycs" ? isRycs : canaisAtivos.includes(id);
+            return (<>
+              <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Confirmação de contato</h2>
+              <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>Defina como a RYCS deverá comprovar que o profissional realmente conversou com seu cliente.</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 14 }}>
+                {CARDS_CONFIRMACAO.map(({ id, Icon, iconColor, titulo, descricao, criterios, rodape, disabled, badge }) => {
+                  const sel = isSelected(id);
+                  return (
+                    <button key={id} type="button" disabled={disabled} onClick={() => !disabled && toggleCanal(id)} style={{
+                      position: "relative", textAlign: "left", padding: "16px", cursor: disabled ? "not-allowed" : "pointer",
+                      border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`,
+                      background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface-2, #F9FAFB)",
+                      borderRadius: 12, opacity: disabled ? 0.6 : 1,
+                      transition: "border-color .15s, background .15s",
+                      display: "flex", flexDirection: "column", gap: 0,
+                    }}>
+                      {sel && (
+                        <div style={{ position: "absolute", top: 12, right: 12, width: 20, height: 20, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Check size={12} color="#fff" />
+                        </div>
+                      )}
+                      <Icon size={24} color={disabled ? "var(--muted)" : iconColor} style={{ marginBottom: 10 }} />
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink, #171717)", marginBottom: badge ? 4 : 8 }}>{titulo}</div>
+                      {badge && <div style={{ fontSize: 11, fontWeight: 600, color: "var(--amber, #F59E0B)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>{badge}</div>}
+                      <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 12 }}>{descricao}</div>
+                      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: "auto" }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.07em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 6 }}>O que será verificado</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          {criterios.map((c) => (
+                            <div key={c} style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: 12, color: "var(--text-2)" }}>
+                              <Check size={12} color="var(--brand)" style={{ marginTop: 1, flexShrink: 0 }} />
+                              <span>{c}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="vx-mut" style={{ fontSize: 11, lineHeight: 1.4, marginTop: 8 }}>{rodape}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ marginTop: 12, padding: "12px 14px", background: "var(--brand-50, #EFF6FF)", borderRadius: 10, border: "1px solid var(--brand-100, #BFDBFE)", display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <ShieldCheck size={16} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--brand)", marginBottom: 2 }}>Proteção contra fraudes</div>
+                  <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5 }}>Nenhuma confirmação isolada garante a liberação do pagamento. A RYCS cruza as evidências com as regras da campanha antes de aprovar a atividade.</div>
+                </div>
+              </div>
+            </>);
+          })()}
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={voltarBloco}><ArrowLeft size={14} /> Voltar</button>
