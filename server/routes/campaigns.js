@@ -11,6 +11,7 @@ import { obterOperacaoCampanha, obterVisaoGeralCampanhas } from "../services/cam
 import { registrarEventoCampanha } from "../services/campaignEvents.js";
 import { sanearAlcance, sanearPaisesAceitos, parsePaisesAceitos } from "../../shared/oportunidades.js";
 import { calcularPlanejamentoReverso } from "../../shared/planejamentoReverso.js";
+import { calcularFunilProjecao, entradaDaCampanha } from "../../shared/funilProjecao.js";
 import { investimentoRecomendado, capacidadeOperacional } from "../../shared/otimizacaoVerba.js";
 import { criarPergunta, criarCriterio } from "../../shared/qualificacaoLeads.js";
 import { diagnosticoCampanha } from "../../shared/campaignEngine.js";
@@ -2250,6 +2251,25 @@ router.get("/campaigns/:id/metas-projecoes", (req, res) => {
 
   const metasDiarias = meta > 0 ? Math.round((meta / duracaoDias) * 10) / 10 : 0;
   res.json({ meta, diasDecorridos, diasRestantes, duracaoDias, realizado: { leadsTrabalhados: totalLeadsTrabalhados, qualificados: totalQualificados, reunioes: totalReunioes, reunioesRealizadas: totalReunioesRealizadas, vendas: totalVendas }, ritmo, projecao, comparacao, metasIntermediarias: { diaria: metasDiarias, semanal: Math.round(metasDiarias * 7), meta, duracaoDias }, planejamento });
+});
+
+// ── Projeção de ROI do funil (lógica da planilha) ───────────────────────
+
+router.get("/campaigns/:id/projecao-funil", (req, res) => {
+  const { role, entityId } = req.user;
+  if (role !== "empresa" && role !== "admin") return res.status(403).json({ error: "Apenas empresa" });
+  const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+  if (!campaign) return res.status(404).json({ error: "Campanha não encontrada" });
+  if (role === "empresa" && entityId !== campaign.companyId) return res.status(403).json({ error: "Sem permissão" });
+
+  const empresa = db.prepare("SELECT nome, segmento, produto, ticket FROM companies WHERE id = ?").get(campaign.companyId) || {};
+  const formasGanho = db.prepare("SELECT * FROM formas_ganho WHERE campaignId = ? AND ativo = 1").all(campaign.id);
+
+  const parsed = parseCampaign(campaign);
+  const entradas = entradaDaCampanha(parsed, empresa, formasGanho);
+  const projecao = calcularFunilProjecao(entradas);
+
+  res.json({ projecao, entradas, ticketInformado: !!(Number(empresa.ticket) || 0) });
 });
 
 // ── F3: Alertas proativos ───────────────────────────────────────────────
