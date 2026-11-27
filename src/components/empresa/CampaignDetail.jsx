@@ -8,7 +8,7 @@ import {
   Sparkles, ChevronDown,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
-import { money } from "../../lib/utils.js";
+import { money, moedaSimbolo } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { STATUS_CAMPANHA_UI } from "../../../shared/campaignOperations.js";
 import {
@@ -1005,7 +1005,7 @@ function FormasGanhoCampanha({ campanha }) {
                     <option value="fixo">Valor fixo</option><option value="comissao">Comissão %</option>
                   </select>
                 </label>
-                <label><div className="vx-label">{novo.tipoRemuneracao === "comissao" ? "Percentual (%)" : "Valor (R$)"}</div>
+                <label><div className="vx-label">{novo.tipoRemuneracao === "comissao" ? "Percentual (%)" : `Valor (${moedaSimbolo()})`}</div>
                   <input className="vx-input vx-mono" type="number" min="0" value={novo.valor} onChange={(e) => setNovo({ ...novo, valor: Number(e.target.value) })} />
                 </label>
                 <label><div className="vx-label">Evento gatilho</div>

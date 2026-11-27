@@ -6,7 +6,7 @@ import { lerJson, gravarJson, remover as removerArmazenado } from "../../lib/arm
 import ConversaJarvas from "./ConversaJarvas.jsx";
 import { useI18n } from "../../lib/i18n.jsx";
 import { nomeAssistente } from "../../../shared/jarvas.js";
-import { money } from "../../lib/utils.js";
+import { money, moedaSimbolo } from "../../lib/utils.js";
 import { ACOES } from "../../lib/constants.js";
 import { OBJETIVOS, ORDEM_OBJETIVOS, montarCampanha, custoEstimado } from "../../../shared/objetivosCampanha.js";
 import { campanhaPodeSerPublicada, requisitosPublicacao, saldoDisponivel, isPosPago } from "../../../shared/empresa.js";
@@ -2040,19 +2040,19 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                               <div className="vx-label">Tipo de remuneração</div>
                               <select className="vx-input" value={a.id === "venda" ? (campanha.vendaTipoRemuneracao || "fixo") : "fixo"}
                                 onChange={(e) => { if (a.id === "venda") set("vendaTipoRemuneracao", e.target.value); }}>
-                                <option value="fixo">Valor fixo (R$)</option>
+                                <option value="fixo">{`Valor fixo (${moedaSimbolo()})`}</option>
                                 {a.id === "venda" && <option value="percentual">Comissão (%)</option>}
                               </select>
                             </label>
                             <label>
-                              <div className="vx-label">{a.id === "venda" && campanha.vendaTipoRemuneracao === "percentual" ? "Percentual (%)" : "Valor (R$)"}</div>
+                              <div className="vx-label">{a.id === "venda" && campanha.vendaTipoRemuneracao === "percentual" ? "Percentual (%)" : `Valor (${moedaSimbolo()})`}</div>
                               <div style={{ position: "relative" }}>
                                 <input className="vx-input vx-mono" type="number" min="0" step="0.5"
                                   max={a.id === "venda" && campanha.vendaTipoRemuneracao === "percentual" ? "100" : undefined}
                                   value={campanha.tarefas?.[a.id] || 0}
                                   onChange={(e) => set("tarefas", { ...campanha.tarefas, [a.id]: Number(e.target.value) })} />
                                 <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", fontSize: 12, pointerEvents: "none" }}>
-                                  {a.id === "venda" && campanha.vendaTipoRemuneracao === "percentual" ? "%" : "R$"}
+                                  {a.id === "venda" && campanha.vendaTipoRemuneracao === "percentual" ? "%" : moedaSimbolo()}
                                 </span>
                               </div>
                             </label>
@@ -2182,10 +2182,10 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                                 <option value="fixo">Valor fixo por ação</option>
                                 <option value="comissao">Comissão percentual</option>
                               </select></label>
-                            <label><div className="vx-label">{fg.tipoRemuneracao === "comissao" ? "Percentual (%)" : "Valor (R$)"}</div>
+                            <label><div className="vx-label">{fg.tipoRemuneracao === "comissao" ? "Percentual (%)" : `Valor (${moedaSimbolo()})`}</div>
                               <div style={{ position: "relative" }}>
                                 <input className="vx-input vx-mono" type="number" min="0" step="0.5" value={fg.valor} onChange={(e) => upd("valor", Number(e.target.value))} />
-                                <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", fontSize: 12, pointerEvents: "none" }}>{fg.tipoRemuneracao === "comissao" ? "%" : "R$"}</span>
+                                <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", fontSize: 12, pointerEvents: "none" }}>{fg.tipoRemuneracao === "comissao" ? "%" : moedaSimbolo()}</span>
                               </div></label>
                           </div>
                           {fg.tipoRemuneracao === "comissao" && (

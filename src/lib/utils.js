@@ -7,6 +7,8 @@ export function setMoedaUi(moeda) {
   MOEDA_UI = String(moeda || "BRL").toUpperCase();
 }
 
+export function getMoedaUi() { return MOEDA_UI; }
+
 // BRL → pt-BR (R$ 399,00). Resto → en-US pra ter prefixos distintos
 // (MX$, A$, C$, HK$, CN¥, ₹…) sem ambiguidade entre moedas tipo dólar.
 const localeDaMoeda = (m) => m === "BRL" ? "pt-BR" : "en-US";
@@ -15,6 +17,15 @@ export const money = (n, moeda) => {
   const m = String(moeda || MOEDA_UI).toUpperCase();
   try { return (Number(n) || 0).toLocaleString(localeDaMoeda(m), { style: "currency", currency: m }); }
   catch { return `${m} ${(Number(n) || 0).toFixed(2)}`; }
+};
+
+// Símbolo curto da moeda (ex: "R$", "$", "€", "£").
+export const moedaSimbolo = (moeda) => {
+  const m = String(moeda || MOEDA_UI).toUpperCase();
+  try {
+    const parts = (0).toLocaleString(localeDaMoeda(m), { style: "currency", currency: m, minimumFractionDigits: 0 }).split(/[\d,.\s]/);
+    return parts.find((p) => p.trim()) || m;
+  } catch { return m; }
 };
 
 export const uid = () => Math.random().toString(36).slice(2, 9);
