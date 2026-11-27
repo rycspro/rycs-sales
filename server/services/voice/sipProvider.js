@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { VoiceProviderInterface } from "./providerInterface.js";
 
 // Cliente ARI leve para comunicação com Asterisk via REST + WebSocket.
@@ -11,6 +12,18 @@ const WEBRTC_WSS_URL = process.env.WEBRTC_WSS_URL || "";
 
 function ariConfigurado() {
   return !!(ARI_URL && ARI_USER && ARI_PASS);
+}
+
+const DOMINIO_SIP = process.env.VOICE_SIP_DOMAIN || "app.rycs.pro";
+
+function nomeRamal(sellerId) {
+  return `sdr_${String(sellerId).replace(/[^A-Za-z0-9_-]/g, "")}`.slice(0, 40);
+}
+
+// Operadoras esperam E.164 sem "+"; números brasileiros chegam sem DDI.
+export function paraE164(numero) {
+  const d = String(numero || "").replace(/\D/g, "").replace(/^0+/, "");
+  return d.length === 10 || d.length === 11 ? `55${d}` : d;
 }
 
 class AriClient {
@@ -120,6 +133,65 @@ class AriClient {
 
 const ariClient = new AriClient();
 
+const chamadas = new Map();
+let aoAtualizarChamada = () => {};
+
+async function desligarCanal(id) {
+  if (!id) return;
+  await ariClient.request("DELETE", `/channels/${id}`).catch(() => {});
+}
+
+async function tratarEventoPonte(ev) {
+  const canal = ev.channel;
+  if (!canal) return;
+
+  if (ev.type === "StasisStart") {
+    const [papel, callId] = ev.args || [];
+    const c = chamadas.get(callId);
+    if (!c) return;
+
+    if (papel === "agente") {
+      try {
+        const ponte = await ariClient.request("POST", "/bridges", { type: "mixing" });
+        c.ponte = ponte.id;
+        await ariClient.request("POST", `/bridges/${ponte.id}/addChannel`, { channel: canal.id });
+        aoAtualizarChamada(callId, { status: "discando" });
+        const cliente = await ariClient.request("POST", "/channels", {
+          endpoint: `PJSIP/${c.destino}@operadora-endpoint`,
+          app: "rycs-voice",
+          appArgs: `cliente,${callId}`,
+          timeout: 45,
+          ...(c.callerIdNum ? { callerId: c.callerIdNum } : {}),
+        });
+        c.cliente = cliente.id;
+      } catch (err) {
+        aoAtualizarChamada(callId, { status: "falhou", motivo: err.message });
+        await desligarCanal(c.agente);
+      }
+    } else if (papel === "cliente") {
+      c.atendidaEm = Date.now();
+      await ariClient.request("POST", `/bridges/${c.ponte}/addChannel`, { channel: canal.id }).catch(() => {});
+      aoAtualizarChamada(callId, { status: "em_andamento", atendidaEm: c.atendidaEm });
+    }
+    return;
+  }
+
+  if (ev.type === "ChannelDestroyed") {
+    for (const [callId, c] of chamadas) {
+      if (c.agente !== canal.id && c.cliente !== canal.id) continue;
+      chamadas.delete(callId);
+      await desligarCanal(c.agente === canal.id ? c.cliente : c.agente);
+      if (c.ponte) await ariClient.request("DELETE", `/bridges/${c.ponte}`).catch(() => {});
+      aoAtualizarChamada(callId, {
+        status: c.atendidaEm ? "encerrada" : "nao_atendida",
+        atendidaEm: c.atendidaEm,
+        encerradaEm: Date.now(),
+        causa: ev.cause_txt || "",
+      });
+    }
+  }
+}
+
 export class SipProvider extends VoiceProviderInterface {
   get id() { return "sip"; }
   get nome() { return "SIP/Asterisk (WebRTC)"; }
@@ -161,6 +233,7 @@ export class SipProvider extends VoiceProviderInterface {
 
     try {
       const info = await ariClient.request("GET", "/asterisk/info");
+      ariClient.onEvent("ponte-chamadas", (ev) => { tratarEventoPonte(ev).catch(() => {}); });
       ariClient.connectWebSocket();
       return { ok: true, versao: info?.system?.version || "desconhecida" };
     } catch (err) {
@@ -168,52 +241,74 @@ export class SipProvider extends VoiceProviderInterface {
     }
   }
 
-  async createWebRtcEndpoint({ extensionId, companyId, sellerId }) {
+  async createWebRtcEndpoint({ sellerId }) {
     if (!ariConfigurado()) return { ok: false, motivo: "ARI não configurado." };
 
-    const endpointName = `sdr_${companyId}_${sellerId}`.slice(0, 40);
+    const nome = nomeRamal(sellerId);
+    const senha = randomBytes(18).toString("hex");
+    const gravar = (tipo, campos) => ariClient.request("PUT", `/asterisk/config/dynamic/res_pjsip/${tipo}/${nome}`, {
+      fields: Object.entries(campos).map(([attribute, value]) => ({ attribute, value: String(value) })),
+    });
+
+    try {
+      await gravar("auth", { auth_type: "userpass", username: nome, password: senha });
+      await gravar("aor", { max_contacts: 1, remove_existing: "yes" });
+      await gravar("endpoint", {
+        transport: "transport-ws",
+        context: "rycs-webrtc",
+        disallow: "all",
+        allow: "opus,ulaw",
+        webrtc: "yes",
+        dtls_auto_generate_cert: "yes",
+        direct_media: "no",
+        auth: nome,
+        aors: nome,
+      });
+    } catch (err) {
+      return { ok: false, motivo: `Falha ao preparar o ramal: ${err.message}` };
+    }
+
     return {
       ok: true,
-      endpoint: endpointName,
-      wssUrl: WEBRTC_WSS_URL || `wss://${new URL(ARI_URL).hostname}:8089/ws`,
+      endpoint: nome,
+      usuario: nome,
+      senha,
+      dominio: DOMINIO_SIP,
+      wssUrl: WEBRTC_WSS_URL || `wss://${DOMINIO_SIP}/voice-ws`,
       stunServers: [process.env.STUN_SERVER || "stun:stun.l.google.com:19302"],
       codecs: ["opus", "ulaw"],
     };
   }
 
-  async initiateCall({ telefone, leadId, sellerId, companyId, queueId, callerIdNum }) {
+  // Liga primeiro para o navegador do profissional; quando ele atende, o
+  // evento StasisStart disca para o lead e junta as duas pontas numa ponte.
+  async initiateCall({ telefone, sellerId, callId, callerIdNum }) {
     if (!ariConfigurado()) return { ok: false, motivo: "Provedor SIP não configurado." };
 
-    const callId = `sip_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const destino = telefone.replace(/\D/g, "");
-
+    const destino = paraE164(telefone);
     try {
-      const channel = await ariClient.request("POST", "/channels", {
-        endpoint: `PJSIP/${destino}@operadora-endpoint`,
+      const canal = await ariClient.request("POST", "/channels", {
+        endpoint: `PJSIP/${nomeRamal(sellerId)}`,
         app: "rycs-voice",
-        appArgs: `outgoing,${callId},${companyId},${sellerId},${leadId || ""},${queueId || ""}`,
-        callerId: callerIdNum || destino,
-        variables: {
-          RYCS_CALL_ID: callId,
-          RYCS_COMPANY_ID: companyId,
-          RYCS_SELLER_ID: sellerId,
-          RYCS_LEAD_ID: leadId || "",
-          RYCS_QUEUE_ID: queueId || "",
-        },
+        appArgs: `agente,${callId}`,
+        callerId: `RYCS <${destino}>`,
+        timeout: 30,
       });
-
+      chamadas.set(callId, { destino, callerIdNum, agente: canal.id, cliente: null, ponte: null, atendidaEm: null });
       return {
         ok: true,
         providerCallId: callId,
-        channelId: channel.id,
-        status: "originando",
+        channelId: canal.id,
+        status: "chamando_profissional",
         origemDados: "verificado",
       };
     } catch (err) {
+      const semRegistro = /404|400|Allocation failed|not found/i.test(err.message);
       return {
         ok: false,
         providerCallId: callId,
-        motivo: `Falha ao originar: ${err.message}`,
+        status: "falhou",
+        motivo: semRegistro ? "Áudio do navegador não conectado. Recarregue a discadora." : `Falha ao originar: ${err.message}`,
         origemDados: "verificado",
       };
     }
@@ -349,6 +444,10 @@ export class SipProvider extends VoiceProviderInterface {
 
   removeAriListener(listenerId) {
     ariClient.removeListener(listenerId);
+  }
+
+  aoAtualizarChamada(fn) {
+    aoAtualizarChamada = fn;
   }
 
   get ariConnected() {

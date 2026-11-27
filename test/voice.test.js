@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import jwt from "jsonwebtoken";
+import { paraE164 } from "../server/services/voice/sipProvider.js";
 
 const SEGREDO = "segredo-de-teste-onboarding";
 const assinar = (payload) => `sm_token=${jwt.sign(payload, SEGREDO, { expiresIn: "1h" })}`;
@@ -618,6 +619,29 @@ describe("RYCS Voice — Discadora comercial", () => {
   it("vendedor não acessa admin telefonia config", async () => {
     const r = await req("/voice/admin/telefonia/config", { cookie: cookieVendedor });
     assert.equal(r.status, 403);
+  });
+
+  it("credencial WebRTC fica indisponível sem Asterisk configurado", async () => {
+    const r = await req("/voice/webrtc/credenciais", { cookie: cookieVendedor, body: {} });
+    assert.equal(r.status, 503);
+  });
+
+  it("empresa não pede credencial WebRTC", async () => {
+    const r = await req("/voice/webrtc/credenciais", { cookie: cookieEmpresa, body: {} });
+    assert.equal(r.status, 403);
+  });
+
+  it("provedor SIP informa se a telefonia real foi liberada", async () => {
+    const r = await req("/voice/providers", { cookie: cookieVendedor });
+    const sip = r.corpo.find((p) => p.id === "sip");
+    assert.equal(sip.liberado, false);
+  });
+
+  it("números brasileiros viram E.164 para a operadora", () => {
+    assert.equal(paraE164("(11) 98765-4321"), "5511987654321");
+    assert.equal(paraE164("011 3333-4444"), "551133334444");
+    assert.equal(paraE164("+55 21 99999-8888"), "5521999998888");
+    assert.equal(paraE164("+91 98765 43210"), "919876543210");
   });
 
   it("check-destination não aplica limite diário com limites comerciais desativados", async () => {
