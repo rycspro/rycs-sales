@@ -1801,66 +1801,90 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                 </div>
               )}
               {(campanha.funcoesOperacao || []).length > 0 && (
-                <div style={{ marginTop: 16 }}>
-                  <div className="vx-label" style={{ marginBottom: 8 }}>Configure cada função</div>
-                  <div style={{ display: "flex", gap: 0, borderBottom: "2px solid var(--border)", marginBottom: 14 }}>
-                    {(campanha.funcoesOperacao || []).map((k) => {
-                      const f = FUNCOES[k];
-                      const ativaAba = (campanha.abaFuncaoAtiva || (campanha.funcoesOperacao || [])[0]) === k;
-                      return (
-                        <button key={k} onClick={() => set("abaFuncaoAtiva", k)} style={{
-                          padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                          color: ativaAba ? "#fff" : "var(--muted)",
-                          background: ativaAba ? "var(--brand)" : "transparent",
-                          borderRadius: "8px 8px 0 0", border: "none",
-                          marginBottom: -2, borderBottomWidth: 2, borderBottomStyle: "solid",
-                          borderBottomColor: ativaAba ? "var(--brand)" : "transparent",
-                          transition: "background .15s, color .15s",
-                        }}>
-                          {f?.nome || k}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {(() => {
-                    const funcaoAtiva = campanha.abaFuncaoAtiva || (campanha.funcoesOperacao || [])[0];
-                    if (!funcaoAtiva) return null;
-                    const cfg = campanha[`config_${funcaoAtiva}`] || {};
-                    const setConfig = (campo, valor) => set(`config_${funcaoAtiva}`, { ...cfg, [campo]: valor });
-                    const fInfo = FUNCOES[funcaoAtiva];
-                    const sugeridas = SUGESTOES_FUNCAO[funcaoAtiva] || [];
+                <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
+                  {(campanha.funcoesOperacao || []).map((k) => {
+                    const f = FUNCOES[k];
+                    const IconFuncao = { sdr: CalendarCheck, bdr: Target, closer: BadgeDollarSign, pap: Footprints }[k] || Users;
+                    const nomeAmigavel = { sdr: "Qualificar e agendar reuniões", bdr: "Encontrar novos clientes", closer: "Negociar e fechar vendas", pap: "Visitar clientes presencialmente" }[k] || f?.completo;
+                    const cfg = campanha[`config_${k}`] || {};
+                    const setConfig = (campo, valor) => set(`config_${k}`, { ...(campanha[`config_${k}`] || {}), [campo]: valor });
+                    const expandido = campanha.abaFuncaoAtiva === k;
+                    const origemLabel = { rycs: "RYCS", interno: "Minha equipe", ambos: "Ambos" }[cfg.origemProfissionais] || "RYCS";
+                    const expLabel = NIVEIS_EXPERIENCIA.find((n) => n.id === (cfg.nivelExperiencia || "indiferente"))?.label || "Indiferente";
+                    const aprovLabel = PROCESSOS_ADMISSAO.find((p) => p.id === (cfg.processoAdmissao || "manual"))?.label || "Manual";
                     return (
-                      <div style={{ display: "grid", gap: 14 }}>
-                        <div className="vx-card" style={{ padding: 14 }}>
-                          <b style={{ fontSize: 13, color: "var(--brand)" }}>De onde vêm os profissionais? — {fInfo?.nome}</b><Tag obrigatorio={true} />
-                          <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 10 }}>Escolha se contrata pela RYCS, usa sua equipe ou ambos.</div>
-                          <div style={{ display: "grid", gap: 6 }}>
-                            {Object.values(ORIGENS_PROFISSIONAIS).map((o) => (
-                              <CardOption key={o.id} selected={cfg.origemProfissionais === o.id} onClick={() => setConfig("origemProfissionais", o.id)} title={o.label} />
-                            ))}
+                      <div key={k} style={{ border: `1px solid ${expandido ? "var(--brand)" : "var(--border)"}`, borderRadius: 12, overflow: "hidden", background: "var(--surface)", transition: "border-color .15s" }}>
+                        {/* cabeçalho */}
+                        <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <IconFuncao size={20} color="var(--brand)" />
                           </div>
-                          {(cfg.origemProfissionais === "interno" || cfg.origemProfissionais === "ambos") && (
-                            <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8, padding: "8px 10px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
-                              Os colaboradores da sua empresa podem ser selecionados em <b>Gestão interna → Meu time</b> após a publicação.
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: 15 }}>{f?.nome || k}</div>
+                            <div className="vx-mut" style={{ fontSize: 12 }}>{nomeAmigavel}</div>
+                          </div>
+                          <button type="button" className="vx-btn vx-btn-ghost vx-btn-sm" style={{ padding: 6 }} onClick={() => set("abaFuncaoAtiva", expandido ? null : k)}>
+                            <Pencil size={15} color="var(--brand)" />
+                          </button>
+                        </div>
+                        {/* resumo (recolhido) */}
+                        {!expandido && (<>
+                          <div style={{ padding: "10px 16px", borderTop: "1px solid var(--border)", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                            <div><div className="vx-mut" style={{ fontSize: 11 }}>Origem</div><div style={{ fontWeight: 600, fontSize: 13 }}>{origemLabel}</div></div>
+                            <div><div className="vx-mut" style={{ fontSize: 11 }}>Experiência</div><div style={{ fontWeight: 600, fontSize: 13 }}>{expLabel}</div></div>
+                            <div><div className="vx-mut" style={{ fontSize: 11 }}>Aprovação</div><div style={{ fontWeight: 600, fontSize: 13 }}>{aprovLabel}</div></div>
+                          </div>
+                          <div style={{ padding: "10px 16px", borderTop: "1px solid var(--border)" }}>
+                            <button type="button" className="vx-btn vx-btn-ghost" style={{ width: "100%", justifyContent: "center" }} onClick={() => set("abaFuncaoAtiva", k)}>
+                              Personalizar profissional
+                            </button>
+                          </div>
+                        </>)}
+                        {/* formulário expandido */}
+                        {expandido && (
+                          <div style={{ padding: 16, borderTop: "1px solid var(--border)", display: "grid", gap: 14 }}>
+                            {/* Origem */}
+                            <div>
+                              <div className="vx-label" style={{ marginBottom: 8 }}>Origem dos profissionais <Tag obrigatorio={true} /></div>
+                              <div style={{ display: "grid", gap: 6 }}>
+                                {Object.values(ORIGENS_PROFISSIONAIS).map((o) => (
+                                  <CardOption key={o.id} selected={(cfg.origemProfissionais || "rycs") === o.id} onClick={() => setConfig("origemProfissionais", o.id)} title={o.label} />
+                                ))}
+                              </div>
+                              {(cfg.origemProfissionais === "interno" || cfg.origemProfissionais === "ambos") && (
+                                <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8, padding: "8px 10px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)" }}>
+                                  Os colaboradores da sua empresa podem ser selecionados em <b>Gestão interna → Meu time</b> após a publicação.
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className="vx-card" style={{ padding: 14 }}>
-                          <b style={{ fontSize: 13, color: "var(--brand)" }}>Perfil e requisitos — {fInfo?.nome}</b><Tag obrigatorio={false} />
-                          <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
-                            <label><div className="vx-label">Experiência</div>
-                              <select className="vx-input" value={cfg.nivelExperiencia || "indiferente"} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
-                                {NIVEIS_EXPERIENCIA.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
-                              </select></label>
-                            <label><div className="vx-label">Aprovação da candidatura</div>
-                              <select className="vx-input" value={cfg.processoAdmissao || "manual"} onChange={(e) => setConfig("processoAdmissao", e.target.value)}>
-                                {PROCESSOS_ADMISSAO.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-                              </select></label>
+                            {/* Experiência */}
+                            <div>
+                              <div className="vx-label" style={{ marginBottom: 8 }}>Experiência <Tag obrigatorio={false} /></div>
+                              <div style={{ display: "grid", gap: 6 }}>
+                                {NIVEIS_EXPERIENCIA.map((n) => (
+                                  <CardOption key={n.id} selected={(cfg.nivelExperiencia || "indiferente") === n.id} onClick={() => setConfig("nivelExperiencia", n.id)} title={n.label} subtitle={n.descricao} />
+                                ))}
+                              </div>
+                            </div>
+                            {/* Aprovação — oculta se só equipe interna */}
+                            {cfg.origemProfissionais !== "interno" && (
+                              <div>
+                                <div className="vx-label" style={{ marginBottom: 8 }}>Aprovação da candidatura <Tag obrigatorio={false} /></div>
+                                <div style={{ display: "grid", gap: 6 }}>
+                                  {PROCESSOS_ADMISSAO.map((p) => (
+                                    <CardOption key={p.id} selected={(cfg.processoAdmissao || "manual") === p.id} onClick={() => setConfig("processoAdmissao", p.id)} title={p.label} subtitle={p.descricao} />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <button type="button" className="vx-btn vx-btn-brand" style={{ justifyContent: "center" }} onClick={() => set("abaFuncaoAtiva", null)}>
+                              Concluir configuração
+                            </button>
                           </div>
-                        </div>
+                        )}
                       </div>
                     );
-                  })()}
+                  })}
                 </div>
               )}
               {(campanha.funcoesOperacao || []).length >= 2 && (
