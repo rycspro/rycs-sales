@@ -2258,26 +2258,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
-          {/* Validação de resultados */}
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Validação de resultados</h2>
-          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina como você aprova um lead qualificado, uma reunião agendada ou outro resultado desta atividade.</p>
-          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
-            <div style={{ display: "grid", gap: 8 }}>
-              {METODOS_APROVACAO.map((m) => {
-                const MIcon = m.icon;
-                return (
-                  <CardOption key={m.id} selected={(campanha.aprovacaoPagamentos || "manual") === m.id}
-                    onClick={() => set("aprovacaoPagamentos", m.id)} icon={MIcon} title={m.nome}
-                    subtitle={m.id === "automatica" ? "O resultado é validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e valida dentro dos critérios definidos." : "Você revisa e aprova manualmente cada resultado entregue."} />
-                );
-              })}
-            </div>
-            <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)", display: "flex", alignItems: "flex-start", gap: 8 }}>
-              <ShieldCheck size={14} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
-              <span className="vx-mut" style={{ fontSize: 11.5 }}>Independente da modalidade, as comprovações obrigatórias definidas pela RYCS nunca podem ser ignoradas.</span>
-            </div>
-          </div>
-
           {/* ── Monte a rotina comercial ── */}
           {campanha.estruturaComercial !== "vinculada" && (() => {
             const funcoesParaRotina = campanha.estruturaComercial === "operacao"
@@ -2420,6 +2400,26 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               </div>
             );
           })()}
+
+          {/* Aprovação das entregas */}
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Aprovação das entregas para o pagamento do profissional</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina como você aprova um lead qualificado, uma reunião agendada ou outro resultado desta atividade.</p>
+          <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
+            <div style={{ display: "grid", gap: 8 }}>
+              {METODOS_APROVACAO.map((m) => {
+                const MIcon = m.icon;
+                return (
+                  <CardOption key={m.id} selected={(campanha.aprovacaoPagamentos || "manual") === m.id}
+                    onClick={() => set("aprovacaoPagamentos", m.id)} icon={MIcon} title={m.nome}
+                    subtitle={m.id === "automatica" ? "O resultado é validado automaticamente após comprovação obrigatória." : m.id === "ia" ? "A IA analisa as evidências e valida dentro dos critérios definidos." : "Você revisa e aprova manualmente cada resultado entregue."} />
+                );
+              })}
+            </div>
+            <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--brand-50)", borderRadius: 8, border: "1px solid var(--brand-100)", display: "flex", alignItems: "flex-start", gap: 8 }}>
+              <ShieldCheck size={14} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
+              <span className="vx-mut" style={{ fontSize: 11.5 }}>Independente da modalidade, as comprovações obrigatórias definidas pela RYCS nunca podem ser ignoradas.</span>
+            </div>
+          </div>
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(4)}><ArrowLeft size={14} /> Voltar</button>
