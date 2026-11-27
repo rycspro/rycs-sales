@@ -623,6 +623,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const [catalogoProdutos, setCatalogoProdutos] = useState([]);
   const [popoverProjecao, setPopoverProjecao] = useState(null);
   const [modalSaldoAberto, setModalSaldoAberto] = useState(false);
+  const [popoverFerr, setPopoverFerr] = useState(false);
+  const popoverFerrRef = useRef(null);
 
   const disponivel = saldoDisponivel(emp);
   const set = (k, v) => setCampanha((c) => ({ ...c, [k]: v }));
@@ -639,6 +641,12 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const seqRef = useRef(0);              // controle de versão: nº da requisição
   const seqSalvoRef = useRef(0);         // última seq efetivamente confirmada
   const debounceRef = useRef(null);
+  useEffect(() => {
+    if (!popoverFerr) return;
+    const h = (e) => { if (popoverFerrRef.current && !popoverFerrRef.current.contains(e.target)) setPopoverFerr(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [popoverFerr]);
   useEffect(() => { rascunhoIdRef.current = rascunhoId; }, [rascunhoId]);
   useEffect(() => { campanhaRef.current = campanha; }, [campanha]);
   useEffect(() => { passoRef.current = passo; }, [passo]);
@@ -1335,89 +1343,74 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             };
             const isPresencialOuHibrido = campanha.modeloTrabalho === "presencial" || campanha.modeloTrabalho === "hibrido";
             const CARDS_CANAL = [
-              { id: "whatsapp", Icon: MessageCircle, color: "#25D366", titulo: "WhatsApp", descricao: "Prospecção, atendimento e acompanhamento de clientes.", ferramenta: "WhatsApp da RYCS" },
-              { id: "ligacao", Icon: Phone, color: "#3B82F6", titulo: "Ligação telefônica", descricao: "Abordagens comerciais e conversas por telefone.", ferramenta: "Discadora da RYCS" },
-              { id: "email", Icon: Mail, color: "var(--brand)", titulo: "E-mail", descricao: "Envio de apresentações, propostas e follow-ups.", ferramenta: null },
-              { id: "linkedin", Icon: Linkedin, color: "#0077B5", titulo: "LinkedIn", descricao: "Prospecção de empresas e contato com decisores.", ferramenta: null },
-              { id: "instagram", Icon: Instagram, color: "#E1306C", titulo: "Instagram", descricao: "Abordagem de potenciais clientes pelas redes sociais.", ferramenta: null },
-              ...(isPresencialOuHibrido ? [{ id: "presencial", Icon: MapPin, color: "#F59E0B", titulo: "Visita presencial", descricao: "Atendimento e prospecção diretamente no local do cliente.", ferramenta: null }] : []),
+              { id: "whatsapp",  Icon: MessageCircle, color: "#25D366", titulo: "WhatsApp",           descricao: "Prospecção, atendimento e acompanhamento.",     ferramenta: "WhatsApp da RYCS" },
+              { id: "ligacao",   Icon: Phone,         color: "#3B82F6", titulo: "Ligação telefônica", descricao: "Abordagens comerciais por telefone.",           ferramenta: "Discadora da RYCS" },
+              { id: "email",     Icon: Mail,          color: "#6366F1", titulo: "E-mail",             descricao: "Apresentações, propostas e follow-ups.",        ferramenta: null },
+              { id: "linkedin",  Icon: Linkedin,      color: "#0077B5", titulo: "LinkedIn",           descricao: "Prospecção e contato com decisores.",           ferramenta: null },
+              { id: "instagram", Icon: Instagram,     color: "#E1306C", titulo: "Instagram",          descricao: "Abordagem pelas redes sociais.",                ferramenta: null },
+              ...(isPresencialOuHibrido ? [{ id: "presencial", Icon: MapPin, color: "#F59E0B", titulo: "Visita presencial", descricao: "Prospecção diretamente no local.", ferramenta: null }] : []),
+              { id: "outro",     Icon: Globe,         color: "#8B5CF6", titulo: "Outros canais",      descricao: "Telegram, SMS ou outro meio de comunicação.",   ferramenta: null },
             ];
             const totalSel = canaisSel.length;
             return (<>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Por onde o profissional vai falar?</h2>
-              <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Selecione um ou mais canais de atendimento para esta campanha.</p>
-              {totalSel > 0 && (
-                <div style={{ marginBottom: 10, fontSize: 12, fontWeight: 600, color: "var(--brand)" }}>
-                  {totalSel} canal{totalSel > 1 ? "is" : ""} selecionado{totalSel > 1 ? "s" : ""}
-                </div>
-              )}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 4 }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "28px 0 5px" }}>Canais de comunicação</h2>
+              <p className="vx-mut" style={{ marginTop: 0, marginBottom: 12, fontSize: 13 }}>Por onde o profissional entrará em contato com os clientes?</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
                 {CARDS_CANAL.map(({ id, Icon, color, titulo, descricao, ferramenta }) => {
                   const sel = canaisSel.includes(id);
+                  const bgIcon = color.startsWith("#") ? `${color}1a` : "var(--brand-50)";
                   return (
                     <button key={id} type="button" onClick={() => toggleCanal(id)} style={{
-                      position: "relative", textAlign: "left", padding: "16px", cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 12, padding: "11px 13px",
                       border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`,
-                      background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface)",
-                      borderRadius: 12, transition: "border-color .15s, background .15s",
-                      display: "flex", flexDirection: "column", gap: 0,
+                      background: sel ? "var(--brand-50)" : "var(--surface)",
+                      borderRadius: 11, cursor: "pointer", textAlign: "left",
+                      transition: "border-color .15s, background .15s", width: "100%",
                     }}>
-                      {sel && (
-                        <div style={{ position: "absolute", top: 10, right: 10, width: 20, height: 20, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Check size={12} color="#fff" />
-                        </div>
-                      )}
-                      <Icon size={22} color={sel ? color : "var(--muted)"} style={{ marginBottom: 8 }} />
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink, #171717)", marginBottom: 4 }}>{titulo}</div>
-                      <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5, flex: 1 }}>{descricao}</div>
-                      {ferramenta && (
-                        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "var(--brand)", borderTop: "1px solid var(--border)", paddingTop: 8 }}>
-                          <Zap size={11} /> {ferramenta}
-                        </div>
-                      )}
+                      <div style={{ width: 36, height: 36, borderRadius: 9, background: bgIcon, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Icon size={17} color={color} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", lineHeight: 1.3 }}>{titulo}</div>
+                        <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.4, marginTop: 1 }}>{descricao}</div>
+                        {ferramenta && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 10.5, fontWeight: 600, color: "var(--brand)", marginTop: 3 }}>
+                            <Zap size={9} />{ferramenta}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`, background: sel ? "var(--brand)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s, border-color .15s" }}>
+                        {sel && <Check size={10} color="#fff" />}
+                      </div>
                     </button>
                   );
                 })}
-                {/* Outros canais — largura total */}
-                {(() => {
-                  const sel = canaisSel.includes("outro");
-                  return (
-                    <div style={{ gridColumn: "1 / -1" }}>
-                      <button type="button" onClick={() => toggleCanal("outro")} style={{
-                        width: "100%", textAlign: "left", padding: "14px 16px", cursor: "pointer",
-                        border: `1.5px solid ${sel ? "var(--brand)" : "var(--border)"}`,
-                        background: sel ? "var(--brand-50, #EFF6FF)" : "var(--surface)",
-                        borderRadius: 12, transition: "border-color .15s, background .15s",
-                        display: "flex", alignItems: "center", gap: 12, position: "relative",
-                      }}>
-                        {sel && (
-                          <div style={{ position: "absolute", top: 10, right: 12, width: 20, height: 20, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Check size={12} color="#fff" />
-                          </div>
-                        )}
-                        <Globe size={22} color={sel ? "var(--brand)" : "var(--muted)"} style={{ flexShrink: 0 }} />
-                        <div>
-                          <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink, #171717)" }}>Outros canais</div>
-                          <div className="vx-mut" style={{ fontSize: 12 }}>Utilização de outros meios de comunicação.</div>
-                        </div>
-                      </button>
-                      {sel && (
-                        <div style={{ marginTop: 8, padding: "0 2px" }}>
-                          <input className="vx-input" placeholder="Descreva os canais utilizados (ex.: Telegram, SMS, etc.)"
-                            value={campanha.outrosCanaisDescricao || ""}
-                            onChange={(e) => set("outrosCanaisDescricao", e.target.value)} />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
               </div>
-              <div style={{ marginTop: 14, padding: "12px 14px", background: "var(--surface)", borderRadius: 10, border: "1px solid var(--border)", display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <Zap size={15} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--brand)", marginBottom: 2 }}>Ferramentas de trabalho</div>
-                  <div className="vx-mut" style={{ fontSize: 12, lineHeight: 1.5 }}>Os canais selecionados orientarão o ambiente de trabalho do profissional e os métodos de comprovação das atividades. As ferramentas integradas da RYCS são exibidas apenas quando há integração ativa.</div>
+              {canaisSel.includes("outro") && (
+                <div style={{ marginTop: 8 }}>
+                  <input className="vx-input" placeholder="Descreva os canais utilizados (ex.: Telegram, SMS, etc.)"
+                    value={campanha.outrosCanaisDescricao || ""}
+                    onChange={(e) => set("outrosCanaisDescricao", e.target.value)} />
                 </div>
+              )}
+              {/* Rodapé: info + contador */}
+              <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div ref={popoverFerrRef} style={{ position: "relative", display: "inline-block" }}>
+                  <button type="button" onClick={() => setPopoverFerr((v) => !v)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: "4px 0", color: "var(--muted)" }}>
+                    <Info size={13} />
+                    <span style={{ fontSize: 12 }}>Ferramentas de trabalho</span>
+                  </button>
+                  {popoverFerr && (
+                    <div style={{ position: "absolute", left: 0, bottom: "calc(100% + 6px)", zIndex: 100, width: 280, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 13px", boxShadow: "0 4px 16px rgba(0,0,0,.12)", fontSize: 12, lineHeight: 1.5, color: "var(--muted)" }}>
+                      Os canais selecionados orientam o ambiente de trabalho do profissional e os métodos de comprovação. As ferramentas integradas da RYCS são exibidas apenas quando há integração ativa na conta.
+                    </div>
+                  )}
+                </div>
+                {totalSel > 0 && (
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--brand)" }}>
+                    {totalSel} canal{totalSel > 1 ? "is" : ""} selecionado{totalSel > 1 ? "s" : ""}
+                  </span>
+                )}
               </div>
             </>);
           })()}
