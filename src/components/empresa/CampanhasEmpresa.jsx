@@ -272,25 +272,21 @@ function ToggleCandidaturas({ c, onToggle }) {
   );
 }
 
-// Etapas do wizard (espelham PASSOS de NovaCampanha) — para rotular a etapa
-// atual do rascunho no card.
-const PASSOS_WIZARD = ["Objetivo", "Estrutura", "Perfil profissional", "Ações & Remuneração", "Revisão"];
+// Etapas do wizard (espelham PASSOS_CURTOS de NovaCampanha, índices 0-6)
+const PASSOS_WIZARD = [
+  "Tipo de campanha",
+  "O que você precisa?",
+  "Operação",
+  "Profissionais",
+  "Ações",
+  "Pagamentos",
+  "Revisão",
+];
 
-// Progresso REAL do rascunho: proporção de configurações significativas já
-// preenchidas. Sem percentual fictício — cada item reflete um dado de verdade.
+// Progresso baseado na etapa em que o rascunho foi salvo pela última vez.
 function progressoRascunho(c) {
-  const checks = [
-    !!(c.titulo && c.titulo.trim() && c.titulo !== "Campanha sem título"),
-    !!(c.objetivoUI || c.objetivo),
-    !!c.modeloTrabalho,
-    !!c.funcao,
-    !!(c.publico && String(c.publico).trim()),
-    Array.isArray(c.canais) && c.canais.length > 0,
-    Array.isArray(c.acoesAtivas) && c.acoesAtivas.length > 0,
-    Object.values(c.tarefas || {}).some((v) => Number(v) > 0),
-    Number(c.orcamento) > 0,
-  ];
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+  const passo = Number(c.passoWizard) || 0;
+  return Math.min(100, Math.round((passo / (PASSOS_WIZARD.length - 1)) * 100));
 }
 
 function dataEdicao(c) {
