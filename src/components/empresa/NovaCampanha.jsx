@@ -1192,8 +1192,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
         <>
           {/* Dados básicos */}
           <>
-          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Como vai funcionar?</h2>
-          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina o nome e as atividades desta campanha.</p>
+          <h2 className="vx-disp" style={{ fontSize: 22, margin: "0 0 8px" }}>Sobre a campanha</h2>
+          <p className="vx-mut" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>Defina as informações gerais da sua campanha.</p>
           <div className="vx-card" style={{ padding: 18, marginTop: 0 }}>
             <label><div className="vx-label">Como você quer chamar esta campanha? <Tag obrigatorio={true} /></div>
               <input className="vx-input" value={campanha.titulo} onChange={(e) => set("titulo", e.target.value)} /></label>
