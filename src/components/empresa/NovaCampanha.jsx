@@ -735,12 +735,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
   return (
     <div className="vx-fade vx-campaign-wizard">
-      {rascunhoSalvo.current && campanha && (
-        <div className="vx-notice" style={{ marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span>Rascunho restaurado automaticamente{campanha.titulo ? `: "${campanha.titulo}"` : ""}.</span>
-          <button className="vx-btn vx-btn-ghost vx-btn-sm" onClick={() => { removerArmazenado(chaveRascunho); rascunhoSalvo.current = null; setCampanha(null); setPasso(0); }}>Descartar</button>
-        </div>
-      )}
       {/* Cabeçalho do rascunho: indicador de salvamento + salvar e sair */}
       {campanha && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
