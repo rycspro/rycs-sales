@@ -92,6 +92,13 @@ function CampoOrcamento({ value, onChange }) {
 
 const SEL = { bg: "var(--brand-50, #E4F0FF)", border: "var(--brand, #318CE7)", bgOff: "var(--surface, #FFFFFF)", borderOff: "var(--border, #E2E2E2)" };
 
+const FONTES_CONTATOS = [
+  { id: "meus_contatos", nome: "Meus contatos", icon: Users },
+  { id: "meta_ads", nome: "Meta Ads", icon: Zap },
+  { id: "loja_leads", nome: "Loja de Leads", icon: Library },
+  { id: "importar", nome: "Importar", icon: Upload },
+];
+
 function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }) {
   return (
     <button
@@ -367,8 +374,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
     return {
       dadosBasicos: true,
       modeloTrabalho: true,
-      mercado: !!campanha.modeloTrabalho,
-      origemLeads: !!campanha.mercado,
+      origemLeads: !!campanha.modeloTrabalho,
       canais: !!campanha.origemLeads,
       materiais: !!(campanha.canais && campanha.canais.length > 0),
       fonteLeads: !!(campanha.canais && campanha.canais.length > 0),
@@ -888,30 +894,61 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           )}
 
-          {/* Mercado de atuação do cliente */}
-          {secaoVisivel.mercado && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização dos seus clientes</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde estão os clientes que o profissional vai contatar?</div></div>
-            <div style={{ display: "grid", gap: 8 }}>
-              {Object.values(MERCADOS).map((m) => (
-                <CardOption key={m.id} selected={campanha.mercado === m.id} onClick={() => set("mercado", m.id)} title={m.label} />
-              ))}
+          {/* Origem dos contatos — bloco unificado */}
+          {secaoVisivel.origemLeads && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+            <div style={{ marginBottom: 12 }}>
+              <b style={{ color: "var(--brand)" }}>Como os profissionais vão conseguir clientes?</b>
+              <div className="vx-mut" style={{ fontSize: 11.5 }}>Define de onde vêm os contatos que o profissional vai trabalhar.</div>
             </div>
-            {(campanha.mercado === "outros_paises" || campanha.mercado === "global") && (
-              <div style={{ marginTop: 12 }}>
-                <div className="vx-label">Países do mercado</div>
-                <MultiSelect opcoes={OPC_PAISES} valor={campanha.mercadoPaises || []} onChange={(v) => set("mercadoPaises", v)} placeholder="Selecione os países" />
+            <div style={{ display: "grid", gap: 8 }}>
+              <CardOption
+                selected={campanha.origemLeads === "empresa"}
+                onClick={() => { set("origemLeads", "empresa"); if (!campanha.mercado) set("mercado", "pais_todo"); }}
+                title="Minha empresa fornecerá os contatos"
+                subtitle="Utilizar contatos já cadastrados ou recebidos pelas integrações."
+              />
+              <CardOption
+                selected={campanha.origemLeads === "profissional"}
+                onClick={() => set("origemLeads", "profissional")}
+                title="O profissional encontrará os contatos"
+                subtitle="O profissional buscará novos clientes."
+              />
+              <CardOption
+                selected={campanha.origemLeads === "ambos"}
+                onClick={() => { set("origemLeads", "ambos"); if (!campanha.mercado) set("mercado", "pais_todo"); }}
+                title="Ambas as opções"
+                subtitle="Utilizar contatos da empresa e buscar novos clientes."
+              />
+            </div>
+
+            {(campanha.origemLeads === "empresa" || campanha.origemLeads === "ambos") && (
+              <div style={{ marginTop: 14 }}>
+                <div className="vx-label" style={{ marginBottom: 8 }}>Selecionar origem dos contatos</div>
+                <ChipToggle
+                  items={FONTES_CONTATOS}
+                  value={campanha.fontesContatos || []}
+                  onChange={(v) => set("fontesContatos", v)}
+                  multi
+                />
               </div>
             )}
-          </div>}
 
-          {/* Origem dos leads */}
-          {secaoVisivel.origemLeads && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>De onde vêm os contatos?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Como os profissionais vão conseguir os contatos para trabalhar?</div></div>
-            <div style={{ display: "grid", gap: 8 }}>
-              {Object.values(ORIGENS_LEAD).map((o) => (
-                <CardOption key={o.id} selected={campanha.origemLeads === o.id} onClick={() => set("origemLeads", o.id)} title={o.label} />
-              ))}
-            </div>
+            {(campanha.origemLeads === "profissional" || campanha.origemLeads === "ambos") && (
+              <div style={{ marginTop: 14 }}>
+                <div className="vx-label" style={{ marginBottom: 8 }}>Onde estão os clientes que o profissional vai contatar?</div>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {Object.values(MERCADOS).map((m) => (
+                    <CardOption key={m.id} selected={campanha.mercado === m.id} onClick={() => set("mercado", m.id)} title={m.label} />
+                  ))}
+                </div>
+                {(campanha.mercado === "outros_paises" || campanha.mercado === "global") && (
+                  <div style={{ marginTop: 12 }}>
+                    <div className="vx-label">Países do mercado</div>
+                    <MultiSelect opcoes={OPC_PAISES} valor={campanha.mercadoPaises || []} onChange={(v) => set("mercadoPaises", v)} placeholder="Selecione os países" />
+                  </div>
+                )}
+              </div>
+            )}
           </div>}
 
           {/* Canais */}
