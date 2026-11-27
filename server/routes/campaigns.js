@@ -258,7 +258,7 @@ router.post("/campaigns", (req, res) => {
       "icpTipo", "versao", "processoAdmissao",
       "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
       "prazoContatoHoras", "prazoInatividadeHoras", "operacaoId", "estruturaComercial", "vendaTipoRemuneracao", "modoAcoesRemuneradas", "passoWizard", "ordemOperacao", "modoDistribuicaoVerba"];
-    const v2Bool = ["temComissao", "remuneracaoCumulativa"];
+    const v2Bool = ["temComissao", "remuneracaoCumulativa", "incluirNovosAutomaticamente"];
     const v2Json = ["paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
       "canais", "idiomasExigidos", "requisitosObrigatorios", "requisitosDesejaveis",
       "comissaoConfig", "acoesAtivas", "icpEstruturado", "qualificacaoCriterios", "reuniaoConfig",
@@ -299,7 +299,8 @@ router.patch("/campaigns/:id", (req, res) => {
     "disponibilidade", "disponibilidadeDetalhes", "limiteProf", "visibilidade", "objetivoUI",
     "temComissao", "remuneracaoCumulativa", "icpTipo", "versao", "processoAdmissao",
     "fonteLeads", "selecaoLeadsTipo", "distribuicaoLeads", "limiteLeadsSimultaneos", "limiteLeadsDia",
-    "prazoContatoHoras", "prazoInatividadeHoras", "selecaoLeadsDinamica", "passoWizard", "modoDistribuicaoVerba"];
+    "prazoContatoHoras", "prazoInatividadeHoras", "selecaoLeadsDinamica", "passoWizard", "modoDistribuicaoVerba",
+    "incluirNovosAutomaticamente"];
   const jsonFields = ["comissoes", "treinamento", "tarefas", "evidencias", "criteriosAprovacao", "modelosVerificacao",
     "etapasPipeline", "fluxoDirecionamento", "camposPersonalizados", "modelosCampos",
     "paisesRestritos", "regioesRestritas", "cidadesRestritas", "mercadoPaises", "mercadoRegioes",
@@ -445,6 +446,26 @@ router.post("/campaigns/:id/status", (req, res) => {
       db.prepare("UPDATE campaigns SET status = ? WHERE id = ?").run(status, campaign.id);
       const tipo = status === "ativa" ? "CAMPAIGN_PUBLISHED" : status === "pausada" ? "CAMPAIGN_PAUSED" : status === "encerrada" ? "CAMPAIGN_CLOSED" : null;
       if (tipo && status !== campaign.status) registrarEventoCampanha({ companyId: campaign.companyId, campaignId: campaign.id, tipo, actorId: req.user.id, actorRole: role, source: "USER", dados: { statusAnterior: campaign.status, statusNovo: status } });
+
+      // Propagar status para campanhas vinculadas na mesma operação
+      if (campaign.estruturaComercial === "operacao") {
+        const vinculadas = db.prepare(
+          `SELECT DISTINCT campanhaDestinoId AS lid FROM vinculos_campanhas WHERE campanhaOrigemId = ? AND companyId = ?
+           UNION SELECT DISTINCT campanhaOrigemId AS lid FROM vinculos_campanhas WHERE campanhaDestinoId = ? AND companyId = ?`
+        ).all(campaign.id, campaign.companyId, campaign.id, campaign.companyId);
+        for (const { lid } of vinculadas) {
+          if (!lid || lid === campaign.id) continue;
+          const sub = db.prepare("SELECT id, status FROM campaigns WHERE id = ?").get(lid);
+          if (!sub || sub.status === status) continue;
+          if (status === "ativa") {
+            db.prepare("UPDATE campaigns SET status = 'ativa' WHERE id = ?").run(lid);
+          } else if (status === "pausada" || status === "encerrada" || status === "cancelada") {
+            if (sub.status === "ativa" || sub.status === "pausada") {
+              db.prepare("UPDATE campaigns SET status = ? WHERE id = ?").run(status, lid);
+            }
+          }
+        }
+      }
     })();
     res.json({ ok: true, status });
   } catch (err) {

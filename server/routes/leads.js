@@ -4,6 +4,7 @@ import { ETAPAS, TIPOS_EVENTO, etapaValida, MOTIVOS_PERDA } from "../../shared/p
 import { exigirOportunidadesLiberadas } from "../services/acessoProfissional.js";
 import { notificar } from "./notifications.js";
 import { registrarEventoCampanha } from "../services/campaignEvents.js";
+import { vincularLeadAutomaticamente } from "../services/campaignAutoEntry.js";
 
 const router = Router();
 
@@ -82,12 +83,17 @@ router.post("/leads/import", (req, res) => {
   const ts = agora();
   db.transaction(() => validos.forEach((l) => {
     const leadId = uid();
+    l._leadId = leadId;
     db.prepare(`INSERT INTO leads
       (id, sellerId, companyId, campaignId, nome, empresa, cargo, telefone, email, origem, etapa, valorEstimado, criadoEm, atualizadoEm)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'empresa', 'novo', ?, ?, ?)`)
       .run(leadId, l.sellerId, companyId, campaignId, l.nome, String(l.empresa || ""), String(l.cargo || ""), l.telefone, l.email, Number(l.valorEstimado) || 0, ts, ts);
     registrarEventoCampanha({ companyId, campaignId, tipo: "LEAD_CREATED", actorId: req.user.id, actorRole: role, sellerId: l.sellerId, leadId, source: "USER", dados: { origem: "importacao" }, criadoEm: ts });
   }))();
+  // Auto-vincular leads importados a campanhas com incluirNovosAutomaticamente
+  for (const l of validos) {
+    if (l._leadId) vincularLeadAutomaticamente(l._leadId, companyId, campaignId);
+  }
   // A importação pode acontecer com a empresa em outra tela, e o profissional
   // recebe leads sem ter pedido nada. Os dois precisam saber.
   const resumo = `${validos.length} importado(s)` +
@@ -166,6 +172,7 @@ router.post("/leads", (req, res) => {
     if (campaignId) registrarEventoCampanha({ companyId, campaignId, tipo: "LEAD_CREATED", actorId: req.user.id, actorRole: role, sellerId: entityId, leadId: id, source: "USER", dados: { origem: "proprio" }, criadoEm: ts });
   })();
 
+  vincularLeadAutomaticamente(id, companyId, campaignId || null);
   res.json({ id, etapa: "novo" });
 });
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import db, { uid, agora } from "../db.js";
 import { registrarEventoCampanha } from "../services/campaignEvents.js";
+import { vincularLeadAutomaticamente } from "../services/campaignAutoEntry.js";
 import { notificar } from "./notifications.js";
 
 const router = Router();
@@ -142,12 +143,16 @@ router.post("/google-sheets/importar", async (req, res) => {
   const ts = agora();
   db.transaction(() => validos.forEach((l) => {
     const leadId = uid();
+    l._leadId = leadId;
     db.prepare(`INSERT INTO leads
       (id, sellerId, companyId, campaignId, nome, empresa, cargo, telefone, email, origem, etapa, valorEstimado, criadoEm, atualizadoEm)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'google-sheets', 'novo', 0, ?, ?)`)
       .run(leadId, l.sellerId, companyId, campaignId, l.nome, l.empresa, l.cargo, l.telefone, l.email, ts, ts);
     registrarEventoCampanha({ companyId, campaignId, tipo: "LEAD_CREATED", actorId: req.user.id, actorRole: req.user.role, sellerId: l.sellerId, leadId, source: "USER", dados: { origem: "google-sheets" }, criadoEm: ts });
   }))();
+  for (const l of validos) {
+    if (l._leadId) vincularLeadAutomaticamente(l._leadId, companyId, campaignId);
+  }
 
   const empUser = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'empresa'").get(companyId);
   if (empUser) {

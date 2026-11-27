@@ -146,6 +146,38 @@ export const ORDEM_OBJETIVOS_UI = [
   "realizar_vendas", "visitas_comerciais", "reativar_clientes", "personalizar",
 ];
 
+// ── Origem dos profissionais por função ─────────────────────────────────
+export const ORIGENS_PROFISSIONAIS = {
+  rycs: { id: "rycs", label: "Contratar profissionais pela RYCS" },
+  interno: { id: "interno", label: "Utilizar profissionais da minha empresa" },
+  ambos: { id: "ambos", label: "Utilizar ambos" },
+};
+
+// ── Seleção rápida de atividades por função (spec Etapa 6.2) ───────────
+export const SELECAO_RAPIDA = {
+  bdr: [
+    { id: "contato", nome: "Contato encontrado" },
+    { id: "lead_validado", nome: "Contato validado" },
+    { id: "lead_qualificado", nome: "Contato qualificado" },
+  ],
+  sdr: [
+    { id: "ligacao", nome: "Contato na discadora" },
+    { id: "contato", nome: "Contato no WhatsApp" },
+    { id: "lead_qualificado", nome: "Lead qualificado" },
+    { id: "agendamento", nome: "Reunião agendada" },
+    { id: "bonus_comparecimento", nome: "Bônus por comparecimento" },
+  ],
+  closer: [
+    { id: "realizada", nome: "Reunião realizada" },
+    { id: "venda", nome: "Comissão por venda" },
+  ],
+  pap: [
+    { id: "visita", nome: "Visita realizada" },
+    { id: "lead_qualificado", nome: "Contato qualificado" },
+    { id: "venda", nome: "Venda realizada" },
+  ],
+};
+
 // ── Ações expandidas (spec seção 22) ────────────────────────────────────
 export const ACOES_DISPONIVEIS = [
   { id: "lead_encontrado", nome: "Lead encontrado", grupo: "prospeccao" },
@@ -161,6 +193,7 @@ export const ACOES_DISPONIVEIS = [
   { id: "visita", nome: "Visita comercial realizada", grupo: "presencial" },
   { id: "proposta", nome: "Proposta apresentada", grupo: "negociacao" },
   { id: "venda", nome: "Venda concluída", grupo: "fechamento" },
+  { id: "bonus_comparecimento", nome: "Bônus por comparecimento", grupo: "reuniao" },
 ];
 
 // Sugestões de ações por função (spec seção 22)
@@ -246,9 +279,22 @@ export function diagnosticoCampanha(campanha = {}, empresa = {}) {
   // Financeiro
   if (orcamento > 0 && orcamento > saldo) bloqueios.push({ campo: "orcamento", msg: "Orçamento superior ao saldo disponível" });
 
+  // Operação multi-função: validar config de cada função
+  if (campanha.estruturaComercial === "operacao" && Array.isArray(campanha.funcoesOperacao)) {
+    for (const fn of campanha.funcoesOperacao) {
+      const cfg = campanha[`config_${fn}`] || {};
+      const fnTarefas = typeof cfg.tarefas === "string" ? JSON.parse(cfg.tarefas || "{}") : (cfg.tarefas || {});
+      const fnTemTarefa = Object.values(fnTarefas).some((v) => Number(v) > 0);
+      if (!fnTemTarefa) {
+        const nome = FUNCOES[fn]?.nome || fn.toUpperCase();
+        bloqueios.push({ campo: `config_${fn}.tarefas`, msg: `Configure ao menos uma ação remunerada para ${nome}` });
+      }
+    }
+  }
+
   // Recomendações (não bloqueiam)
   if (!String(campanha.publico || "").trim()) recomendacoes.push({ campo: "publico", msg: "Descreva o perfil do cliente ideal (ICP)" });
-  if (!String(campanha.funcao || "").trim()) recomendacoes.push({ campo: "funcao", msg: "Defina a função comercial" });
+  if (!String(campanha.funcao || "").trim() && campanha.estruturaComercial !== "operacao") recomendacoes.push({ campo: "funcao", msg: "Defina a função comercial" });
   if (!(campanha.treinamento || []).length) recomendacoes.push({ campo: "treinamento", msg: "Vincule um treinamento da Academy" });
   if (!String(campanha.descricao || "").trim()) recomendacoes.push({ campo: "descricao", msg: "Adicione uma descrição das atividades" });
   if (!loc.regiao && !String(campanha.regiao || "").trim() && campanha.modeloTrabalho !== "remoto") {

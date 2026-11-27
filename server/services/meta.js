@@ -15,6 +15,7 @@ import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, 
 import db, { uid, agora } from "../db.js";
 import { notificar } from "../routes/notifications.js";
 import { registrarEventoCampanha } from "./campaignEvents.js";
+import { vincularLeadAutomaticamente } from "./campaignAutoEntry.js";
 import { guardarAvisoWhatsapp } from "./whatsapp.js";
 
 db.exec(`
@@ -356,6 +357,7 @@ export async function processarLead(leadgenId) {
     db.prepare("UPDATE meta_conexoes SET ultimoLeadEm = ? WHERE companyId = ?").run(ts, ml.companyId);
   })();
   if (campanha) registrarEventoCampanha({ companyId: ml.companyId, campaignId: campanha, tipo: "LEAD_CREATED", sellerId, leadId, source: "META", dados: { origem: "meta_ads" }, criadoEm: ts });
+  vincularLeadAutomaticamente(leadId, ml.companyId, campanha);
 
   const vend = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sellerId);
   if (vend) notificar(vend.id, "lead", "Novo lead do Meta Ads", `${p.nome || "Um novo lead"} acabou de se cadastrar pelo anúncio. Faça o primeiro contato agora — quanto mais rápido, maior a chance.`);

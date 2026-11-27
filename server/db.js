@@ -3394,6 +3394,7 @@ adicionarColuna("campaigns", "atualizadoEm", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "ordemOperacao", "INTEGER DEFAULT 0");
 adicionarColuna("campaigns", "distribuicaoVerba", "TEXT DEFAULT '{}'");
 adicionarColuna("campaigns", "modoDistribuicaoVerba", "TEXT DEFAULT 'automatico'");
+adicionarColuna("campaigns", "incluirNovosAutomaticamente", "INTEGER DEFAULT 0");
 
 adicionarColuna("formas_ganho", "origem", "TEXT DEFAULT 'personalizado'");
 adicionarColuna("formas_ganho", "modeloOriginalId", "TEXT DEFAULT ''");

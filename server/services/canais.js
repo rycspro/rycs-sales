@@ -8,6 +8,7 @@
 // não entra no banco e ninguém da RYCS ou da empresa enxerga.
 
 import db, { uid, agora } from "../db.js";
+import { vincularLeadAutomaticamente } from "./campaignAutoEntry.js";
 import { mesmoTelefone, chaveTelefone, janelaAberta } from "../../shared/canais.js";
 
 db.exec(`
@@ -348,5 +349,6 @@ export function criarLeadDaConversa(user, id, { sellerId, campaignId = null, nom
       .run(uid(), leadId, sellerId, `Lead criado a partir de ${v.canal === "instagram" ? (v.tipo === "comentario" ? "um comentário no Instagram" : "um direct do Instagram") : "uma conversa do WhatsApp"}${v.usuario ? ` (@${v.usuario})` : ""}.`, t);
     db.prepare("UPDATE canais_conversas SET leadId = ? WHERE id = ?").run(leadId, id);
   })();
+  vincularLeadAutomaticamente(leadId, user.entityId, campanha);
   return { leadId, sellerId, nome: nomeLead };
 }

@@ -8,6 +8,7 @@
 
 import db, { uid, agora } from "../db.js";
 import { notificar } from "../routes/notifications.js";
+import { vincularLeadAutomaticamente } from "./campaignAutoEntry.js";
 
 // ── Schema (aditivo, idempotente) ───────────────────────────────────────────
 db.exec(`
@@ -230,6 +231,7 @@ async function importarNovasLinhas(cfg) {
         .run(uid(), leadId, sellerId, ts);
     })();
 
+    vincularLeadAutomaticamente(leadId, cfg.companyId, null);
     const vend = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sellerId);
     if (vend) notificar(vend.id, "lead", "Novo lead via Google Sheets", `${nome || "Um novo lead"} foi importado da planilha.`);
     importados++;

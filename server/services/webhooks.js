@@ -10,6 +10,7 @@
 import { randomBytes, timingSafeEqual } from "crypto";
 import db, { uid, agora } from "../db.js";
 import { notificar } from "../routes/notifications.js";
+import { vincularLeadAutomaticamente } from "./campaignAutoEntry.js";
 
 // ── Schema (aditivo, idempotente) ───────────────────────────────────────────
 db.exec(`
@@ -168,6 +169,7 @@ export function receber(secret, corpo, { ip } = {}) {
       .run(uid(), leadId, sellerId, `Lead recebido por webhook.${fonte ? ` Origem: ${String(fonte).slice(0, 80)}.` : ""}`, ts);
   })();
 
+  vincularLeadAutomaticamente(leadId, cfg.companyId, null);
   const vend = db.prepare("SELECT id FROM users WHERE entityId = ? AND role = 'vendedor'").get(sellerId);
   if (vend) notificar(vend.id, "lead", "Novo lead por webhook", `${p.nome || "Um novo lead"} acabou de chegar por integração. Faça o primeiro contato agora.`);
   return { ok: true, status: "criado" };

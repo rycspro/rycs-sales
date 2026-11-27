@@ -17,7 +17,7 @@ import { PAISES } from "../../../shared/paises.js";
 import {
   MODELOS_TRABALHO, RESTRICOES_GEO, MERCADOS, ORIGENS_LEAD, CANAIS,
   NIVEIS_EXPERIENCIA, PROCESSOS_ADMISSAO, OBJETIVOS_UI, ORDEM_OBJETIVOS_UI,
-  ACOES_DISPONIVEIS, SUGESTOES_ACOES,
+  ACOES_DISPONIVEIS, SUGESTOES_ACOES, ORIGENS_PROFISSIONAIS, SELECAO_RAPIDA,
   regrasLocalizacao, camposVisiveis, diagnosticoCampanha, migrarCampanhaAntiga,
   precisaDeReuniao, precisaDePresencial,
 } from "../../../shared/campaignEngine.js";
@@ -983,8 +983,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginTop: 14 }}>
               <input type="checkbox" style={{ marginTop: 3, flexShrink: 0 }} checked={campanha.exigeCertificacao} onChange={(e) => set("exigeCertificacao", e.target.checked)} />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>Exigir que complete o treinamento antes de começar</div>
-                <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.5 }}>O profissional só trabalha depois de concluir os treinamentos obrigatórios.</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>Exigir treinamento antes de começar o trabalho</div>
+                <div className="vx-mut" style={{ fontSize: 11.5, lineHeight: 1.5 }}>O treinamento é liberado após a aprovação da candidatura, mas contatos e atividades remuneradas ficam bloqueados até a conclusão dos treinamentos obrigatórios.</div>
               </div>
             </label>
           </div>}
@@ -1154,6 +1154,17 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   </div>
                 )}
                 <LeadsSelectorInline campanha={campanha} set={set} rascunhoId={rascunhoIdRef.current} />
+                <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={!!campanha.incluirNovosAutomaticamente} onChange={(e) => set("incluirNovosAutomaticamente", e.target.checked)} style={{ accentColor: "var(--brand)" }} />
+                    <span style={{ fontSize: 13, fontWeight: 500 }}>Incluir novos contatos automaticamente</span>
+                  </label>
+                  <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, paddingLeft: 26 }}>
+                    {campanha.incluirNovosAutomaticamente
+                      ? "Novos leads recebidos pelas fontes selecionadas entrarão automaticamente na campanha enquanto ela estiver ativa."
+                      : "Somente os contatos selecionados manualmente farão parte da campanha."}
+                  </div>
+                </div>
               </div>
             )}
           </div>}
@@ -1271,6 +1282,21 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                       return (
                         <div style={{ display: "grid", gap: 14 }}>
                           <div className="vx-card" style={{ padding: 14 }}>
+                            <b style={{ fontSize: 13, color: "var(--brand)" }}>De onde vêm os profissionais? — {fInfo?.nome}</b>
+                            <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 10 }}>Escolha se contrata pela RYCS, usa sua equipe ou ambos.</div>
+                            <div style={{ display: "grid", gap: 6 }}>
+                              {Object.values(ORIGENS_PROFISSIONAIS).map((o) => (
+                                <CardOption key={o.id} selected={cfg.origemProfissionais === o.id} onClick={() => setConfig("origemProfissionais", o.id)} title={o.label} />
+                              ))}
+                            </div>
+                            {(cfg.origemProfissionais === "interno" || cfg.origemProfissionais === "ambos") && (
+                              <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 8, padding: "8px 10px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                                Os colaboradores da sua empresa podem ser selecionados em <b>Gestão interna → Meu time</b> após a publicação.
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="vx-card" style={{ padding: 14 }}>
                             <b style={{ fontSize: 13, color: "var(--brand)" }}>Perfil e requisitos — {fInfo?.nome}</b>
                             <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
                               <label><div className="vx-label">Quantas vagas?</div>
@@ -1293,6 +1319,31 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                           <div className="vx-card" style={{ padding: 14 }}>
                             <b style={{ fontSize: 13, color: "var(--brand)" }}>Atividades e pagamentos — {fInfo?.nome}</b>
                             <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 4, marginBottom: 10 }}>Marque o que este profissional faz e quanto ganha.</div>
+                            {SELECAO_RAPIDA[funcaoAtiva] && (
+                              <div style={{ marginBottom: 12 }}>
+                                <div className="vx-label" style={{ marginBottom: 6 }}>Seleção rápida</div>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                  {SELECAO_RAPIDA[funcaoAtiva].map((sr) => {
+                                    const ativa = (cfg.acoesAtivas || []).includes(sr.id);
+                                    return (
+                                      <button key={sr.id} onClick={() => {
+                                        const novas = ativa ? (cfg.acoesAtivas || []).filter((x) => x !== sr.id) : [...(cfg.acoesAtivas || []), sr.id];
+                                        setConfig("acoesAtivas", novas);
+                                        if (!ativa) setConfig("tarefas", { ...(cfg.tarefas || {}), [sr.id]: cfg.tarefas?.[sr.id] || 0 });
+                                      }} style={{
+                                        display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 20,
+                                        fontSize: 12, fontWeight: 500, cursor: "pointer",
+                                        border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`,
+                                        background: ativa ? SEL.bg : SEL.bgOff,
+                                        color: ativa ? "var(--ink)" : "var(--text-2)",
+                                      }}>
+                                        {ativa && <Check size={12} />} {sr.nome}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                             <div style={{ display: "grid", gap: 6 }}>
                               {(() => {
                                 const ordenadas = [...ACOES_DISPONIVEIS].sort((a, b) => {
@@ -1364,9 +1415,11 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     <ul className="vx-mut" style={{ fontSize: 12, margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
                       <li>Todos compartilham a mesma base de contatos.</li>
                       <li>Quando o primeiro profissional termina, o contato passa automaticamente para o próximo da fila.</li>
-                      {(campanha.funcoesOperacao || []).includes("sdr") && (campanha.funcoesOperacao || []).includes("closer") && (
-                        <li>O SDR agenda na agenda do Closer — integração automática de calendário.</li>
-                      )}
+                      {(campanha.funcoesOperacao || []).includes("sdr") && (campanha.funcoesOperacao || []).includes("closer") && (<>
+                        <li>O SDR qualifica contatos e agenda reuniões. O Closer recebe a reunião e conduz a negociação até o fechamento.</li>
+                        <li>O SDR visualiza automaticamente os horários disponíveis dos Closers — sem necessidade de consultar individualmente cada um.</li>
+                        <li>As reuniões são distribuídas entre os Closers elegíveis de forma equilibrada, priorizando quem tem menor carga.</li>
+                      </>)}
                       <li>Cada profissional é pago individualmente pelo que fizer.</li>
                       <li>Ao publicar, serão criadas {(campanha.funcoesOperacao || []).length} campanhas conectadas dentro da operação.</li>
                     </ul>
@@ -1845,6 +1898,22 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                   <CardOption selected={campanha.remuneracaoCumulativa} onClick={() => set("remuneracaoCumulativa", true)} title="Pagar por cada etapa" subtitle="O profissional ganha por cada atividade que completar (ex: R$10 por contato + R$30 por reunião)." />
                   <CardOption selected={!campanha.remuneracaoCumulativa} onClick={() => set("remuneracaoCumulativa", false)} title="Pagar só pelo resultado final" subtitle="Só paga quando o profissional chega ao último passo. Etapas anteriores não são remuneradas." />
                 </div>
+                {(() => {
+                  const acoes = (campanha.acoesAtivas || []).filter((k) => Number(campanha.tarefas?.[k]) > 0);
+                  if (acoes.length < 2) return null;
+                  const vals = acoes.map((k) => ({ k, v: Number(campanha.tarefas[k]) }));
+                  const total = vals.reduce((s, { v }) => s + v, 0);
+                  return (
+                    <div style={{ marginTop: 10, padding: 10, background: "var(--bg-secondary, #f8f9fa)", borderRadius: 8, fontSize: 12 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 4, color: "var(--brand)" }}>Exemplo de jornada completa:</div>
+                      {campanha.remuneracaoCumulativa ? (
+                        <div className="vx-mut">{vals.map(({ k, v }) => `${k}: ${money(v)}`).join(" + ")} = <b style={{ color: "var(--fg)" }}>{money(total)}</b> por ciclo completo</div>
+                      ) : (
+                        <div className="vx-mut">Só a última etapa é paga: <b style={{ color: "var(--fg)" }}>{money(vals[vals.length - 1].v)}</b> (etapas anteriores não geram pagamento)</div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -2069,23 +2138,46 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               )}
 
               {/* Distribuição multi-função */}
-              {temMultiFuncao && funcoes.length > 0 && (
+              {temMultiFuncao && funcoes.length > 0 && (() => {
+                const custosPorFuncao = funcoes.map((fk) => {
+                  const cfg = campanha[`config_${fk}`] || {};
+                  const custoFixo = (cfg.acoesAtivas || []).reduce((s, a) => s + Number(cfg.tarefas?.[a] || 0), 0);
+                  return { fk, custoFixo };
+                });
+                const custoJornada = custosPorFuncao.reduce((s, c) => s + c.custoFixo, 0);
+                const jornadasPossiveis = custoJornada > 0 ? Math.floor(orcamentoAtual / custoJornada) : 0;
+                const totalCustoFunc = custosPorFuncao.reduce((s, c) => s + c.custoFixo, 0);
+
+                return (
                 <>
-                  <div className="vx-eyebrow" style={{ marginTop: 14, marginBottom: 8 }}>VERBA POR FUNÇÃO</div>
-                  <div className="vx-mut" style={{ fontSize: 12, marginBottom: 10 }}>A verba é dividida automaticamente entre as funções, com base nas atividades e dependências comerciais.</div>
+                  <div className="vx-eyebrow" style={{ marginTop: 14, marginBottom: 8 }}>CUSTO POR JORNADA COMPLETA</div>
+                  <div className="vx-mut" style={{ fontSize: 12, marginBottom: 10 }}>Uma jornada completa inclui o pagamento de todas as funções participantes para um único contato.</div>
+                  {custoJornada > 0 && (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 14 }}>
+                      <div style={{ background: "var(--brand-50)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: "1px solid var(--brand-100)" }}>
+                        <div className="vx-mut" style={{ fontSize: 11 }}>Custo por jornada</div>
+                        <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700, color: "var(--brand)" }}>{money(custoJornada)}</div>
+                      </div>
+                      <div style={{ background: "var(--surface)", borderRadius: 10, padding: "14px 16px", textAlign: "center", border: "1px solid var(--border)" }}>
+                        <div className="vx-mut" style={{ fontSize: 11 }}>Jornadas possíveis</div>
+                        <div className="vx-mono" style={{ fontSize: 18, fontWeight: 700 }}>até {jornadasPossiveis}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="vx-eyebrow" style={{ marginBottom: 8 }}>VERBA POR FUNÇÃO</div>
+                  <div className="vx-mut" style={{ fontSize: 12, marginBottom: 10 }}>A verba é compartilhada entre as funções. A distribuição é proporcional ao custo das atividades de cada uma.</div>
                   <div style={{ display: "grid", gap: 8 }}>
-                    {funcoes.map((fk) => {
+                    {custosPorFuncao.map(({ fk, custoFixo }) => {
                       const f = FUNCOES[fk];
                       const cfg = campanha[`config_${fk}`] || {};
-                      const custoFunc = (cfg.acoesAtivas || []).reduce((s, a) => s + Number(cfg[`valor_${a}`] || 0), 0);
-                      const totalCustoFunc = funcoes.reduce((s, k2) => { const c2 = campanha[`config_${k2}`] || {}; return s + (c2.acoesAtivas || []).reduce((s2, a) => s2 + Number(c2[`valor_${a}`] || 0), 0); }, 0);
-                      const proporcao = totalCustoFunc > 0 ? custoFunc / totalCustoFunc : 1 / funcoes.length;
+                      const proporcao = totalCustoFunc > 0 ? custoFixo / totalCustoFunc : 1 / funcoes.length;
                       const verbaFunc = Math.round(orcamentoAtual * proporcao * 100) / 100;
                       return (
                         <div key={fk} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 10 }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13.5, fontWeight: 600 }}>{f?.nome || fk}</div>
-                            <div className="vx-mut" style={{ fontSize: 11.5 }}>{(cfg.acoesAtivas || []).length} atividade(s) · {cfg.vagas || 0} vagas</div>
+                            <div className="vx-mut" style={{ fontSize: 11.5 }}>{(cfg.acoesAtivas || []).length} atividade(s) · {cfg.vagas || 0} vagas · {money(custoFixo)}/jornada</div>
                           </div>
                           <div className="vx-mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--brand)" }}>{money(verbaFunc)}</div>
                         </div>
@@ -2093,7 +2185,8 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                     })}
                   </div>
                 </>
-              )}
+                );
+              })()}
             </div>
           )}
 
