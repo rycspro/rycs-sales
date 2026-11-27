@@ -1834,37 +1834,80 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
-          {/* Processo de admissão */}
-          <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Como o profissional entra na campanha?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Ele pode começar na hora ou precisa da sua aprovação?</div></div>
-            <div style={{ display: "grid", gap: 8 }}>
-              {PROCESSOS_ADMISSAO.map((p) => (
-                <CardOption key={p.id} selected={campanha.processoAdmissao === p.id} onClick={() => set("processoAdmissao", p.id)} title={p.label} subtitle={p.descricao} />
-              ))}
-            </div>
-            <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
-              <label><div className="vx-label">Quantas vagas?</div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <select className="vx-input" value={campanha.vagas === 0 ? "0" : String(campanha.vagas || 0)} onChange={(e) => set("vagas", Number(e.target.value))} style={{ flex: 1 }}>
-                    <option value="0">Ilimitado</option>
-                    {[1,2,3,5,10,15,20,30,50,100].map((v) => <option key={v} value={v}>{v}</option>)}
+          {/* Processo de admissão — grade 2×2 */}
+          {(() => {
+            const ADMISSAO_CARDS = [
+              { id: "manual",     icon: UserCheck,  title: "Aprovação manual",   subtitle: "Você escolhe quem entra na campanha." },
+              { id: "ia",         icon: Sparkles,   title: "Aprovação com IA",   subtitle: "A IA avalia os candidatos conforme seus requisitos." },
+              { id: "automatico", icon: Zap,        title: "Entrada automática", subtitle: "Quem atende aos requisitos entra automaticamente." },
+              { id: "convite",    icon: Mail,       title: "Somente convidados", subtitle: "Apenas profissionais convidados por você." },
+            ];
+            const vagaAtual = campanha.vagas === undefined ? -1 : campanha.vagas;
+            const VAGAS_OPTS = [
+              { value: -1, label: "Deixar a IA recomendar" },
+              { value: 0,  label: "Sem limite" },
+              { value: 1,  label: "1 profissional" },
+              { value: 2,  label: "2 profissionais" },
+              { value: 3,  label: "3 profissionais" },
+              { value: 5,  label: "5 profissionais" },
+              { value: 10, label: "10 profissionais" },
+              { value: 20, label: "20 profissionais" },
+              { value: 30, label: "30 profissionais" },
+              { value: 50, label: "50 profissionais" },
+              { value: 100,label: "100 profissionais" },
+              { value: "custom", label: "Quantidade personalizada" },
+            ];
+            const isCustom = ![−1,0,1,2,3,5,10,20,30,50,100].includes(vagaAtual) && vagaAtual > 0;
+            const selectVal = isCustom ? "custom" : String(vagaAtual);
+            return (
+              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <b style={{ color: "var(--brand)" }}>Como os profissionais serão selecionados?</b>
+                  <div className="vx-mut" style={{ fontSize: 11.5 }}>Define como um profissional entra na campanha.</div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {ADMISSAO_CARDS.map((c) => {
+                    const sel = campanha.processoAdmissao === c.id;
+                    const Ic = c.icon;
+                    return (
+                      <button key={c.id} onClick={() => set("processoAdmissao", c.id)} className="vx-card"
+                        style={{ padding: "16px 14px", cursor: "pointer", textAlign: "left", border: `1.5px solid ${sel ? "var(--brand)" : "var(--border, #E2E2E2)"}`, background: sel ? "var(--brand, #318CE7)" : "var(--surface, #fff)", borderRadius: 10, transition: "background .15s, border-color .15s", position: "relative" }}>
+                        <Ic size={20} color={sel ? "#fff" : "var(--brand)"} style={{ marginBottom: 8, display: "block" }} />
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: sel ? "#fff" : "var(--ink, #171717)", marginBottom: 4 }}>{c.title}</div>
+                        <div style={{ fontSize: 12, color: sel ? "rgba(255,255,255,0.8)" : "var(--muted)" }}>{c.subtitle}</div>
+                        {sel && <Check size={14} color="#fff" style={{ position: "absolute", top: 10, right: 10 }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ marginTop: 16 }}>
+                  <div className="vx-label" style={{ marginBottom: 6 }}>Quantos profissionais você precisa?</div>
+                  <select className="vx-input" value={selectVal}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "custom") set("vagas", 1);
+                      else set("vagas", Number(v));
+                    }}>
+                    {VAGAS_OPTS.map((o) => <option key={o.value} value={String(o.value)}>{o.label}</option>)}
                   </select>
-                  {![0,1,2,3,5,10,15,20,30,50,100].includes(campanha.vagas) && campanha.vagas > 0 && (
-                    <input className="vx-input vx-mono" type="number" min="1" value={campanha.vagas} onChange={(e) => set("vagas", Number(e.target.value))} style={{ width: 80 }} />
+                  {isCustom && (
+                    <input className="vx-input vx-mono" type="number" min="1" value={vagaAtual > 0 ? vagaAtual : 1}
+                      onChange={(e) => set("vagas", Number(e.target.value))}
+                      style={{ marginTop: 8, width: 120 }} placeholder="Quantidade" />
                   )}
-                </div></label>
-              <label><div className="vx-label">Máximo de profissionais</div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <select className="vx-input" value={campanha.limiteProf === 0 ? "0" : String(campanha.limiteProf || 0)} onChange={(e) => set("limiteProf", Number(e.target.value))} style={{ flex: 1 }}>
-                    <option value="0">Ilimitado</option>
-                    {[1,2,3,5,10,15,20,30,50,100].map((v) => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                  {![0,1,2,3,5,10,15,20,30,50,100].includes(campanha.limiteProf) && campanha.limiteProf > 0 && (
-                    <input className="vx-input vx-mono" type="number" min="1" value={campanha.limiteProf} onChange={(e) => set("limiteProf", Number(e.target.value))} style={{ width: 80 }} />
+                  {vagaAtual === -1 && (
+                    <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 6 }}>A IA vai recomendar com base no objetivo, demanda estimada e verba da campanha.</div>
                   )}
-                </div></label>
-            </div>
-          </div>
+                  {campanha.orcamento > 0 && vagaAtual > 0 && (
+                    <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 6 }}>
+                      Verba disponível: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(campanha.orcamento / vagaAtual)}/profissional estimado.
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
           </>)}
 
           {/* Visibilidade */}
