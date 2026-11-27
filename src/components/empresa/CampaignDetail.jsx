@@ -5,7 +5,7 @@ import {
   TrendingUp, Unlink, Upload, UserMinus, UsersRound, X,
   Laptop, MapPin, Building2, Globe, MessageCircle, Phone, Mail, Eye, EyeOff, Lock,
   FileText, Download, Trash2, Database, UserPlus, Shuffle, Filter, List, Users,
-  Sparkles, ChevronDown,
+  Sparkles, ChevronDown, HelpCircle, DollarSign, Handshake,
 } from "lucide-react";
 import { api, apiPatch } from "../../lib/api.js";
 import { money } from "../../lib/utils.js";
@@ -540,8 +540,14 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
   const [vinculos, setVinculos] = useState([]);
   const [duplicando, setDuplicando] = useState(false);
   const [removendoProf, setRemovendoProf] = useState(null);
+  const [projecaoFunil, setProjecaoFunil] = useState(null);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, []);
+
+  useEffect(() => {
+    if (!campanha?.id) return;
+    api(`/campaigns/${campanha.id}/projecao-funil`).then(setProjecaoFunil).catch(() => {});
+  }, [campanha?.id]);
 
   useEffect(() => {
     let ativo = true;
@@ -758,6 +764,94 @@ export default function CampaignDetail({ campanha, db, onVoltar, onEditar, onSta
           <div className="vx-chart-source">Base: {dados.origem.investimento}.</div>
         </section>
       </div>
+
+      {/* ── Projeção de resultados com IA (lógica do funil) ─── */}
+      {projecaoFunil?.projecao && (() => {
+        const pf = projecaoFunil.projecao;
+        const f = pf.funil;
+        const fin = pf.financeiro;
+        const eq = pf.equipe;
+        const temTicket = projecaoFunil.ticketInformado;
+        const stats = [
+          { Icon: Phone, label: "Contatos trabalhados", valor: f.contatos },
+          { Icon: Filter, label: "Leads qualificados", valor: f.agendamentos },
+          { Icon: CalendarCheck, label: "Reuniões agendadas", valor: f.agendamentosVerificados },
+          { Icon: UsersRound, label: "Reuniões realizadas", valor: f.reunioesRealizadas },
+          { Icon: Target, label: "Vendas estimadas", valor: f.vendas < 1 && f.vendas > 0 ? f.vendas.toFixed(2) : Math.round(f.vendas) },
+          { Icon: DollarSign, label: "Custo por venda", valor: money(fin.cac), mono: true },
+        ];
+        return <section className="vx-card" style={{ padding: 20, marginTop: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <Sparkles size={18} color="var(--brand)" />
+            <h2 className="vx-disp" style={{ margin: 0, fontSize: 16 }}>Projeção de resultados com IA</h2>
+          </div>
+          <p className="vx-mut" style={{ fontSize: 12.5, margin: "0 0 16px" }}>Baseado no investimento e benchmarks comerciais.</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10, marginBottom: 16 }}>
+            {stats.map(({ Icon, label, valor, mono }) => (
+              <div key={label} className="vx-card" style={{ padding: 14, textAlign: "center", position: "relative" }}>
+                <Icon size={18} color="var(--brand)" style={{ marginBottom: 6 }} />
+                <div style={{ fontSize: 24, fontWeight: 800, fontFamily: mono ? "var(--font-mono)" : undefined, color: "var(--brand)" }}>{valor}</div>
+                <div className="vx-mut" style={{ fontSize: 11.5 }}>{label}</div>
+                <HelpCircle size={14} color="var(--muted)" style={{ position: "absolute", top: 8, right: 8, cursor: "help" }} title={label} />
+              </div>
+            ))}
+          </div>
+
+          {temTicket ? (
+            <div style={{ background: "var(--brand)", borderRadius: 12, padding: "18px 24px", color: "#fff", textAlign: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 2 }}>
+                <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: 0.5, textTransform: "uppercase" }}>Faturamento bruto estimado</span>
+                <HelpCircle size={14} style={{ opacity: 0.7, cursor: "help" }} title="Receita total projetada considerando o funil e o ticket médio do produto." />
+              </div>
+              <div style={{ fontSize: 32, fontWeight: 900, fontFamily: "var(--font-mono)", margin: "6px 0" }}>{money(fin.faturamento)}</div>
+              <div style={{ display: "flex", justifyContent: "center", gap: 20, fontSize: 12, opacity: 0.85, flexWrap: "wrap", marginTop: 8 }}>
+                <span>Lucro: <b>{money(fin.lucro)}</b></span>
+                <span>Margem: <b>{fin.margem.toFixed(1)}%</b></span>
+                <span>ROI: <b>{fin.roi.toFixed(1)}%</b></span>
+                <span>Retorno/R$1: <b>{fin.retornoPorReal.toFixed(2)}×</b></span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ background: "var(--brand)", borderRadius: 12, padding: "18px 24px", color: "#fff", textAlign: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 2 }}>
+                <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: 0.5, textTransform: "uppercase" }}>Faturamento bruto estimado</span>
+                <HelpCircle size={14} style={{ opacity: 0.7 }} />
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, margin: "6px 0" }}>—</div>
+              <div style={{ fontSize: 12.5, opacity: 0.8 }}>Informe o preço dos produtos para calcular</div>
+            </div>
+          )}
+
+          {(eq.sdrsNecessarios > 0 || eq.closersNecessarios > 0) && (
+            <div style={{ display: "flex", gap: 12, marginTop: 14, fontSize: 12.5 }}>
+              <span className="vx-chip"><UsersRound size={12} /> {eq.sdrsNecessarios} SDR(s) necessário(s)</span>
+              <span className="vx-chip"><Handshake size={12} /> {eq.closersNecessarios} closer(s) necessário(s)</span>
+            </div>
+          )}
+
+          {fin.custoTotal > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 8, marginTop: 14, fontSize: 12 }}>
+              {[
+                ["Custo de mídia", fin.custoMidia],
+                ["Custo dos SDRs", fin.custoSdrs],
+                ["Custo dos closers", fin.custoClosers],
+                ["Taxas e impostos", fin.taxasImpostos],
+                ["Custo total", fin.custoTotal],
+                ["CAC aquisição", fin.cacAquisicao],
+              ].map(([label, valor]) => (
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--border)" }}>
+                  <span className="vx-mut">{label}</span>
+                  <b className="vx-mono">{money(valor)}</b>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="vx-chart-source" style={{ marginTop: 10 }}>Projeção baseada na verba, taxas de conversão e remuneração configurada. Ajuste os parâmetros da campanha para refinar.</div>
+        </section>;
+      })()}
+
       {vinculos.length > 0 && (
         <section className="vx-card" style={{ padding: 18, marginTop: 16 }}>
           <div className="vx-row" style={{ marginBottom: 10 }}>
