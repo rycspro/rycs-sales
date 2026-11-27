@@ -31,8 +31,8 @@ const OPC_PAISES = PAISES.map((p) => ({ value: p.code, label: p.nome }));
 const NOME_PAIS = Object.fromEntries(PAISES.map((p) => [p.code, p.nome]));
 const nomePais = (code) => NOME_PAIS[String(code || "").toUpperCase()] || code || "seu país";
 
-const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Ações e pagamentos", "Verba da campanha", "Tudo certo?"];
-const PASSOS_CURTOS = ["Tipo", "Objetivo", "Operação", "Profissionais", "Pagamentos", "Verba", "Revisão"];
+const PASSOS = ["Tipo de campanha", "O que você precisa?", "Como vai funcionar?", "Quem vai trabalhar?", "Ações e pagamentos", "Planejamento e verba", "Tudo certo?"];
+const PASSOS_CURTOS = ["Tipo", "Objetivo", "Operação", "Profissionais", "Pagamentos", "Planejamento", "Revisão"];
 
 const ICONES_OBJETIVO_UI = {
   encontrar_clientes: Search, qualificar: Filter, agendar_reunioes: CalendarCheck,
@@ -877,70 +877,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
           </div>
 
-          {/* Meta quantitativa + planejamento reverso */}
-          {campanha.objetivo && (() => {
-            const metaQ = perguntaMetaQuantitativa(campanha.objetivo);
-            const metaAtual = Number(campanha.metaQuantitativa) || 0;
-            const tarefas = campanha.tarefas || {};
-            const plan = metaAtual > 0 ? calcularPlanejamentoReverso({ objetivoChave: campanha.objetivo, metaQuantidade: metaAtual, tarefas }) : null;
-            return (
-              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-                <div style={{ marginBottom: 12 }}>
-                  <b style={{ color: "var(--brand)" }}><Target size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Meta da campanha</b><Tag obrigatorio={false} />
-                  <div className="vx-mut" style={{ fontSize: 11.5 }}>Informe sua meta para calcularmos automaticamente o esforço necessário.</div>
-                </div>
-                <label><div className="vx-label">{metaQ.label}</div>
-                  <input className="vx-input" type="number" min="0" value={metaAtual || ""} placeholder={metaQ.placeholder}
-                    onChange={(e) => { const v = Math.max(0, Number(e.target.value) || 0); set("metaQuantitativa", v); }} />
-                </label>
-                {plan && plan.etapas.length > 0 && (() => {
-                  const ICONES_ETAPA = { contatos_trabalhados: Phone, contatos_qualificados: Filter, leads_qualificados: Filter, reunioes_agendadas: CalendarCheck, reunioes_realizadas: Users, visitas_realizadas: MapPin, vendas: Target, clientes_reativados: RotateCcw };
-                  const etapasInvertidas = [...plan.etapas].reverse();
-                  return (
-                    <div style={{ marginTop: 16 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                        <div className="vx-eyebrow" style={{ margin: 0 }}>PLANEJAMENTO REVERSO</div>
-                        <span style={{ fontSize: 10.5, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: plan.fonte === "historico" ? "rgba(22,163,74,.1)" : "var(--brand-50)", color: plan.fonte === "historico" ? "var(--green)" : "var(--brand)", border: `1px solid ${plan.fonte === "historico" ? "rgba(22,163,74,.2)" : "var(--brand-100)"}` }}>
-                          {plan.fonte === "historico" ? "Dados reais" : "Estimativa"}
-                        </span>
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-                        {etapasInvertidas.map((e, i) => {
-                          const Ic = ICONES_ETAPA[e.id] || Target;
-                          const isMeta = e.tipo === "meta";
-                          return (
-                            <div key={e.id} style={{ display: "contents" }}>
-                              {i > 0 && <div style={{ display: "flex", alignItems: "center", color: "var(--muted)", fontSize: 13, fontWeight: 600 }}>→</div>}
-                              <div style={{ flex: "1 1 100px", maxWidth: 160, minWidth: 90, textAlign: "center", padding: "14px 8px 10px", borderRadius: 10, background: isMeta ? "var(--brand)" : "var(--surface-solid)", border: `1px solid ${isMeta ? "var(--brand)" : "var(--border)"}`, boxShadow: isMeta ? "var(--shadow-brand)" : "var(--shadow-card)" }}>
-                                <Ic size={18} color={isMeta ? "#fff" : "var(--brand)"} style={{ marginBottom: 6 }} />
-                                <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: isMeta ? "#fff" : "var(--brand)" }}>{e.quantidade.toLocaleString("pt-BR")}</div>
-                                <div style={{ fontSize: 10.5, fontWeight: 600, color: isMeta ? "rgba(255,255,255,.85)" : "var(--ink-2)", marginTop: 3, lineHeight: 1.3 }}>{e.nome}</div>
-                                {e.taxa > 0 && <div style={{ fontSize: 9.5, color: "var(--muted)", marginTop: 2 }}>{(e.taxa * 100).toFixed(0)}% {e.taxaNome?.replace("Taxa de ", "")}</div>}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div style={{ display: "grid", gridTemplateColumns: plan.investimentoEstimado > 0 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 10 }}>
-                        <div style={{ textAlign: "center", padding: "10px 8px", borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)" }}>
-                          <div className="vx-mut" style={{ fontSize: 10.5 }}>Profissionais sugeridos</div>
-                          <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>{plan.profissionaisRecomendados}</div>
-                        </div>
-                        {plan.investimentoEstimado > 0 && (
-                          <div style={{ textAlign: "center", padding: "10px 8px", borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)" }}>
-                            <div className="vx-mut" style={{ fontSize: 10.5 }}>Investimento estimado</div>
-                            <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>{money(plan.investimentoEstimado)}</div>
-                          </div>
-                        )}
-                      </div>
-                      {plan.aviso && <div className="vx-mut" style={{ fontSize: 11, marginTop: 8, fontStyle: "italic" }}>{plan.aviso}</div>}
-                    </div>
-                  );
-                })()}
-              </div>
-            );
-          })()}
-
           {/* Modelo de trabalho + localização do profissional (unificado) */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
@@ -1649,11 +1585,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                         <div className="vx-card" style={{ padding: 14 }}>
                           <b style={{ fontSize: 13, color: "var(--brand)" }}>Perfil e requisitos — {fInfo?.nome}</b>
                           <div className="vx-grid vx-g2" style={{ marginTop: 10 }}>
-                            <label><div className="vx-label">Quantas vagas?</div>
-                              <select className="vx-input" value={cfg.vagas === 0 ? "0" : String(cfg.vagas || 0)} onChange={(e) => setConfig("vagas", Number(e.target.value))}>
-                                <option value="0">Ilimitado</option>
-                                {[1,2,3,5,10,15,20,30,50,100].map((v) => <option key={v} value={v}>{v}</option>)}
-                              </select></label>
                             <label><div className="vx-label">Experiência</div>
                               <select className="vx-input" value={cfg.nivelExperiencia || "indiferente"} onChange={(e) => setConfig("nivelExperiencia", e.target.value)}>
                                 {NIVEIS_EXPERIENCIA.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
@@ -1837,28 +1768,6 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
               {PROCESSOS_ADMISSAO.map((p) => (
                 <CardOption key={p.id} selected={campanha.processoAdmissao === p.id} onClick={() => set("processoAdmissao", p.id)} title={p.label} subtitle={p.descricao} />
               ))}
-            </div>
-            <div className="vx-grid vx-g2" style={{ marginTop: 12 }}>
-              <label><div className="vx-label">Quantas vagas?</div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <select className="vx-input" value={campanha.vagas === 0 ? "0" : String(campanha.vagas || 0)} onChange={(e) => set("vagas", Number(e.target.value))} style={{ flex: 1 }}>
-                    <option value="0">Ilimitado</option>
-                    {[1,2,3,5,10,15,20,30,50,100].map((v) => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                  {![0,1,2,3,5,10,15,20,30,50,100].includes(campanha.vagas) && campanha.vagas > 0 && (
-                    <input className="vx-input vx-mono" type="number" min="1" value={campanha.vagas} onChange={(e) => set("vagas", Number(e.target.value))} style={{ width: 80 }} />
-                  )}
-                </div></label>
-              <label><div className="vx-label">Máximo de profissionais</div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <select className="vx-input" value={campanha.limiteProf === 0 ? "0" : String(campanha.limiteProf || 0)} onChange={(e) => set("limiteProf", Number(e.target.value))} style={{ flex: 1 }}>
-                    <option value="0">Ilimitado</option>
-                    {[1,2,3,5,10,15,20,30,50,100].map((v) => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                  {![0,1,2,3,5,10,15,20,30,50,100].includes(campanha.limiteProf) && campanha.limiteProf > 0 && (
-                    <input className="vx-input vx-mono" type="number" min="1" value={campanha.limiteProf} onChange={(e) => set("limiteProf", Number(e.target.value))} style={{ width: 80 }} />
-                  )}
-                </div></label>
             </div>
           </div>
           </>)}
@@ -2348,7 +2257,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
             <button className="vx-btn" onClick={() => setPasso(3)}><ArrowLeft size={14} /> Voltar</button>
-            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(5)}>Verba da campanha <ArrowRight size={14} /></button>
+            <button className="vx-btn vx-btn-primary" onClick={() => setPasso(5)}>Planejamento e verba <ArrowRight size={14} /></button>
           </div>
         </>
       )}
@@ -2394,10 +2303,101 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
         return (
         <>
-          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Verba da campanha</h2>
+          <h2 className="vx-disp" style={{ fontSize: 23, margin: "0 0 5px" }}>Planejamento e verba</h2>
           <p className="vx-mut" style={{ marginTop: 0, fontSize: 13.5 }}>
-            Defina quanto você deseja investir. A plataforma distribui automaticamente entre as atividades.
+            Defina sua meta, veja o planejamento e quanto investir.
           </p>
+
+          {/* Meta da campanha + planejamento reverso */}
+          {campanha.objetivo && (() => {
+            const metaQ = perguntaMetaQuantitativa(campanha.objetivo);
+            const metaAtual = Number(campanha.metaQuantitativa) || 0;
+            const tarefasCalc = campanha.estruturaComercial === "operacao"
+              ? Object.assign({}, ...(campanha.funcoesOperacao || []).map(fk => (campanha[`config_${fk}`] || {}).tarefas || {}))
+              : (tarefas || {});
+            const plan = metaAtual > 0 ? calcularPlanejamentoReverso({ objetivoChave: campanha.objetivo, metaQuantidade: metaAtual, tarefas: tarefasCalc }) : null;
+            const funcoesConfig = campanha.estruturaComercial === "operacao"
+              ? (campanha.funcoesOperacao || []).map(fk => ({ funcao: fk, nome: FUNCOES[fk]?.nome || fk, vagas: (campanha[`config_${fk}`] || {}).vagas || 0 }))
+              : campanha.funcao ? [{ funcao: campanha.funcao, nome: FUNCOES[campanha.funcao]?.nome || campanha.funcao, vagas: campanha.vagas || 0 }] : [];
+            return (
+              <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <b style={{ color: "var(--brand)" }}><Target size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Meta da campanha</b><Tag obrigatorio={false} />
+                  <div className="vx-mut" style={{ fontSize: 11.5 }}>Informe sua meta para calcularmos automaticamente o esforço e investimento necessários.</div>
+                </div>
+                <label><div className="vx-label">{metaQ.label}</div>
+                  <input className="vx-input" type="number" min="0" value={metaAtual || ""} placeholder={metaQ.placeholder}
+                    onChange={(e) => { const v = Math.max(0, Number(e.target.value) || 0); set("metaQuantitativa", v); }} />
+                </label>
+                {plan && plan.etapas.length > 0 && (() => {
+                  const ICONES_ETAPA = { contatos_trabalhados: Phone, contatos_qualificados: Filter, leads_qualificados: Filter, reunioes_agendadas: CalendarCheck, reunioes_realizadas: Users, visitas_realizadas: MapPin, vendas: Target, clientes_reativados: RotateCcw };
+                  const etapasInvertidas = [...plan.etapas].reverse();
+                  return (
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                        <div className="vx-eyebrow" style={{ margin: 0 }}>PLANEJAMENTO REVERSO</div>
+                        <span style={{ fontSize: 10.5, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: plan.fonte === "historico" ? "rgba(22,163,74,.1)" : "var(--brand-50)", color: plan.fonte === "historico" ? "var(--green)" : "var(--brand)", border: `1px solid ${plan.fonte === "historico" ? "rgba(22,163,74,.2)" : "var(--brand-100)"}` }}>
+                          {plan.fonte === "historico" ? "Dados reais" : "Estimativa"}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+                        {etapasInvertidas.map((e, i) => {
+                          const Ic = ICONES_ETAPA[e.id] || Target;
+                          const isMeta = e.tipo === "meta";
+                          return (
+                            <div key={e.id} style={{ display: "contents" }}>
+                              {i > 0 && <div style={{ display: "flex", alignItems: "center", color: "var(--muted)", fontSize: 13, fontWeight: 600 }}>→</div>}
+                              <div style={{ flex: "1 1 100px", maxWidth: 160, minWidth: 90, textAlign: "center", padding: "14px 8px 10px", borderRadius: 10, background: isMeta ? "var(--brand)" : "var(--surface-solid)", border: `1px solid ${isMeta ? "var(--brand)" : "var(--border)"}`, boxShadow: isMeta ? "var(--shadow-brand)" : "var(--shadow-card)" }}>
+                                <Ic size={18} color={isMeta ? "#fff" : "var(--brand)"} style={{ marginBottom: 6 }} />
+                                <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: isMeta ? "#fff" : "var(--brand)" }}>{e.quantidade.toLocaleString("pt-BR")}</div>
+                                <div style={{ fontSize: 10.5, fontWeight: 600, color: isMeta ? "rgba(255,255,255,.85)" : "var(--ink-2)", marginTop: 3, lineHeight: 1.3 }}>{e.nome}</div>
+                                {e.taxa > 0 && <div style={{ fontSize: 9.5, color: "var(--muted)", marginTop: 2 }}>{(e.taxa * 100).toFixed(0)}% {e.taxaNome?.replace("Taxa de ", "")}</div>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {funcoesConfig.length > 0 && (
+                        <div style={{ marginTop: 12 }}>
+                          <div className="vx-eyebrow" style={{ marginBottom: 8 }}>PROFISSIONAIS RECOMENDADOS</div>
+                          <div style={{ display: "grid", gap: 6 }}>
+                            {funcoesConfig.map(fc => {
+                              const recPorFunc = Math.max(1, Math.ceil(plan.contatosTotais / (200 * funcoesConfig.length)));
+                              return (
+                                <div key={fc.funcao} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "var(--brand-50)", border: "1px solid var(--brand-100)", borderRadius: 10 }}>
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 600 }}>{fc.nome}</div>
+                                    <div className="vx-mut" style={{ fontSize: 11.5 }}>Vagas atuais: {fc.vagas || "Ilimitado"}</div>
+                                  </div>
+                                  <div style={{ textAlign: "right" }}>
+                                    <div className="vx-mono" style={{ fontSize: 18, fontWeight: 800, color: "var(--brand)" }}>{recPorFunc}</div>
+                                    <div className="vx-mut" style={{ fontSize: 10.5 }}>recomendados</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      <div style={{ display: "grid", gridTemplateColumns: plan.investimentoEstimado > 0 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 10 }}>
+                        <div style={{ textAlign: "center", padding: "10px 8px", borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)" }}>
+                          <div className="vx-mut" style={{ fontSize: 10.5 }}>Total de profissionais</div>
+                          <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>{plan.profissionaisRecomendados}</div>
+                        </div>
+                        {plan.investimentoEstimado > 0 && (
+                          <div style={{ textAlign: "center", padding: "10px 8px", borderRadius: 10, background: "var(--brand-50)", border: "1px solid var(--brand-100)" }}>
+                            <div className="vx-mut" style={{ fontSize: 10.5 }}>Investimento estimado</div>
+                            <div className="vx-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--brand)" }}>{money(plan.investimentoEstimado)}</div>
+                          </div>
+                        )}
+                      </div>
+                      {plan.aviso && <div className="vx-mut" style={{ fontSize: 11, marginTop: 8, fontStyle: "italic" }}>{plan.aviso}</div>}
+                    </div>
+                  );
+                })()}
+              </div>
+            );
+          })()}
 
           {/* Saldo disponível */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14, background: "linear-gradient(135deg, var(--brand-50) 0%, var(--surface) 100%)", border: "1.5px solid var(--brand-100)" }}>
