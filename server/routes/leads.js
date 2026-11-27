@@ -48,7 +48,7 @@ router.get("/leads/:id", (req, res) => {
 router.post("/leads/import", (req, res) => {
   const { role, entityId: companyId } = req.user;
   if (role !== "empresa") return res.status(403).json({ error: "Apenas a empresa pode importar listas" });
-  const { campaignId, sellerId, linhas, autoDistribuir } = req.body || {};
+  const { campaignId, sellerId, sellerIds, linhas, autoDistribuir } = req.body || {};
   if (!campaignId) return res.status(400).json({ error: "Campanha é obrigatória" });
   if (!Array.isArray(linhas) || !linhas.length || linhas.length > 1000) return res.status(400).json({ error: "Envie entre 1 e 1.000 contatos" });
   const campanha = db.prepare("SELECT id FROM campaigns WHERE id = ? AND companyId = ?").get(campaignId, companyId);
@@ -56,7 +56,13 @@ router.post("/leads/import", (req, res) => {
 
   // Pool de vendedores: auto-distribuir ou vendedor específico
   let sellerPool = [];
-  if (autoDistribuir || !sellerId) {
+  if (Array.isArray(sellerIds) && sellerIds.length) {
+    // Distribuir só entre os profissionais escolhidos (ex.: os da discadora),
+    // e apenas os que de fato estão aprovados no time.
+    const aprovados = new Set(db.prepare("SELECT sellerId FROM applications WHERE companyId = ? AND status = 'aprovado'").all(companyId).map((r) => r.sellerId));
+    sellerPool = sellerIds.filter((id) => aprovados.has(id)).sort(() => Math.random() - 0.5);
+    if (!sellerPool.length) return res.status(422).json({ error: "Nenhum dos profissionais escolhidos está aprovado no time" });
+  } else if (autoDistribuir || !sellerId) {
     const rows = db.prepare("SELECT sellerId FROM applications WHERE companyId = ? AND status = 'aprovado'").all(companyId);
     sellerPool = rows.map((r) => r.sellerId).sort(() => Math.random() - 0.5);
     if (!sellerPool.length) return res.status(422).json({ error: "Nenhum profissional aprovado para distribuir" });
@@ -66,22 +72,30 @@ router.post("/leads/import", (req, res) => {
     sellerPool = [sellerId];
   }
 
-  const existentes = db.prepare("SELECT email, telefone FROM leads WHERE companyId = ?").all(companyId);
-  const emails = new Set(existentes.map((l) => String(l.email || "").trim().toLowerCase()).filter(Boolean));
-  const telefones = new Set(existentes.map((l) => String(l.telefone || "").replace(/\D/g, "")).filter(Boolean));
-  const validos = [], erros = []; let duplicados = 0, sellerIdx = 0;
+  const existentes = db.prepare("SELECT id, email, telefone FROM leads WHERE companyId = ?").all(companyId);
+  // Mapas contato → id: quem chama (ex.: a discadora) recebe também o id do
+  // lead que já existia, para usar a lista inteira sem duplicar o cadastro.
+  const emails = new Map(), telefones = new Map();
+  existentes.forEach((l) => {
+    const e = String(l.email || "").trim().toLowerCase(), t = String(l.telefone || "").replace(/\D/g, "");
+    if (e && !emails.has(e)) emails.set(e, l.id);
+    if (t && !telefones.has(t)) telefones.set(t, l.id);
+  });
+  const validos = [], erros = [], idsExistentes = new Set(); let duplicados = 0, sellerIdx = 0;
   linhas.forEach((linha, indice) => {
     const nome = String(linha?.nome || "").trim(), email = String(linha?.email || "").trim().toLowerCase(), telefone = String(linha?.telefone || "").replace(/\D/g, "");
     if (!nome) return erros.push({ linha: indice + 2, erro: "Nome obrigatório" });
     if (!email && !telefone) return erros.push({ linha: indice + 2, erro: "Informe telefone ou e-mail" });
-    if ((email && emails.has(email)) || (telefone && telefones.has(telefone))) { duplicados++; return; }
-    if (email) emails.add(email); if (telefone) telefones.add(telefone);
+    const jaExiste = (email && emails.get(email)) || (telefone && telefones.get(telefone));
+    if (jaExiste) { duplicados++; idsExistentes.add(jaExiste); return; }
+    const leadId = uid();
+    if (email) emails.set(email, leadId); if (telefone) telefones.set(telefone, leadId);
     const assignedSellerId = sellerPool[sellerIdx++ % sellerPool.length];
-    validos.push({ ...linha, nome, email, telefone, sellerId: assignedSellerId });
+    validos.push({ ...linha, nome, email, telefone, sellerId: assignedSellerId, leadId });
   });
   const ts = agora();
   db.transaction(() => validos.forEach((l) => {
-    const leadId = uid();
+    const leadId = l.leadId;
     db.prepare(`INSERT INTO leads
       (id, sellerId, companyId, campaignId, nome, empresa, cargo, telefone, email, origem, etapa, valorEstimado, criadoEm, atualizadoEm)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'empresa', 'novo', ?, ?, ?)`)
@@ -103,7 +117,11 @@ router.post("/leads/import", (req, res) => {
     if (vendUser) notificar(vendUser.id, "importacao", "Novos contatos na sua fila", `${qtd} contato(s) foram atribuídos a você.`);
   }
 
-  res.json({ totalRecebido: linhas.length, validos: validos.length, invalidos: erros.length, duplicados, ignorados: erros.length + duplicados, importados: validos.length, erros });
+  const ids = validos.map((l) => l.leadId), novos = new Set(ids);
+  res.json({
+    totalRecebido: linhas.length, validos: validos.length, invalidos: erros.length, duplicados, ignorados: erros.length + duplicados, importados: validos.length, erros,
+    ids, idsExistentes: [...idsExistentes].filter((id) => !novos.has(id)),
+  });
 });
 
 // Redistribuir contatos abertos da campanha entre os profissionais aprovados

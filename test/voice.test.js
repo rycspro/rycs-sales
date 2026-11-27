@@ -666,4 +666,55 @@ describe("RYCS Voice — Discadora comercial", () => {
     assert.equal(r.corpo.maxMinutosMes, 0);
     assert.equal(r.corpo.maxCanaisSimultaneos, 2);
   });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Configuração simples: subir lista + número de teste no topo
+  // ══════════════════════════════════════════════════════════════════════
+
+  it("importação devolve ids novos e existentes e distribui só entre os escolhidos", async () => {
+    const camp = await req("/campaigns", { cookie: cookieEmpresa, body: { titulo: "Campanha Discadora" } });
+    assert.equal(camp.status, 200, JSON.stringify(camp.corpo));
+    const campaignId = camp.corpo.id;
+    const primeiro = await req("/leads/import", {
+      cookie: cookieEmpresa,
+      body: { campaignId, sellerIds: [realSellerId2], linhas: [{ nome: "Já na base", telefone: "11977770002" }] },
+    });
+    assert.equal(primeiro.status, 200, JSON.stringify(primeiro.corpo));
+    const jaNaBase = primeiro.corpo.ids[0];
+    const r = await req("/leads/import", {
+      cookie: cookieEmpresa,
+      body: { campaignId, sellerIds: [realSellerId2], linhas: [
+        { nome: "Contato Novo", telefone: "11977770001" },
+        { nome: "Repetido", telefone: "(11) 97777-0002" },
+      ] },
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.corpo));
+    assert.equal(r.corpo.importados, 1);
+    assert.equal(r.corpo.ids.length, 1);
+    assert.deepEqual(r.corpo.idsExistentes, [jaNaBase]);
+    const novo = await req(`/leads/${r.corpo.ids[0]}`, { cookie: cookieEmpresa });
+    assert.equal(novo.corpo.sellerId, realSellerId2);
+
+    const fila = await req("/voice/queues", { body: { nome: "Discadora · Campanha Discadora", campaignId }, cookie: cookieEmpresa });
+    const filaId = fila.corpo.id;
+    const add = await req(`/voice/queues/${filaId}/leads`, { body: { leadIds: [...r.corpo.ids, ...r.corpo.idsExistentes] }, cookie: cookieEmpresa });
+    assert.equal(add.corpo.adicionados, 2);
+
+    // Número de teste: entra (ou volta) no topo da fila
+    const teste = await req(`/voice/queues/${filaId}/leads`, { body: { leadIds: [jaNaBase], teste: true }, cookie: cookieEmpresa });
+    assert.equal(teste.status, 200);
+    const lista = await req(`/voice/queues/${filaId}/leads`, { cookie: cookieEmpresa });
+    assert.equal(lista.corpo[0].leadId, jaNaBase);
+    assert.equal(lista.corpo[0].prioridade, 1000);
+    assert.equal(lista.corpo[0].status, "pendente");
+  });
+
+  it("importação recusa profissionais escolhidos fora do time", async () => {
+    const camps = await req("/campaigns", { cookie: cookieEmpresa });
+    const r = await req("/leads/import", {
+      cookie: cookieEmpresa,
+      body: { campaignId: camps.corpo[0].id, sellerIds: ["nao_existe"], linhas: [{ nome: "X", telefone: "11977770009" }] },
+    });
+    assert.equal(r.status, 422);
+  });
 });

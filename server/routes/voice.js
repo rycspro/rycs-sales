@@ -314,7 +314,14 @@ router.post("/voice/queues/:id/leads", (req, res) => {
   const idsValidos = validos.map((l) => l.id);
 
   const resultado = adicionarLeadsNaFila(fila.id, idsValidos);
-  auditLog(companyId, req.user.id, "adicionar_leads_fila", "voice_queue", fila.id, { total: idsValidos.length, adicionados: resultado.adicionados });
+  // Número de teste: vai para o topo da fila e volta a ficar pendente,
+  // mesmo que já tenha sido discado antes.
+  if (req.body.teste && idsValidos.length) {
+    const ph = idsValidos.map(() => "?").join(",");
+    db.prepare(`UPDATE voice_queue_leads SET prioridade = 1000, status = 'pendente', tentativas = 0, proximaTentativa = NULL, atualizadoEm = ?
+      WHERE queueId = ? AND leadId IN (${ph})`).run(agora(), fila.id, ...idsValidos);
+  }
+  auditLog(companyId, req.user.id, "adicionar_leads_fila", "voice_queue", fila.id, { total: idsValidos.length, adicionados: resultado.adicionados, teste: !!req.body.teste });
   res.json(resultado);
 });
 

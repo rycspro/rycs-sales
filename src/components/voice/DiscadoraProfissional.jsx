@@ -71,7 +71,11 @@ export default function DiscadoraProfissional({ aviso }) {
 
   useEffect(() => {
     api.get("/voice/status").then(setVoiceStatus).catch(() => setVoiceStatus({ habilitada: false }));
-    api.get("/voice/queues").then(setFilas).catch(() => {});
+    api.get("/voice/queues").then((f) => {
+      setFilas(f);
+      // Uma fila só: já vem escolhida, basta apertar Iniciar.
+      if (f.length === 1) setFilaSelecionada((atual) => atual || f[0].id);
+    }).catch(() => {});
     api.get("/voice/providers").then(setProviders).catch(() => {});
     api.get("/voice/settings").then(setSettings).catch(() => {});
     api.get("/voice/callbacks").then(setCallbacks).catch(() => {});
