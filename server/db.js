@@ -1329,6 +1329,9 @@ db.exec(`
 // Registros anteriores à linha do tempo são projetados uma única vez. Cada
 // item usa um id determinístico e source=BACKFILL; assim o feed aproveita o
 // histórico real sem fingir que conhece a hora de aprovações antigas.
+// FK checagem desabilitada durante o backfill: dados históricos podem
+// referenciar registros já deletados; OR IGNORE cuida de duplicatas UNIQUE.
+db.exec(`PRAGMA foreign_keys = OFF`);
 db.exec(`
   INSERT OR IGNORE INTO campaign_events
     (id, companyId, campaignId, tipo, actorRole, source, dados, criadoEm)
@@ -1350,6 +1353,7 @@ db.exec(`
   SELECT 'backfill:lead:' || l.id, l.companyId, l.campaignId, 'LEAD_CREATED', 'profissional', l.sellerId, l.id, 'BACKFILL', '{}', l.criadoEm
     FROM leads l WHERE l.campaignId IS NOT NULL;
 `);
+db.exec(`PRAGMA foreign_keys = ON`);
 
 // Cobrança e acesso administrativo por empresa
 db.exec(`
