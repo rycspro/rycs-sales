@@ -92,6 +92,22 @@ function CampoOrcamento({ value, onChange }) {
 
 const SEL = { bg: "var(--brand-50, #E4F0FF)", border: "var(--brand, #318CE7)", bgOff: "var(--surface, #FFFFFF)", borderOff: "var(--border, #E2E2E2)" };
 
+function Tag({ obrigatorio }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      fontSize: 10, fontWeight: 700, letterSpacing: ".04em",
+      padding: "2px 7px", borderRadius: 20,
+      marginLeft: 7, verticalAlign: "middle",
+      background: obrigatorio ? "var(--brand-50,#E4F0FF)" : "var(--surface-2,#F5F5F5)",
+      color: obrigatorio ? "var(--brand,#318CE7)" : "var(--muted,#888)",
+      border: `1px solid ${obrigatorio ? "var(--brand-100,#bdd7ff)" : "var(--border,#E2E2E2)"}`,
+    }}>
+      {obrigatorio ? "OBRIGATÓRIO" : "OPCIONAL"}
+    </span>
+  );
+}
+
 function CardOption({ selected, onClick, icon: Icon, title, subtitle, disabled }) {
   return (
     <button
@@ -798,7 +814,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             return (
               <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
                 <div style={{ marginBottom: 12 }}>
-                  <b style={{ color: "var(--brand)" }}><Target size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Meta da campanha</b>
+                  <b style={{ color: "var(--brand)" }}><Target size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Meta da campanha</b><Tag obrigatorio={false} />
                   <div className="vx-mut" style={{ fontSize: 11.5 }}>Informe sua meta para calcularmos automaticamente o esforço necessário.</div>
                 </div>
                 <label><div className="vx-label">{metaQ.label}</div>
@@ -837,7 +853,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Modelo de trabalho */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>De onde o profissional trabalha?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Ele trabalha de casa, na rua ou mistura os dois?</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>De onde o profissional trabalha?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Ele trabalha de casa, na rua ou mistura os dois?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {Object.values(MODELOS_TRABALHO).map((m) => {
                 const Ic = ICONES_MODELO[m.id] || Globe;
@@ -849,7 +865,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Restrição geográfica do profissional (só remoto) */}
           {campanha.modeloTrabalho === "remoto" && (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização do profissional</b><div className="vx-mut" style={{ fontSize: 11.5 }}>De onde o profissional pode trabalhar? Aceita de qualquer lugar ou só de algumas regiões?</div></div>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização do profissional</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>De onde o profissional pode trabalhar? Aceita de qualquer lugar ou só de algumas regiões?</div></div>
               <div style={{ display: "grid", gap: 8 }}>
                 {Object.values(RESTRICOES_GEO).map((r) => (
                   <CardOption key={r.id} selected={campanha.restricaoGeo === r.id} onClick={() => set("restricaoGeo", r.id)} title={r.label} />
@@ -879,7 +895,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Território (presencial/híbrido) */}
           {(campanha.modeloTrabalho === "presencial" || campanha.modeloTrabalho === "hibrido") && (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Território de atuação do profissional</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Em qual cidade ou região o profissional vai trabalhar presencialmente?</div></div>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Território de atuação do profissional</b><Tag obrigatorio={true} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Em qual cidade ou região o profissional vai trabalhar presencialmente?</div></div>
               <div className="vx-grid vx-g2">
                 <label><div className="vx-label">Região</div>
                   <input className="vx-input" value={campanha.regiao} onChange={(e) => set("regiao", e.target.value)} placeholder="Ex.: interior de SP" /></label>
@@ -890,7 +906,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Mercado de atuação do cliente */}
           {secaoVisivel.mercado && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização dos seus clientes</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde estão os clientes que o profissional vai contatar?</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Localização dos seus clientes</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Onde estão os clientes que o profissional vai contatar?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {Object.values(MERCADOS).map((m) => (
                 <CardOption key={m.id} selected={campanha.mercado === m.id} onClick={() => set("mercado", m.id)} title={m.label} />
@@ -906,7 +922,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Origem dos leads */}
           {secaoVisivel.origemLeads && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>De onde vêm os contatos?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Como os profissionais vão conseguir os contatos para trabalhar?</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>De onde vêm os contatos?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Como os profissionais vão conseguir os contatos para trabalhar?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {Object.values(ORIGENS_LEAD).map((o) => (
                 <CardOption key={o.id} selected={campanha.origemLeads === o.id} onClick={() => set("origemLeads", o.id)} title={o.label} />
@@ -916,7 +932,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Canais */}
           {secaoVisivel.canais && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Por onde ele vai falar com os contatos?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione os meios de comunicação que o profissional pode usar.</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Por onde ele vai falar com os contatos?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Selecione os meios de comunicação que o profissional pode usar.</div></div>
             <ChipToggle
               items={CANAIS.map((c) => ({ id: c.id, nome: c.nome, icon: ICONES_CANAL[c.id] || Globe }))}
               value={campanha.canais || []}
@@ -928,7 +944,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Materiais e treinamento (unificado) */}
           {secaoVisivel.materiais && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
-              <b style={{ color: "var(--brand)" }}>Materiais e treinamento</b>
+              <b style={{ color: "var(--brand)" }}>Materiais e treinamento</b><Tag obrigatorio={false} />
               <div className="vx-mut" style={{ fontSize: 11.5 }}>Adicione arquivos, treinamentos e conteúdos que vão ajudar o profissional.</div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
@@ -1235,7 +1251,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Base de leads da campanha */}
           {secaoVisivel.fonteLeads && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
-              <b style={{ color: "var(--brand)" }}>Quem o profissional vai contatar?</b>
+              <b style={{ color: "var(--brand)" }}>Quem o profissional vai contatar?</b><Tag obrigatorio={false} />
               <div className="vx-mut" style={{ fontSize: 11.5 }}>Você fornece a lista de contatos ou o profissional busca sozinho?</div>
             </div>
             <div style={{ display: "grid", gap: 8 }}>
@@ -1290,7 +1306,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Estrutura comercial */}
           {secaoVisivel.estrutura && <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Como os profissionais vão trabalhar?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Uma campanha sozinha ou em equipe com outras?</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Como os profissionais vão trabalhar?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Uma campanha sozinha ou em equipe com outras?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               <CardOption selected={campanha.estruturaComercial === "independente" || !campanha.estruturaComercial} onClick={() => set("estruturaComercial", "independente")} icon={Target} title="Campanha sozinha" subtitle="Funciona de forma independente, sem vínculo com outras." />
               <CardOption selected={campanha.estruturaComercial === "vinculada"} onClick={() => set("estruturaComercial", "vinculada")} icon={Workflow} title="Conectar a outra campanha" subtitle="Os contatos passam de uma campanha para outra automaticamente." />
@@ -1557,7 +1573,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div>
-                <b style={{ color: "var(--brand)" }}><ClipboardCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Qualificação de leads</b>
+                <b style={{ color: "var(--brand)" }}><ClipboardCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Qualificação de leads</b><Tag obrigatorio={false} />
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>Perguntas que o profissional faz ao contato para qualificá-lo.</div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
@@ -1617,7 +1633,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* Confirmação de contato */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
             <div style={{ marginBottom: 12 }}>
-              <b style={{ color: "var(--brand)" }}><ShieldCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Confirmação de contato</b>
+              <b style={{ color: "var(--brand)" }}><ShieldCheck size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Confirmação de contato</b><Tag obrigatorio={false} />
               <div className="vx-mut" style={{ fontSize: 11.5 }}>O cliente recebe um link para confirmar que o contato realmente aconteceu.</div>
             </div>
             <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13 }}>
@@ -1672,7 +1688,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {campanha.estruturaComercial === "operacao" && (campanha.funcoesOperacao || []).length > 0 ? (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 10 }}><b style={{ color: "var(--brand)" }}>Funções da equipe</b>
+              <div style={{ marginBottom: 10 }}><b style={{ color: "var(--brand)" }}>Funções da equipe</b><Tag obrigatorio={true} />
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>O perfil, vagas e experiência de cada função foram configurados no passo anterior.</div>
               </div>
               <div style={{ display: "grid", gap: 6 }}>
@@ -1692,7 +1708,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           ) : (<>
           {/* Função comercial */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>O que o profissional vai fazer?</b>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>O que o profissional vai fazer?</b><Tag obrigatorio={true} />
               {objUI?.funcaoSugerida && <span className="vx-badge vx-badge-brand" style={{ fontSize: 11, marginLeft: 8 }}>Sugerida: {FUNCOES[objUI.funcaoSugerida]?.nome}</span>}
             </div>
             <div style={{ display: "grid", gap: 8 }}>
@@ -1706,7 +1722,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* ICP */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Quem é o cliente ideal?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Descreva o tipo de empresa ou pessoa que o profissional deve procurar.</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Quem é o cliente ideal?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Descreva o tipo de empresa ou pessoa que o profissional deve procurar.</div></div>
             <textarea className="vx-input" style={{ minHeight: 64 }} value={campanha.publico || ""}
               onChange={(e) => set("publico", e.target.value)}
               placeholder="Ex.: distribuidoras de bebida com 10 a 80 funcionários" />
@@ -1719,7 +1735,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Nível de experiência */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Quanta experiência ele precisa ter?</b></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Quanta experiência ele precisa ter?</b><Tag obrigatorio={false} /></div>
             <div style={{ display: "grid", gap: 8 }}>
               {NIVEIS_EXPERIENCIA.map((n) => (
                 <CardOption key={n.id} selected={campanha.nivelExperiencia === n.id} onClick={() => set("nivelExperiencia", n.id)} title={n.label} />
@@ -1729,7 +1745,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {/* Processo de admissão */}
           <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Como o profissional entra na campanha?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Ele pode começar na hora ou precisa da sua aprovação?</div></div>
+            <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Como o profissional entra na campanha?</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Ele pode começar na hora ou precisa da sua aprovação?</div></div>
             <div style={{ display: "grid", gap: 8 }}>
               {PROCESSOS_ADMISSAO.map((p) => (
                 <CardOption key={p.id} selected={campanha.processoAdmissao === p.id} onClick={() => set("processoAdmissao", p.id)} title={p.label} subtitle={p.descricao} />
@@ -1795,7 +1811,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
 
           {campanha.estruturaComercial === "operacao" && (campanha.funcoesOperacao || []).length > 0 ? (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Resumo de pagamentos por função</b></div>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Resumo de pagamentos por função</b><Tag obrigatorio={true} /></div>
               <div style={{ display: "grid", gap: 10 }}>
                 {(campanha.funcoesOperacao || []).map((k) => {
                   const f = FUNCOES[k];
@@ -1864,7 +1880,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {/* ── MODO SELEÇÃO RÁPIDA ── */}
           {(campanha.modoAcoesRemuneradas || "rapido") === "rapido" && (<>
             <div className="vx-card" style={{ padding: 18 }}>
-              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Por quais resultados você paga?</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Marque cada atividade e defina o valor. As mais comuns para {FUNCOES[campanha.funcao]?.nome || campanha.funcao || "SDR"} aparecem primeiro.</div></div>
+              <div style={{ marginBottom: 12 }}><b style={{ color: "var(--brand)" }}>Por quais resultados você paga?</b><Tag obrigatorio={true} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Marque cada atividade e defina o valor. As mais comuns para {FUNCOES[campanha.funcao]?.nome || campanha.funcao || "SDR"} aparecem primeiro.</div></div>
               <div style={{ display: "grid", gap: 8 }}>
                 {(() => {
                   const sugeridas = SUGESTOES_FUNCAO[campanha.funcao] || SUGESTOES_FUNCAO.sdr;
@@ -1924,7 +1940,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             {/* Ações personalizadas preservadas ao voltar do modo personalizado */}
             {(campanha.formasGanhoRascunho || []).filter((f) => f.origem !== "predefinido").length > 0 && (
               <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
-                <div style={{ marginBottom: 10 }}><b style={{ color: "var(--brand)" }}>Ações personalizadas</b><div className="vx-mut" style={{ fontSize: 11.5 }}>Criadas no modo personalizado e preservadas.</div></div>
+                <div style={{ marginBottom: 10 }}><b style={{ color: "var(--brand)" }}>Ações personalizadas</b><Tag obrigatorio={false} /><div className="vx-mut" style={{ fontSize: 11.5 }}>Criadas no modo personalizado e preservadas.</div></div>
                 {(campanha.formasGanhoRascunho || []).filter((f) => f.origem !== "predefinido").map((fg, i) => (
                   <div key={fg.tempId} style={{ padding: "10px 12px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, marginBottom: 6, display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ flex: 1 }}>
@@ -1943,7 +1959,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             <div className="vx-card" style={{ padding: 18 }}>
               <div className="vx-row" style={{ marginBottom: 12 }}>
                 <div>
-                  <b style={{ color: "var(--brand)" }}>Crie suas formas de ganho</b>
+                  <b style={{ color: "var(--brand)" }}>Crie suas formas de ganho</b><Tag obrigatorio={true} />
                   <div className="vx-mut" style={{ fontSize: 11.5 }}>Personalize as atividades e condições de remuneração da sua operação.</div>
                 </div>
                 <button className="vx-btn vx-btn-sm vx-btn-primary" onClick={() => set("formasGanhoRascunho", [...(campanha.formasGanhoRascunho || []), {
@@ -2212,7 +2228,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
           {campanha.origemLeads === "mista" && (
             <div className="vx-card" style={{ padding: 18, marginTop: 14 }}>
               <div style={{ marginBottom: 12 }}>
-                <b style={{ color: "var(--brand)" }}><HandCoins size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Remuneração por origem do lead</b>
+                <b style={{ color: "var(--brand)" }}><HandCoins size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Remuneração por origem do lead</b><Tag obrigatorio={false} />
                 <div className="vx-mut" style={{ fontSize: 11.5 }}>Leads da empresa e leads encontrados pelo profissional podem ter valores diferentes.</div>
               </div>
               <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, marginBottom: 12 }}>
