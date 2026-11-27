@@ -1742,17 +1742,20 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
                         set(`config_${k}`, { funcao: k, vagas: 0, nivelExperiencia: "", processoAdmissao: "manual", acoesAtivas: [], tarefas: {}, remuneracaoCumulativa: true, prazoHoras: 24, limitePorProfissional: 10, orcamento: 0 });
                       }
                     }} style={{
-                      display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, padding: "14px 14px", width: "100%", textAlign: "left", cursor: "pointer",
+                      display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, padding: "14px 14px", width: "100%", textAlign: "left", cursor: "pointer",
                       border: `1px solid ${ativa ? SEL.border : SEL.borderOff}`,
                       background: ativa ? SEL.bg : SEL.bgOff,
                       borderRadius: 10, transition: "border-color .15s, background .15s", position: "relative",
                     }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: ativa ? "var(--brand)" : "var(--brand-50)", border: ativa ? "none" : "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <IconFuncao size={18} color={ativa ? "#fff" : "var(--brand)"} />
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: ativa ? "var(--brand)" : "var(--brand-50)", border: ativa ? "none" : "1px solid var(--brand-100)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <IconFuncao size={18} color={ativa ? "#fff" : "var(--brand)"} />
+                        </div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: ativa ? "var(--brand)" : "var(--text)", letterSpacing: 0.2 }}>{f.nome}</div>
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: ativa ? "var(--brand)" : "var(--text)" }}>{nomeAmigavel}</div>
-                        <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 3 }}>{f.nome} · {f.descricao}</div>
+                        <div className="vx-mut" style={{ fontSize: 11.5, marginTop: 3 }}>{f.descricao}</div>
                       </div>
                       {ativa && <div style={{ position: "absolute", top: 10, right: 10, width: 18, height: 18, borderRadius: "50%", background: "var(--brand)", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={11} color="#fff" /></div>}
                     </button>
