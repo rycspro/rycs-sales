@@ -14,6 +14,7 @@ import { sugerirValores, sugerirValorVisita } from "../../../shared/valorTarefa.
 import { takeRateDoPlano } from "../../../shared/planos.js";
 import MultiSelect from "../ui/MultiSelect.jsx";
 import { PAISES } from "../../../shared/paises.js";
+import { ModalSaldo } from "./PagamentosEmpresa.jsx";
 import {
   MODELOS_TRABALHO, RESTRICOES_GEO, MERCADOS, ORIGENS_LEAD, CANAIS,
   NIVEIS_EXPERIENCIA, PROCESSOS_ADMISSAO, OBJETIVOS_UI, ORDEM_OBJETIVOS_UI,
@@ -576,6 +577,7 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
   const uploadInputRef = useRef(null);
   const [catalogoProdutos, setCatalogoProdutos] = useState([]);
   const [popoverProjecao, setPopoverProjecao] = useState(null);
+  const [modalSaldoAberto, setModalSaldoAberto] = useState(false);
 
   const disponivel = saldoDisponivel(emp);
   const set = (k, v) => setCampanha((c) => ({ ...c, [k]: v }));
@@ -2630,12 +2632,20 @@ export default function NovaCampanha({ emp, aoCriar, aoCancelar, aviso, iniciarC
             </div>
             <CampoOrcamento value={orcamentoAtual} onChange={(v) => set("orcamento", v)} />
             {precisaAdicionar > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, padding: "10px 14px", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 10 }}>
-                <AlertCircle size={15} color="var(--amber, #F59E0B)" style={{ flexShrink: 0 }} />
-                <div className="vx-mut" style={{ fontSize: 12.5 }}>
-                  Saldo insuficiente. Você precisa adicionar <b className="vx-mono">{money(precisaAdicionar)}</b> para cobrir essa verba.
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 12, padding: "10px 14px", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <AlertCircle size={15} color="var(--amber, #F59E0B)" style={{ flexShrink: 0 }} />
+                  <div className="vx-mut" style={{ fontSize: 12.5 }}>
+                    Saldo insuficiente. Faltam <b className="vx-mono">{money(precisaAdicionar)}</b> para cobrir essa verba.
+                  </div>
                 </div>
+                <button className="vx-btn vx-btn-sm vx-btn-primary" style={{ whiteSpace: "nowrap", flexShrink: 0 }} onClick={() => setModalSaldoAberto(true)}>
+                  <Plus size={13} /> Adicionar saldo
+                </button>
               </div>
+            )}
+            {modalSaldoAberto && (
+              <ModalSaldo emp={emp} aviso={aviso} aoConfirmar={() => { setModalSaldoAberto(false); window.location.reload(); }} onFechar={() => setModalSaldoAberto(false)} />
             )}
           </div>
 
